@@ -1,0 +1,3 @@
+[submodule "third_party/rds-spy-logs"]
+	path = third_party/rds-spy-logs
+	url = https://github.com/walczakp/rds-spy-logs.git
