@@ -1,3 +1,5 @@
+use crate::callbacks::{RdsData, RdsDecoderCallbacks, RdsGroupType};
+
 pub enum BlockErrorCount {
     None = 0,        // No block errors.
     OneToTwo = 1,    // 1-2 block errors.
@@ -17,18 +19,18 @@ pub struct RdsBlocks {
     pub d: Option<RdsBlock>,
 }
 
-pub struct Decoder {
-    // decoder fields
+pub struct Decoder<'a> {
+    callbacks: &'a mut dyn RdsDecoderCallbacks,
 }
 
-impl Decoder {
-    pub fn new() -> Self {
-        Decoder {
-            // initialize fields
-        }
+impl<'a> Decoder<'a> {
+    pub fn new(callbacks: &'a mut dyn RdsDecoderCallbacks) -> Self {
+        Decoder { callbacks }
     }
 
-    pub fn decode(&self, blocks: &RdsBlocks) {
-        // decoding logic
+    pub fn decode(&mut self, blocks: &RdsBlocks) {
+        let data = RdsData::default();
+        let group_type = RdsGroupType::default();
+        self.callbacks.on_oda(0, &data, &group_type);
     }
 }

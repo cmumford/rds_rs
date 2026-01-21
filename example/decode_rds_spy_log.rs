@@ -1,6 +1,5 @@
 use rds_rs::{
-    BlockErrorCount, Decoder, RdsBlock, RdsBlocks, RdsData, RdsDecoderCallbacks, RdsGroup,
-    RdsGroupType,
+    BlockErrorCount, Decoder, RdsBlock, RdsBlocks, RdsData, RdsDecoderCallbacks, RdsGroupType,
 };
 use rdspy::RdsGroupIterator;
 
@@ -51,15 +50,12 @@ fn main() -> io::Result<()> {
 struct DecoderLogger {}
 
 impl RdsDecoderCallbacks for DecoderLogger {
-    fn on_rds_group(&mut self, _group: &RdsGroup, _data: &RdsData) {}
+    fn on_oda(&mut self, app_id: u16, _rds_data: &RdsData, _group_type: &RdsGroupType) {
+        println!("Received ODA app_id: {}", app_id);
+    }
 
-    fn on_oda(
-        &mut self,
-        _app_id: u16,
-        _rds_data: &RdsData,
-        _group_type: RdsGroupType,
-        _cb_data: Option<&mut ()>,
-    ) {
+    fn on_clear(&mut self) {
+        println!("Received clear");
     }
 }
 
@@ -71,7 +67,8 @@ fn opt_to_block(opt: Option<u16>) -> Option<RdsBlock> {
 }
 
 fn process_reader<R: BufRead + 'static>(reader: R) -> io::Result<()> {
-    let decoder = Decoder::new();
+    let mut logger = DecoderLogger {};
+    let mut decoder = Decoder::new(&mut logger);
     for group_result in RdsGroupIterator::new(reader) {
         match group_result {
             Ok(group) => {
