@@ -1,6 +1,4 @@
-use rds_rs::{
-    BlockErrorCount, Decoder, GroupType, RdsBlock, RdsBlocks, RdsData, RdsDecoderCallbacks,
-};
+use rds::{BlockErrorCount, Decoder, GroupType, RdsBlock, RdsBlocks, RdsData, RdsDecoderCallbacks};
 use rdspy::RdsGroupIterator;
 
 use std::{

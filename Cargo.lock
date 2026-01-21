@@ -165,7 +165,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "rds_rs"
+name = "rds"
 version = "0.1.0"
 dependencies = [
  "modular-bitfield-msb",
