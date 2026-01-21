@@ -1,5 +1,3 @@
-//! Rust translation of the RDS C structures and constants
-
 /// Maximum number of transparent data channels we track
 pub const NUM_TDC: usize = 32;
 
@@ -34,15 +32,6 @@ pub struct RdsBlock {
     pub value: u16,
     /// Number of bit errors detected in this block
     pub errors: BlockErrorCount,
-}
-
-/// All four blocks of an RDS group
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub struct RdsBlocks {
-    pub a: Option<RdsBlock>,
-    pub b: Option<RdsBlock>,
-    pub c: Option<RdsBlock>,
-    pub d: Option<RdsBlock>,
 }
 
 /// RDS group type (0–15) and version (A or B)
