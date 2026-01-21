@@ -40,7 +40,7 @@ pub struct GroupType {
 /// Alternative frequency band
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
-pub enum RdsBand {
+pub enum Band {
     Uhf = 0, // UHF band.
     #[default]
     LfMf = 1, // LF/MF band.
@@ -49,7 +49,7 @@ pub enum RdsBand {
 /// How an alternative frequency relates to the tuned frequency
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
-pub enum AfAttribute {
+pub enum AltFreqAttribute {
     #[default]
     SameProgram = 0,
     RegionalVariant = 1,
@@ -58,7 +58,7 @@ pub enum AfAttribute {
 /// Alternative frequency encoding method.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
-pub enum AfEncoding {
+pub enum AltFreqEncoding {
     #[default]
     Unknown = 0,
     MethodA = 1,
@@ -67,9 +67,9 @@ pub enum AfEncoding {
 
 /// A single alternative frequency entry
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub struct RdsFreq {
-    pub band: RdsBand,
-    pub attribute: AfAttribute,
+pub struct Frequency {
+    pub band: Band,
+    pub attribute: AltFreqAttribute,
     /// Frequency value:
     /// - UHF: in 100 kHz steps (885 = 88.5 MHz)
     /// - LF/MF: in kHz (531 = 531 kHz)
@@ -78,37 +78,37 @@ pub struct RdsFreq {
 
 /// Decoded table of alternative frequencies
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
-pub struct RdsAfTable {
+pub struct AltFreqTable {
     /// Tuned frequency (used in Method B)
-    pub tuned_freq: RdsFreq,
+    pub tuned_freq: Frequency,
     /// Number of valid entries in `entries`
     pub count: u8,
     /// Alternative frequencies
-    pub entries: [RdsFreq; 25],
+    pub entries: [Frequency; 25],
 }
 
 /// Internal state while decoding an AF table
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct RdsAfDecodeTablePrivate {
-    pub band: RdsBand,
-    pub prev_encoding: AfEncoding,
+    pub band: Band,
+    pub prev_encoding: AltFreqEncoding,
     pub expected_count: u8,
 }
 
 /// One AF decoding context
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
-pub struct RdsAfDecodeTable {
-    pub table: RdsAfTable,
-    pub encoding: AfEncoding,
+pub struct AltFreqDecodeTable {
+    pub table: AltFreqTable,
+    pub encoding: AltFreqEncoding,
     pub pvt: RdsAfDecodeTablePrivate,
 }
 
 /// Group of multiple decoded AF tables
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
-pub struct RdsAfTableGroup {
+pub struct AltFreqTableGroup {
     pub current_table_idx: i8,
     pub count: u8,
-    pub tables: [RdsAfDecodeTable; 20],
+    pub tables: [AltFreqDecodeTable; 20],
 }
 
 /// Program Item Number Code (PIN)
@@ -135,16 +135,9 @@ impl Default for RdsRt {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct RdsRtPrivate {
-    pub high_prob: [u8; 64],
-    pub low_prob: [u8; 64],
-    pub high_prob_count: [u8; 64],
-}
-
 /// Which RT variant is currently being decoded
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub enum RdsRtVariant {
+pub enum RtVariant {
     #[default]
     A,
     B,
@@ -152,7 +145,7 @@ pub enum RdsRtVariant {
 
 /// Clock Time and Date (CT)
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub struct RdsClock {
+pub struct Clock {
     pub mjd_high: bool,
     pub mjd_low: u16,
     pub hour: u8,
@@ -164,7 +157,7 @@ pub struct RdsClock {
 /// Slow labelling code variant
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
-pub enum RdsSlcVariant {
+pub enum SlcVariant {
     #[default]
     Paging = 0,
     TmcId = 1,
@@ -176,14 +169,11 @@ pub enum RdsSlcVariant {
     Ews = 7,
 }
 
-/// Transparent Data Channel (TDC)
-pub const TDC_DATA: [[u8; TDC_LEN]; NUM_TDC] = [[0; TDC_LEN]; NUM_TDC];
-
 /// Bitflags indicating which RDS fields are valid / have been received
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub struct RdsValidFlags(u32);
+pub struct ValidFlags(u32);
 
-impl RdsValidFlags {
+impl ValidFlags {
     pub const AF: Self = Self(0x00001);
     pub const CLOCK: Self = Self(0x00002);
     pub const EWS: Self = Self(0x00004);
@@ -231,7 +221,7 @@ pub struct RdsData {
     pub rt: RtData,
 
     /// Clock time
-    pub clock: RdsClock,
+    pub clock: Clock,
 
     /// Slow labelling codes
     pub slc: SlcData,
@@ -240,7 +230,7 @@ pub struct RdsData {
     pub ptyn: PtynData,
 
     /// Alternative frequencies
-    pub af: RdsAfTableGroup,
+    pub af: AltFreqTableGroup,
 
     /// Enhanced Other Networks
     pub eon: EonData,
@@ -255,14 +245,10 @@ pub struct RdsData {
     pub ews: EwsData,
 
     /// Bitmask of which fields are valid
-    pub valid: RdsValidFlags,
+    pub valid: ValidFlags,
 
     pub stats: DevStats,
 }
-
-// ──────────────────────────────────────────────────────────────────────────────
-// Helper sub-structures
-// ──────────────────────────────────────────────────────────────────────────────
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct PsData {
@@ -281,13 +267,13 @@ pub struct PsPrivate {
 pub struct RtData {
     pub a: RdsRt,
     pub b: RdsRt,
-    pub current_variant: RdsRtVariant,
+    pub current_variant: RtVariant,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct SlcData {
     pub linkage_actuator: bool,
-    pub variant: RdsSlcVariant,
+    pub variant: SlcVariant,
     pub data: SlcPayload,
 }
 
@@ -326,15 +312,15 @@ pub struct EonOtherNetwork {
     pub pty: u8,
     pub tp: bool,
     pub ta: bool,
-    pub af: RdsAfDecodeTable,
+    pub af: AltFreqDecodeTable,
     pub pi_code: u16,
     pub pic: RdsPic,
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct EonMap {
-    pub tn_tuned_freq: RdsFreq,
-    pub on_freq: RdsFreq,
+    pub tn_tuned_freq: Frequency,
+    pub on_freq: Frequency,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
