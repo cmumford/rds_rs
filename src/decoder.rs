@@ -6,15 +6,15 @@ pub enum BlockErrorCount {
 }
 
 pub struct RdsBlock {
-    block: u16,                  // The RDS block data.
-    num_errors: BlockErrorCount, // Number of bit errors in the block.
+    pub block: u16,                  // The RDS block data.
+    pub num_errors: BlockErrorCount, // Number of bit errors in the block.
 }
 
 pub struct RdsBlocks {
-    a: RdsBlock,
-    b: RdsBlock,
-    c: RdsBlock,
-    d: RdsBlock,
+    pub a: Option<RdsBlock>,
+    pub b: Option<RdsBlock>,
+    pub c: Option<RdsBlock>,
+    pub d: Option<RdsBlock>,
 }
 
 pub struct Decoder {
@@ -22,13 +22,13 @@ pub struct Decoder {
 }
 
 impl Decoder {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Decoder {
             // initialize fields
         }
     }
 
-    fn decode(&self, blocks: &RdsBlocks) {
+    pub fn decode(&self, blocks: &RdsBlocks) {
         // decoding logic
     }
 }

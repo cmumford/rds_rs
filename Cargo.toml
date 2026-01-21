@@ -6,7 +6,7 @@ edition = "2024"
 [dependencies]
 
 [dev-dependencies]
-rdspy = { path = "../rdspy" }
+rdspy = { path = "/Users/chris/src/rdspy" }
 walkdir = "2.5"
 
 [[example]]

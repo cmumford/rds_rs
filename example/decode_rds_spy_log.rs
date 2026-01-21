@@ -1,4 +1,6 @@
+use rds_rs::{BlockErrorCount, Decoder, RdsBlock, RdsBlocks};
 use rdspy::RdsGroupIterator;
+
 use std::{
     env,
     fs::File,
@@ -43,11 +45,25 @@ fn main() -> io::Result<()> {
     Ok(())
 }
 
+fn opt_to_block(opt: Option<u16>) -> Option<RdsBlock> {
+    opt.map(|v| RdsBlock {
+        block: v,
+        num_errors: BlockErrorCount::None,
+    })
+}
+
 fn process_reader<R: BufRead + 'static>(reader: R) -> io::Result<()> {
+    let decoder = Decoder::new();
     for group_result in RdsGroupIterator::new(reader) {
         match group_result {
             Ok(group) => {
-                println!("{:?}", group);
+                let blocks = RdsBlocks {
+                    a: opt_to_block(group.a),
+                    b: opt_to_block(group.b),
+                    c: opt_to_block(group.c),
+                    d: opt_to_block(group.d),
+                };
+                decoder.decode(&blocks);
             }
             Err(e) => eprintln!("Error: {}", e),
         }
