@@ -15,16 +15,6 @@ pub enum BlockErrorCount {
     SixPlus = 3,     // 6+ block errors
 }
 
-/// Maximum acceptable block error rates per block
-pub mod max_bler {
-    use super::BlockErrorCount;
-
-    pub const A: BlockErrorCount = BlockErrorCount::ThreeToFive;
-    pub const B: BlockErrorCount = BlockErrorCount::OneToTwo;
-    pub const C: BlockErrorCount = BlockErrorCount::ThreeToFive;
-    pub const D: BlockErrorCount = BlockErrorCount::ThreeToFive;
-}
-
 /// Single RDS block (A, B, C, or D)
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct RdsBlock {
@@ -34,37 +24,41 @@ pub struct RdsBlock {
     pub errors: BlockErrorCount,
 }
 
-/// RDS group type (0–15) and version (A or B)
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub struct RdsGroupType {
-    /// Group type code (0..15)
+pub enum GroupTypeVersion {
+    #[default]
+    A,
+    B,
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct GroupType {
     pub code: u8,
-    /// 'A' or 'B'
-    pub version: char,
+    pub version: GroupTypeVersion,
 }
 
 /// Alternative frequency band
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
 pub enum RdsBand {
-    Uhf = 0,
+    Uhf = 0, // UHF band.
     #[default]
-    LfMf = 1,
+    LfMf = 1, // LF/MF band.
 }
 
 /// How an alternative frequency relates to the tuned frequency
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
-pub enum RdsAfAttribute {
+pub enum AfAttribute {
     #[default]
     SameProgram = 0,
     RegionalVariant = 1,
 }
 
-/// Encoding method used for alternative frequencies
+/// Alternative frequency encoding method.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
-pub enum RdsAfEncoding {
+pub enum AfEncoding {
     #[default]
     Unknown = 0,
     MethodA = 1,
@@ -75,7 +69,7 @@ pub enum RdsAfEncoding {
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct RdsFreq {
     pub band: RdsBand,
-    pub attribute: RdsAfAttribute,
+    pub attribute: AfAttribute,
     /// Frequency value:
     /// - UHF: in 100 kHz steps (885 = 88.5 MHz)
     /// - LF/MF: in kHz (531 = 531 kHz)
@@ -97,7 +91,7 @@ pub struct RdsAfTable {
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct RdsAfDecodeTablePrivate {
     pub band: RdsBand,
-    pub prev_encoding: RdsAfEncoding,
+    pub prev_encoding: AfEncoding,
     pub expected_count: u8,
 }
 
@@ -105,7 +99,7 @@ pub struct RdsAfDecodeTablePrivate {
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct RdsAfDecodeTable {
     pub table: RdsAfTable,
-    pub encoding: RdsAfEncoding,
+    pub encoding: AfEncoding,
     pub pvt: RdsAfDecodeTablePrivate,
 }
 
@@ -352,7 +346,7 @@ pub struct OdaData {
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct OdaEntry {
     pub id: u16,
-    pub group_type: RdsGroupType,
+    pub group_type: GroupType,
     pub packet_count: u16,
 }
 
@@ -378,6 +372,6 @@ pub struct DevStats {
 }
 
 pub trait RdsDecoderCallbacks {
-    fn on_oda(&mut self, app_id: u16, rds_data: &RdsData, group_type: &RdsGroupType);
+    fn on_oda(&mut self, app_id: u16, rds_data: &RdsData, group_type: &GroupType);
     fn on_clear(&mut self);
 }

@@ -1,5 +1,5 @@
 use rds_rs::{
-    BlockErrorCount, Decoder, RdsBlock, RdsBlocks, RdsData, RdsDecoderCallbacks, RdsGroupType,
+    BlockErrorCount, Decoder, GroupType, RdsBlock, RdsBlocks, RdsData, RdsDecoderCallbacks,
 };
 use rdspy::RdsGroupIterator;
 
@@ -50,7 +50,7 @@ fn main() -> io::Result<()> {
 struct DecoderLogger {}
 
 impl RdsDecoderCallbacks for DecoderLogger {
-    fn on_oda(&mut self, app_id: u16, _rds_data: &RdsData, _group_type: &RdsGroupType) {
+    fn on_oda(&mut self, app_id: u16, _rds_data: &RdsData, _group_type: &GroupType) {
         println!("Received ODA app_id: {}", app_id);
     }
 

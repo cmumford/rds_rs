@@ -1,4 +1,4 @@
-use crate::callbacks::{RdsData, RdsDecoderCallbacks, RdsGroupType};
+use crate::callbacks::{GroupType, RdsData, RdsDecoderCallbacks};
 
 pub enum BlockErrorCount {
     None = 0,        // No block errors.
@@ -30,7 +30,7 @@ impl<'a> Decoder<'a> {
 
     pub fn decode(&mut self, blocks: &RdsBlocks) {
         let data = RdsData::default();
-        let group_type = RdsGroupType::default();
+        let group_type = GroupType::default();
         self.callbacks.on_oda(0, &data, &group_type);
     }
 }
