@@ -4,3 +4,11 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+
+[dev-dependencies]
+rdspy = { path = "../rdspy" }
+walkdir = "2.5"
+
+[[example]]
+name = "decode_rds_spy_log"
+path = "example/decode_rds_spy_log.rs"
