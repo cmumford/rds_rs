@@ -1,3 +1,5 @@
+use modular_bitfield_msb::prelude::*;
+
 /// Maximum number of transparent data channels we track
 pub const NUM_TDC: usize = 32;
 
@@ -121,12 +123,12 @@ pub struct RdsPic {
 
 /// Radiotext (RT) decoding state for one variant (A or B)
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct RdsRt {
+pub struct Radiotext {
     /// Final decoded text (64 bytes)
     pub display: [u8; 64],
 }
 
-impl Default for RdsRt {
+impl Default for Radiotext {
     fn default() -> Self {
         let mut display = [0u8; 64];
         display.fill(b' ');
@@ -193,17 +195,65 @@ impl ValidFlags {
     pub const EON: Self = Self(0x10000);
 }
 
+// Program identification codes and Extended country codes.
+// See the RBDS Standard Annex D.
+#[bitfield(bits = 16)]
+#[derive(Default, Clone, PartialEq, Eq)]
+pub struct ProgramInformation {
+    pub country_code: B4,
+    pub program_type: B4,
+    pub program_reference_number: u8,
+}
+
+#[derive(Default, Clone, PartialEq, Eq)]
+#[repr(u8)]
+pub enum ProgramType {
+    #[default]
+    None = 0,
+    News = 1,
+    Information = 2,
+    Sports = 3,
+    Talk = 4,
+    Rock = 5,
+    ClassicRock = 6,
+    AdultHits = 7,
+    SoftRock = 8,
+    Top40 = 9,
+    Country = 10,
+    Oldies = 11,
+    Soft = 12,
+    Nostalgia = 13,
+    Jazz = 14,
+    Classical = 15,
+    RhythmAndBlues = 16,
+    SoftRhythmAndBlues = 17,
+    ForeignLanguage = 18,
+    ReligiousMusic = 19,
+    ReligiousTalk = 20,
+    Personality = 21,
+    Public = 22,
+    College = 23,
+    Unnasigned1 = 24,
+    Unnasigned2 = 25,
+    Unnasigned3 = 26,
+    Unnasigned4 = 27,
+    Unnasigned5 = 28,
+    Weather = 29,
+    EmergencyTest = 30,
+    Emergency = 31,
+}
+
 /// Main container for all decoded RDS data
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
+#[derive(Default, Clone, PartialEq, Eq)]
 pub struct RdsData {
     /// Program Identification Code
-    pub pi_code: u16,
+    pub pi_code: ProgramInformation,
 
     /// Program Item Number Code
     pub pic: RdsPic,
 
     /// Program Type (PTY)
-    pub pty: u8,
+    pub pty: ProgramType,
 
     /// Traffic Program flag
     pub tp: bool,
@@ -265,8 +315,8 @@ pub struct PsPrivate {
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct RtData {
-    pub a: RdsRt,
-    pub b: RdsRt,
+    pub a: Radiotext,
+    pub b: Radiotext,
     pub current_variant: RtVariant,
 }
 
