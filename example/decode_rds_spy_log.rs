@@ -1,4 +1,7 @@
-use rds_rs::{BlockErrorCount, Decoder, RdsBlock, RdsBlocks};
+use rds_rs::{
+    BlockErrorCount, Decoder, RdsBlock, RdsBlocks, RdsData, RdsDecoderCallbacks, RdsGroup,
+    RdsGroupType,
+};
 use rdspy::RdsGroupIterator;
 
 use std::{
@@ -43,6 +46,21 @@ fn main() -> io::Result<()> {
     }
 
     Ok(())
+}
+
+struct DecoderLogger {}
+
+impl RdsDecoderCallbacks for DecoderLogger {
+    fn on_rds_group(&mut self, _group: &RdsGroup, _data: &RdsData) {}
+
+    fn on_oda(
+        &mut self,
+        _app_id: u16,
+        _rds_data: &RdsData,
+        _group_type: RdsGroupType,
+        _cb_data: Option<&mut ()>,
+    ) {
+    }
 }
 
 fn opt_to_block(opt: Option<u16>) -> Option<RdsBlock> {
