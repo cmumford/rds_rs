@@ -52,8 +52,8 @@ pub struct GroupType {
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
 pub enum Band {
-    Uhf = 0, // UHF band.
     #[default]
+    Uhf = 0, // UHF band.
     LfMf = 1, // LF/MF band.
 }
 
