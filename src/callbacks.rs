@@ -1,6 +1,9 @@
+#![allow(dead_code)]
+
 use modular_bitfield_msb::prelude::*;
 
-/// Maximum number of transparent data channels we track
+/// Maximum number of transparent data channels we track.
+/// See the RBDS Standard section 4.18.
 pub const NUM_TDC: usize = 32;
 
 /// Number of transparent data bytes kept per channel
@@ -26,17 +29,23 @@ pub struct RdsBlock {
     pub errors: BlockErrorCount,
 }
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub enum GroupTypeVersion {
-    #[default]
-    A,
-    B,
+/// Group type version.
+/// See the RDS Standard section 3.1.3.
+/// #[derive(BitfieldSpecifier)]
+#[derive(BitfieldSpecifier, Clone, PartialEq, Eq)]
+#[bits = 1]
+pub enum GroupVersion {
+    A = 0,
+    B = 1,
 }
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+/// Group type code and version.
+/// See the RDS Standard section 3.1.3 - Table 3.
+#[bitfield(bits = 5)]
+#[derive(Default, Clone, PartialEq, Eq)]
 pub struct GroupType {
-    pub code: u8,
-    pub version: GroupTypeVersion,
+    code: B4,
+    version: GroupVersion,
 }
 
 /// Alternative frequency band
@@ -399,13 +408,13 @@ pub struct EonMap {
     pub on_freq: Frequency,
 }
 
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
+#[derive(Default, Clone, PartialEq, Eq)]
 pub struct OdaData {
     pub count: u8,
     pub entries: [OdaEntry; 10],
 }
 
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
+#[derive(Default, Clone, PartialEq, Eq)]
 pub struct OdaEntry {
     pub id: u16,
     pub group_type: GroupType,

@@ -28,7 +28,7 @@ impl<'a> Decoder<'a> {
         Decoder { callbacks }
     }
 
-    pub fn decode(&mut self, blocks: &RdsBlocks) {
+    pub fn decode(&mut self, _blocks: &RdsBlocks) {
         let data = RdsData::default();
         let group_type = GroupType::default();
         self.callbacks.on_oda(0, &data, &group_type);
