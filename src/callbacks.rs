@@ -134,6 +134,7 @@ pub struct AltFreqTableGroup {
 }
 
 /// Program Item Number Code (PIN)
+/// See the RBDS Standard section 3.2.1.7.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct RdsPic {
     pub day: u8,
@@ -296,13 +297,13 @@ pub enum Content {
 #[derive(Default, Clone, PartialEq, Eq)]
 pub struct RdsData {
     /// Program Identification Code
-    pub pi_code: ProgramInformation,
+    pub program_information: ProgramInformation,
 
     /// Program Item Number Code
-    pub pic: RdsPic,
+    pub program_item_number: RdsPic,
 
     /// Program Type (PTY)
-    pub pty: ProgramType,
+    pub program_type: ProgramType,
 
     /// Traffic Program / Announcement codes.
     pub traffic: TrafficCodes,
@@ -323,10 +324,10 @@ pub struct RdsData {
     pub slc: SlcData,
 
     /// Program Type Name (extended PTY)
-    pub ptyn: PtynData,
+    pub program_type_name: PtynData,
 
     /// Alternative frequencies
-    pub af: AltFreqTableGroup,
+    pub alternative_freqs: AltFreqTableGroup,
 
     /// Enhanced Other Networks
     pub eon: EonData,
