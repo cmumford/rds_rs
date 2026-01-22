@@ -1,4 +1,5 @@
-use crate::callbacks::{GroupType, RdsData, RdsDecoderCallbacks};
+use crate::callbacks::RdsDecoderCallbacks;
+use crate::types::{GroupType, RdsData};
 
 pub struct RdsBlocks {
     pub a: Option<u16>,
