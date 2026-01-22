@@ -1,22 +1,10 @@
 use crate::callbacks::{GroupType, RdsData, RdsDecoderCallbacks};
 
-pub enum BlockErrorCount {
-    None = 0,        // No block errors.
-    OneToTwo = 1,    // 1-2 block errors.
-    ThreeToFive = 2, // 3-5 block errors.
-    SixPlus = 3,     // 6+ block errors.
-}
-
-pub struct RdsBlock {
-    pub block: u16,                  // The RDS block data.
-    pub num_errors: BlockErrorCount, // Number of bit errors in the block.
-}
-
 pub struct RdsBlocks {
-    pub a: Option<RdsBlock>,
-    pub b: Option<RdsBlock>,
-    pub c: Option<RdsBlock>,
-    pub d: Option<RdsBlock>,
+    pub a: Option<u16>,
+    pub b: Option<u16>,
+    pub c: Option<u16>,
+    pub d: Option<u16>,
 }
 
 pub struct Decoder<'a> {

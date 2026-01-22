@@ -1,4 +1,4 @@
-use rds::{BlockErrorCount, Decoder, GroupType, RdsBlock, RdsBlocks, RdsData, RdsDecoderCallbacks};
+use rds::{Decoder, GroupType, RdsBlocks, RdsData, RdsDecoderCallbacks};
 use rdspy::RdsGroupIterator;
 
 use std::{
@@ -57,13 +57,6 @@ impl RdsDecoderCallbacks for DecoderLogger {
     }
 }
 
-fn opt_to_block(opt: Option<u16>) -> Option<RdsBlock> {
-    opt.map(|v| RdsBlock {
-        block: v,
-        num_errors: BlockErrorCount::None,
-    })
-}
-
 fn process_reader<R: BufRead + 'static>(reader: R) -> io::Result<()> {
     let mut logger = DecoderLogger {};
     let mut decoder = Decoder::new(&mut logger);
@@ -71,10 +64,10 @@ fn process_reader<R: BufRead + 'static>(reader: R) -> io::Result<()> {
         match group_result {
             Ok(group) => {
                 let blocks = RdsBlocks {
-                    a: opt_to_block(group.a),
-                    b: opt_to_block(group.b),
-                    c: opt_to_block(group.c),
-                    d: opt_to_block(group.d),
+                    a: group.a,
+                    b: group.b,
+                    c: group.c,
+                    d: group.d,
                 };
                 decoder.decode(&blocks);
             }

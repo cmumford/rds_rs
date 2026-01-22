@@ -9,26 +9,6 @@ pub const NUM_TDC: usize = 32;
 /// Number of transparent data bytes kept per channel
 pub const TDC_LEN: usize = 32;
 
-/// Block error rate classification
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-#[repr(u8)]
-pub enum BlockErrorCount {
-    #[default]
-    None = 0, // No block errors
-    OneToTwo = 1,    // 1–2 block errors
-    ThreeToFive = 2, // 3–5 block errors
-    SixPlus = 3,     // 6+ block errors
-}
-
-/// Single RDS block (A, B, C, or D)
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub struct RdsBlock {
-    /// The 16-bit block value
-    pub value: u16,
-    /// Number of bit errors detected in this block
-    pub errors: BlockErrorCount,
-}
-
 /// Group type version.
 /// See the RDS Standard section 3.1.3.
 /// #[derive(BitfieldSpecifier)]
@@ -441,9 +421,9 @@ pub struct TdcData {
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct EwsData {
-    pub b: RdsBlock,
-    pub c: RdsBlock,
-    pub d: RdsBlock,
+    pub b: u16,
+    pub c: u16,
+    pub d: u16,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
