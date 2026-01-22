@@ -48,6 +48,17 @@ pub struct GroupType {
     version: GroupVersion,
 }
 
+/// Decoder identification and Dynamic PTY indicator / DI codes
+/// See the RDS Standard section 3.2.1.5.
+#[bitfield(bits = 4)]
+#[derive(Default, Clone, PartialEq, Eq)]
+pub struct DiCodes {
+    dynamic_pty: bool,
+    compressed: bool,
+    artificial_head: bool,
+    stereo: bool,
+}
+
 /// Alternative frequency band
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
