@@ -205,6 +205,26 @@ pub struct ProgramInformation {
     pub program_reference_number: u8,
 }
 
+// A combination of Traffic Program (TP) and Traffic Announcement (TA) codes
+// See the RBDS Standard section 3.2.1.3.
+#[derive(Default, Clone, PartialEq, Eq)]
+#[repr(u8)]
+pub enum TrafficCodes {
+    /// This program does not carry traffic announcements nor does it refer,
+    /// via EON, to a program that does.
+    #[default]
+    TrafficNoEonNo = 0,
+    /// This program carries EON information about another program which gives
+    /// traffic information.
+    TrafficNoEonYes = 1,
+    /// This program carries traffic announcements but none are being broadcast
+    /// at present and may also carry EON information about other traffic
+    /// announcements.
+    TrafficMaybeEonMaybe = 2,
+    /// A traffic announcement is being broadcast on this program at present.
+    TrafficYes = 3,
+}
+
 #[derive(Default, Clone, PartialEq, Eq)]
 #[repr(u8)]
 pub enum ProgramType {
@@ -243,6 +263,15 @@ pub enum ProgramType {
     Emergency = 31,
 }
 
+/// Music/speech (M/S) switch code.
+/// See the RBDS Standard section 3.2.1.4.
+#[derive(Default, Clone, PartialEq, Eq)]
+pub enum Content {
+    Speech = 0,
+    #[default]
+    Music = 1,
+}
+
 /// Main container for all decoded RDS data
 #[derive(Default, Clone, PartialEq, Eq)]
 pub struct RdsData {
@@ -255,14 +284,11 @@ pub struct RdsData {
     /// Program Type (PTY)
     pub pty: ProgramType,
 
-    /// Traffic Program flag
-    pub tp: bool,
+    /// Traffic Program / Announcement codes.
+    pub traffic: TrafficCodes,
 
-    /// Traffic Announcement flag
-    pub ta: bool,
-
-    /// Music/Speech flag (true = music)
-    pub music: bool,
+    /// Music/Speech flag.
+    pub content: Content,
 
     /// Program Service name (8 bytes, not null-terminated)
     pub ps: PsData,
