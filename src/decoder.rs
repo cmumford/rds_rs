@@ -26,12 +26,12 @@ impl<'a> Decoder<'a> {
         }
     }
 
-    pub fn decode(&mut self, blocks: &Group) {
-        if blocks.a.is_some() {
+    pub fn decode(&mut self, group: &Group) {
+        if group.a.is_some() {
             self.rds_data.program_information =
-                ProgramInformation::from_bytes(blocks.a.unwrap().to_be_bytes());
+                ProgramInformation::from_bytes(group.a.unwrap().to_be_bytes());
         }
-        if blocks.b.is_none() {
+        if group.b.is_none() {
             return;
         }
         let group_type = GroupType::default();
