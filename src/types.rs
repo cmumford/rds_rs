@@ -39,8 +39,8 @@ pub enum GroupVersion {
 #[bitfield(bits = 5)]
 #[derive(BitfieldSpecifier, Default, Clone, PartialEq, Eq)]
 pub struct GroupType {
-    code: B4,              // Group type code.
-    version: GroupVersion, // Group version (A/B).
+    pub code: B4,              // Group type code.
+    pub version: GroupVersion, // Group version (A/B).
 }
 
 /// Decoder identification and Dynamic PTY indicator / DI codes
@@ -188,27 +188,26 @@ pub enum SlcVariant {
 }
 
 /// Bitflags indicating which RDS fields are valid / have been received
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub struct ValidFlags(u32);
-
-impl ValidFlags {
-    pub const AF: Self = Self(0x00001);
-    pub const CLOCK: Self = Self(0x00002);
-    pub const EWS: Self = Self(0x00004);
-    pub const FBT: Self = Self(0x00008);
-    pub const MC: Self = Self(0x00010);
-    pub const PIC: Self = Self(0x00020);
-    pub const PI_CODE: Self = Self(0x00040);
-    pub const PS: Self = Self(0x00080);
-    pub const PTY: Self = Self(0x00100);
-    pub const PTYN: Self = Self(0x00200);
-    pub const RT: Self = Self(0x00400);
-    pub const SLC: Self = Self(0x00800);
-    pub const TDC: Self = Self(0x01000);
-    pub const TA_CODE: Self = Self(0x02000);
-    pub const TP_CODE: Self = Self(0x04000);
-    pub const MS: Self = Self(0x08000);
-    pub const EON: Self = Self(0x10000);
+#[bitfield(bits = 17)]
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
+pub struct ValidFlags {
+    pub af: bool,
+    pub clock: bool,
+    pub ews: bool,
+    pub fbt: bool,
+    pub mc: bool,
+    pub pic: bool,
+    pub pi_code: bool,
+    pub ps: bool,
+    pub pty: bool,
+    pub ptyn: bool,
+    pub rt: bool,
+    pub slc: bool,
+    pub tdc: bool,
+    pub ta_code: bool,
+    pub tp_code: bool,
+    pub ms: bool,
+    pub eon: bool,
 }
 
 // Program identification codes and Extended country codes.
@@ -241,8 +240,8 @@ pub enum TrafficCodes {
     TrafficYes = 3,
 }
 
-#[derive(Default, Clone, PartialEq, Eq)]
-#[repr(u8)]
+#[derive(BitfieldSpecifier, Default, Clone, PartialEq, Eq)]
+#[bits = 5]
 pub enum ProgramType {
     #[default]
     None = 0,
