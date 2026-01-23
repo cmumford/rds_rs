@@ -2,6 +2,21 @@
 
 use modular_bitfield_msb::prelude::*;
 
+/// A RDS group, when transmitted, is a 104 bit item consisting of 4 blocks
+/// (A, B, C, D). Each block consists of 26 bits: a 16 data informatino word
+/// followed by a 10 bit checkword. The receiver strips the 10 bit checkword,
+/// and evaluates it to determine if the the block should be passed along for
+/// decoding.
+///
+/// See the RDS Standard section 2.1.
+#[derive(Clone, PartialEq, Eq)]
+pub struct Group {
+    pub a: Option<u16>,
+    pub b: Option<u16>,
+    pub c: Option<u16>,
+    pub d: Option<u16>,
+}
+
 /// Maximum number of transparent data channels we track.
 /// See the RBDS Standard section 4.18.
 pub const NUM_TDC: usize = 32;
@@ -22,10 +37,10 @@ pub enum GroupVersion {
 /// Group type code and version.
 /// See the RDS Standard section 3.1.3 - Table 3.
 #[bitfield(bits = 5)]
-#[derive(Default, Clone, PartialEq, Eq)]
+#[derive(BitfieldSpecifier, Default, Clone, PartialEq, Eq)]
 pub struct GroupType {
-    code: B4,
-    version: GroupVersion,
+    code: B4,              // Group type code.
+    version: GroupVersion, // Group version (A/B).
 }
 
 /// Decoder identification and Dynamic PTY indicator / DI codes

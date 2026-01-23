@@ -1,4 +1,4 @@
-use rds::{Decoder, GroupType, RdsBlocks, RdsData, RdsDecoderCallbacks};
+use rds::{Decoder, Group, GroupType, RdsData, RdsDecoderCallbacks};
 use rdspy::RdsGroupIterator;
 
 use std::{
@@ -63,7 +63,7 @@ fn process_reader<R: BufRead + 'static>(reader: R) -> io::Result<()> {
     for group_result in RdsGroupIterator::new(reader) {
         match group_result {
             Ok(group) => {
-                let blocks = RdsBlocks {
+                let blocks = Group {
                     a: group.a,
                     b: group.b,
                     c: group.c,
