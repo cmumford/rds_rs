@@ -2,8 +2,8 @@
 
 use modular_bitfield_msb::prelude::*;
 
-/// A RDS group, when transmitted, is a 104 bit item consisting of 4 blocks
-/// (A, B, C, D). Each block consists of 26 bits: a 16 data informatino word
+/// An RDS group, when transmitted, is a 104 bit item consisting of 4 blocks
+/// (A, B, C, D). Each block consists of 26 bits: a 16 data information word
 /// followed by a 10 bit checkword. The receiver strips the 10 bit checkword,
 /// and evaluates it to determine if the the block should be passed along for
 /// decoding.
@@ -11,10 +11,10 @@ use modular_bitfield_msb::prelude::*;
 /// See the RDS Standard section 2.1.
 #[derive(Clone, PartialEq, Eq)]
 pub struct Group {
-    pub a: Option<u16>,
-    pub b: Option<u16>,
-    pub c: Option<u16>,
-    pub d: Option<u16>,
+    pub a: Option<u16>, // Block A data word.
+    pub b: Option<u16>, // Block B data word.
+    pub c: Option<u16>, // Block C data word.
+    pub d: Option<u16>, // Block D data word.
 }
 
 /// Maximum number of transparent data channels we track.

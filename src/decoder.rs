@@ -6,11 +6,11 @@ use crate::types::{
 };
 use modular_bitfield_msb::prelude::*;
 
-/// All type B groups share the same 11-bit common prefix.
+/// All type B blocks share the same 11-bit common prefix.
 /// See RDS Standard section 3.1.4.2.
 #[bitfield(bits = 11)]
 #[derive(BitfieldSpecifier, Default, Clone, PartialEq, Eq)]
-pub struct GroupBCommon {
+pub struct BlockBCommon {
     group_type: GroupType,     // Group type (code + version).
     traffic_program: bool,     // TP bit.
     program_type: ProgramType, // PTY: Program type.
@@ -19,8 +19,8 @@ pub struct GroupBCommon {
 // See RDS Standard section 3.1.5.1.
 #[bitfield(bits = 16)]
 #[derive(Default, Clone, PartialEq, Eq)]
-pub struct Type0GroupB {
-    common: GroupBCommon,         // Common group B fields.
+pub struct GroupType0BlockB {
+    common: BlockBCommon,         // Common block B fields.
     traffic_announcement: bool,   // TA bit: section 3.2.1.3.
     ms: bool,                     // M/S bit: section 3.2.1.4.
     decoder_identification: bool, // DI bit: section 3.2.1.5.
@@ -40,7 +40,7 @@ impl<'a> Decoder<'a> {
         }
     }
 
-    fn decode_group_b_common(&mut self, block: &GroupBCommon) {
+    fn decode_block_b_common(&mut self, block: &BlockBCommon) {
         // TODO: This is only setting the TP bit and not the TA bit.
         // Might have to decouple these if they come from different groups.
         if block.traffic_program() {
@@ -57,6 +57,7 @@ impl<'a> Decoder<'a> {
     pub fn decode_alt_freq(&mut self, _group: &Group) {}
 
     pub fn decode_ta(&mut self, _group: &Group) {}
+
     pub fn decode_ms(&mut self, _group: &Group) {}
 
     pub fn decode_group_type_0(&mut self, gt: GroupType, group: &Group) {
@@ -79,8 +80,8 @@ impl<'a> Decoder<'a> {
             return;
         }
 
-        let generic_b = Type0GroupB::from_bytes(group.b.unwrap().to_be_bytes());
-        self.decode_group_b_common(&generic_b.common());
+        let generic_b = GroupType0BlockB::from_bytes(group.b.unwrap().to_be_bytes());
+        self.decode_block_b_common(&generic_b.common());
 
         self.callbacks
             .on_oda(0, &self.rds_data, &GroupType::default());
