@@ -29,6 +29,7 @@ pub struct GroupType0BlockB {
 
 pub struct Decoder<'a> {
     callbacks: &'a mut dyn RdsDecoderCallbacks,
+    advanced_ps_decoding: bool,
     rds_data: RdsData,
 }
 
@@ -36,6 +37,7 @@ impl<'a> Decoder<'a> {
     pub fn new(callbacks: &'a mut dyn RdsDecoderCallbacks) -> Self {
         Decoder {
             callbacks,
+            advanced_ps_decoding: true,
             rds_data: RdsData::default(),
         }
     }
@@ -54,14 +56,96 @@ impl<'a> Decoder<'a> {
         self.rds_data.valid.set_pty(true);
     }
 
-    pub fn decode_alt_freq(&mut self, _group: &Group) {}
+    fn decode_alt_freq(&mut self, _group: &Group) {}
 
-    pub fn decode_ta(&mut self, _group: &Group) {}
+    fn decode_ta(&mut self, _group: &Group) {}
 
-    pub fn decode_ms(&mut self, _group: &Group) {}
+    fn decode_ms(&mut self, _group: &Group) {}
 
-    pub fn decode_group_type_0(&mut self, gt: GroupType, group: &Group) {
-        if gt.version() == GroupVersion::A {
+    fn update_ps_simple(&mut self, char_idx: u8, current_ps_byte: u8) {
+        assert!(char_idx < 8);
+        self.rds_data.ps.display[char_idx as usize] = current_ps_byte;
+        self.rds_data.valid.set_ps(true);
+    }
+
+    /// Update the Program Service text in our buffers from the shadow registers.
+    ///
+    /// This implementation of the Program Service update attempts to display only
+    /// complete messages for stations who rotate text through the PS field in
+    /// violation of the RBDS standard as well as providing enhanced error detection.
+    ///
+    /// This function is from the Silicon Labs sample application.
+    fn update_ps_advanced(&mut self, char_idx: usize, byte: u8) {
+        const PS_VALIDATE_LIMIT: u8 = 2;
+
+        let mut in_transition = false; // Indicates if the PS text is in transition.
+        let mut complete = true; // Indicates the PS text is ready to be displayed.
+
+        if self.rds_data.ps.pvt.hi_prob[char_idx] == byte {
+            // The new byte matches the high probability byte.
+            if self.rds_data.ps.pvt.hi_prob_cnt[char_idx] < PS_VALIDATE_LIMIT {
+                self.rds_data.ps.pvt.hi_prob_cnt[char_idx] += 1;
+            } else {
+                // we have received this byte enough to max out our counter and push it
+                // into the low probability array as well.
+                self.rds_data.ps.pvt.hi_prob_cnt[char_idx] = PS_VALIDATE_LIMIT;
+                self.rds_data.ps.pvt.lo_prob[char_idx] = byte;
+            }
+        } else if self.rds_data.ps.pvt.lo_prob[char_idx] == byte {
+            // The new byte is a match with the low probability byte. Swap them, reset
+            // the counter and flag the text as in transition. Note that the counter for
+            // this character goes higher than the validation limit because it will get
+            // knocked down later.
+            if self.rds_data.ps.pvt.hi_prob_cnt[char_idx] >= PS_VALIDATE_LIMIT {
+                in_transition = true;
+                self.rds_data.ps.pvt.hi_prob_cnt[char_idx] = PS_VALIDATE_LIMIT + 1;
+            } else {
+                self.rds_data.ps.pvt.hi_prob_cnt[char_idx] = PS_VALIDATE_LIMIT;
+            }
+            self.rds_data.ps.pvt.lo_prob[char_idx] = self.rds_data.ps.pvt.hi_prob[char_idx];
+            self.rds_data.ps.pvt.hi_prob[char_idx] = byte;
+        } else if self.rds_data.ps.pvt.hi_prob_cnt[char_idx] == 0 {
+            // The new byte is replacing an empty byte in the high probability array.
+            self.rds_data.ps.pvt.hi_prob[char_idx] = byte;
+            self.rds_data.ps.pvt.hi_prob_cnt[char_idx] = 1;
+        } else {
+            // The new byte doesn't match anything, put it in the low probability array.
+            self.rds_data.ps.pvt.lo_prob[char_idx] = byte;
+        }
+
+        if in_transition {
+            // When the text is changing, decrement the count for all characters to
+            // prevent displaying part of a message that is in transition.
+            for count in self.rds_data.ps.pvt.hi_prob_cnt.iter_mut() {
+                if *count > 1 {
+                    *count -= 1;
+                }
+            }
+        }
+
+        // The PS text is incomplete if any character in the high probability array
+        // has been seen fewer times than the validation limit.
+        for count in self.rds_data.ps.pvt.hi_prob_cnt.iter_mut() {
+            if *count < PS_VALIDATE_LIMIT {
+                complete = false;
+                break;
+            }
+        }
+
+        // If the PS text in the high probability array is complete copy it to the
+        // display array.
+        if complete {
+            self.rds_data.valid.set_ps(true);
+            self.rds_data
+                .ps
+                .display
+                .copy_from_slice(&self.rds_data.ps.pvt.hi_prob);
+        }
+    }
+
+    fn decode_group_type_0(&mut self, group: &Group) {
+        let block_b = GroupType0BlockB::from_bytes(group.b.unwrap().to_be_bytes());
+        if block_b.common().group_type().version() == GroupVersion::A {
             self.decode_alt_freq(group);
         }
         if group.d.is_none() {
@@ -69,6 +153,18 @@ impl<'a> Decoder<'a> {
         }
         self.decode_ta(group);
         self.decode_ms(group);
+
+        let pair_idx = 2 * block_b.c();
+        let d_val = group.d.unwrap();
+        let hi_byte = (d_val >> 8) as u8;
+        let lo_byte = (d_val & 0xFF) as u8;
+        if self.advanced_ps_decoding {
+            self.update_ps_advanced((pair_idx + 0) as usize, hi_byte);
+            self.update_ps_advanced((pair_idx + 1) as usize, lo_byte);
+        } else {
+            self.update_ps_simple(pair_idx + 0, hi_byte);
+            self.update_ps_simple(pair_idx + 1, lo_byte);
+        }
     }
 
     pub fn decode(&mut self, group: &Group) {
@@ -80,19 +176,20 @@ impl<'a> Decoder<'a> {
             return;
         }
 
-        let generic_b = GroupType0BlockB::from_bytes(group.b.unwrap().to_be_bytes());
-        self.decode_block_b_common(&generic_b.common());
+        // All groups have block B common fields.
+        let block_b = GroupType0BlockB::from_bytes(group.b.unwrap().to_be_bytes());
+        self.decode_block_b_common(&block_b.common());
 
-        self.callbacks
-            .on_oda(0, &self.rds_data, &GroupType::default());
-
-        match generic_b.common().group_type().code() {
+        match block_b.common().group_type().code() {
             0 => {
-                self.decode_group_type_0(generic_b.common().group_type(), &group);
+                self.decode_group_type_0(&group);
             }
             _ => {
                 // Other group types not implemented yet
             }
         }
+
+        self.callbacks
+            .on_oda(0, &self.rds_data, &GroupType::default());
     }
 }

@@ -349,9 +349,9 @@ pub struct PsData {
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct PsPrivate {
-    pub high_prob: [u8; 8],
-    pub low_prob: [u8; 8],
-    pub high_prob_count: [u8; 8],
+    pub hi_prob: [u8; 8],
+    pub lo_prob: [u8; 8],
+    pub hi_prob_cnt: [u8; 8],
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
