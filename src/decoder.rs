@@ -10,7 +10,7 @@ use modular_bitfield_msb::prelude::*;
 /// See RDS Standard section 3.1.4.2.
 #[bitfield(bits = 11)]
 #[derive(BitfieldSpecifier, Default, Clone, PartialEq, Eq)]
-pub struct BlockBCommon {
+struct BlockBCommon {
     group_type: GroupType,     // Group type (code + version).
     traffic_program: bool,     // TP bit.
     program_type: ProgramType, // PTY: Program type.
@@ -19,7 +19,7 @@ pub struct BlockBCommon {
 // See RDS Standard section 3.1.5.1.
 #[bitfield(bits = 16)]
 #[derive(Default, Clone, PartialEq, Eq)]
-pub struct GroupType0BlockB {
+struct GroupType0BlockB {
     common: BlockBCommon,         // Common block B fields.
     traffic_announcement: bool,   // TA bit: section 3.2.1.3.
     ms: bool,                     // M/S bit: section 3.2.1.4.
@@ -30,7 +30,7 @@ pub struct GroupType0BlockB {
 // See RDS Standard section 3.1.5.2.
 #[bitfield(bits = 16)]
 #[derive(Default, Clone, PartialEq, Eq)]
-pub struct GroupType1BlockB {
+struct GroupType1BlockB {
     common: BlockBCommon,   // Common block B fields.
     radio_paging_codes: B5, // See Annex M.
 }
