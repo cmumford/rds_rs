@@ -74,5 +74,50 @@ impl AltFreqDecodeTable {
         self.add_alt_freq(&freq);
     }
 
-    pub fn decode_freq_table_nth_block(&mut self, first_byte: u8, second_byte: u8) {}
+    pub fn decode_freq_table_nth_block(&mut self, first_byte: u8, second_byte: u8) {
+        if self.pvt.expected_cnt == 0 {
+            // Got more frequency codes than we were expecting. Probably missed
+            // a block to start a new table, so do nothing.
+            return;
+        }
+
+        let handled_first = self.handle_freq_code(first_byte);
+        let first_freq = Frequency {
+            band: self.pvt.band,
+            attribute: AltFreqAttribute::SameProgram,
+            freq: af_code_to_freq(first_byte, self.pvt.band),
+        };
+
+        let handled_second = self.handle_freq_code(second_byte);
+        let second_freq = Frequency {
+            band: self.pvt.band,
+            attribute: AltFreqAttribute::SameProgram,
+            freq: af_code_to_freq(second_byte, self.pvt.band),
+        };
+
+        if self.encoding == AltFreqEncoding::Unknown {
+            if handled_first && handled_second {
+                // Still don't know, figure out next entry.
+                return;
+            }
+            if handled_first || handled_second {
+                // If only one handled, but not the second then this must be method A.
+                self.encoding = AltFreqEncoding::MethodA;
+            } else if first_freq == self.table.tuned_freq || second_freq == self.table.tuned_freq {
+                // If either frequencies match first freq then must be method B.
+                self.encoding = AltFreqEncoding::MethodB;
+            } else {
+                // Neither match tuned freq, so must be method A.
+                self.encoding = AltFreqEncoding::MethodA;
+
+                if self.table.tuned_freq.freq != 0 {
+                    // Move the frequency, which we saved because we didn't know if this
+                    // was method A or B, into the table.
+                    let freq = self.table.tuned_freq;
+                    self.add_alt_freq(&freq);
+                    self.table.tuned_freq = Frequency::default();
+                }
+            }
+        }
+    }
 }
