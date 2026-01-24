@@ -1,7 +1,9 @@
 #![allow(dead_code)]
 
 use crate::callbacks::{RdsData, RdsDecoderCallbacks};
-use crate::types::{Group, GroupType, GroupVersion, ProgramInformation, ProgramType, TrafficCodes};
+use crate::types::{
+    Group, GroupType, GroupVersion, ProgramInformation, ProgramType, RdsPic, SlcData, TrafficCodes,
+};
 use modular_bitfield_msb::prelude::*;
 
 /// All type B blocks share the same 11-bit common prefix.
@@ -23,6 +25,14 @@ pub struct GroupType0BlockB {
     ms: bool,                     // M/S bit: section 3.2.1.4.
     decoder_identification: bool, // DI bit: section 3.2.1.5.
     c: B2,                        // Prog. service name and DI segment addr.
+}
+
+// See RDS Standard section 3.1.5.2.
+#[bitfield(bits = 16)]
+#[derive(Default, Clone, PartialEq, Eq)]
+pub struct GroupType1BlockB {
+    common: BlockBCommon,   // Common block B fields.
+    radio_paging_codes: B5, // See Annex M.
 }
 
 pub struct Decoder<'a> {
@@ -172,7 +182,25 @@ impl<'a> Decoder<'a> {
             self.update_ps_simple(pair_idx + 1, lo_byte);
         }
     }
-    fn decode_group_type_1(&mut self, _group: &Group) {}
+
+    fn decode_group_type_1(&mut self, group: &Group) {
+        let block_b = GroupType1BlockB::from_bytes(group.b.unwrap().to_be_bytes());
+        if block_b.common().group_type().version() == GroupVersion::A && group.c.is_some() {
+            self.rds_data.slc = SlcData::from_bytes(group.c.unwrap().to_be_bytes());
+            self.rds_data.valid.set_slc(true);
+        }
+
+        if group.d.is_some() {
+            self.rds_data.program_item_number = RdsPic::from_bytes(group.d.unwrap().to_be_bytes());
+            self.rds_data.valid.set_pic(true);
+        } else {
+            // Per spec (3.2.1.7): If a type 1 group is transmitted without a
+            // valid PIN, the day of the month shall be set to zero. In this
+            // case a receiver which evaluates PIN shall ignore the other
+            // information in block 4.
+            self.rds_data.program_item_number = RdsPic::default();
+        }
+    }
 
     fn decode_group_type_2(&mut self, _group: &Group) {}
 

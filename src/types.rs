@@ -95,11 +95,12 @@ pub struct Frequency {
 
 /// Program Item Number Code (PIN)
 /// See the RBDS Standard section 3.2.1.7.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[bitfield(bits = 16)]
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
 pub struct RdsPic {
-    pub day: u8,
-    pub hour: u8,
-    pub minute: u8,
+    pub day: B5,
+    pub hour: B5,
+    pub minute: B6,
 }
 
 /// Radiotext (RT) decoding state for one variant (A or B)
@@ -148,21 +149,6 @@ pub struct Clock {
     pub minute: u8,
     /// Local time offset from UTC in half-hours
     pub utc_offset_half_hours: i8,
-}
-
-/// Slow labelling code variant
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-#[repr(u8)]
-pub enum SlcVariant {
-    #[default]
-    Paging = 0,
-    TmcId = 1,
-    PagingId = 2,
-    Language = 3,
-    NotAssigned4 = 4,
-    NotAssigned5 = 5,
-    Broadcaster = 6,
-    Ews = 7,
 }
 
 /// Bitflags indicating which RDS fields are valid / have been received
@@ -285,28 +271,27 @@ pub struct RtData {
     pub current_variant: RtVariant,
 }
 
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
+/// Slow labelling code variant
+#[derive(BitfieldSpecifier, Default, Clone, PartialEq, Eq)]
+#[bits = 3]
+pub enum SlcVariant {
+    #[default]
+    Paging = 0,
+    TmcId = 1,
+    PagingId = 2,
+    Language = 3,
+    NotAssigned4 = 4,
+    NotAssigned5 = 5,
+    Broadcaster = 6,
+    Ews = 7,
+}
+
+#[bitfield(bits = 16)]
+#[derive(Default, Clone, PartialEq, Eq)]
 pub struct SlcData {
-    pub linkage_actuator: bool,
+    pub linkage_actuator: bool, // See RDSM spec. (3.2.1.8.3).
     pub variant: SlcVariant,
-    pub data: SlcPayload,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum SlcPayload {
-    Paging { paging: u8, country_code: u8 },
-    TmcId(u16),
-    PagingId(u16),
-    LanguageCodes(u16),
-    Broadcasters(u16),
-    EwsChannelId(u16),
-}
-
-// TODO: Temporary. Delete the default value once the decoder is implemented.
-impl Default for SlcPayload {
-    fn default() -> Self {
-        SlcPayload::TmcId(0)
-    }
+    pub data: B12,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
