@@ -1,5 +1,5 @@
 use crate::af_decode_table::AltFreqDecodeTable;
-use crate::types::{Frequency, GroupType, RdsPic};
+use crate::types::{Frequency, RdsPic};
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct EonData {

@@ -72,6 +72,16 @@ pub enum AltFreqAttribute {
     RegionalVariant = 1,
 }
 
+/// Alternative frequency encoding method.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[repr(u8)]
+pub enum AltFreqEncoding {
+    #[default]
+    Unknown = 0,
+    MethodA = 1,
+    MethodB = 2,
+}
+
 /// A single alternative frequency entry
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct Frequency {
