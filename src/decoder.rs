@@ -172,6 +172,35 @@ impl<'a> Decoder<'a> {
             self.update_ps_simple(pair_idx + 1, lo_byte);
         }
     }
+    fn decode_group_type_1(&mut self, _group: &Group) {}
+
+    fn decode_group_type_2(&mut self, _group: &Group) {}
+
+    fn decode_group_type_3(&mut self, _group: &Group) {}
+
+    fn decode_group_type_4(&mut self, _group: &Group) {}
+
+    fn decode_group_type_5(&mut self, _group: &Group) {}
+
+    fn decode_group_type_6(&mut self, _group: &Group) {}
+
+    fn decode_group_type_7(&mut self, _group: &Group) {}
+
+    fn decode_group_type_8(&mut self, _group: &Group) {}
+
+    fn decode_group_type_9(&mut self, _group: &Group) {}
+
+    fn decode_group_type_10(&mut self, _group: &Group) {}
+
+    fn decode_group_type_11(&mut self, _group: &Group) {}
+
+    fn decode_group_type_12(&mut self, _group: &Group) {}
+
+    fn decode_group_type_13(&mut self, _group: &Group) {}
+
+    fn decode_group_type_14(&mut self, _group: &Group) {}
+
+    fn decode_group_type_15(&mut self, _group: &Group) {}
 
     pub fn decode(&mut self, group: &Group) {
         if group.a.is_some() {
@@ -189,6 +218,51 @@ impl<'a> Decoder<'a> {
         match block_b.common().group_type().code() {
             0 => {
                 self.decode_group_type_0(&group);
+            }
+            1 => {
+                self.decode_group_type_1(&group);
+            }
+            2 => {
+                self.decode_group_type_2(&group);
+            }
+            3 => {
+                self.decode_group_type_3(&group);
+            }
+            4 => {
+                self.decode_group_type_4(&group);
+            }
+            5 => {
+                self.decode_group_type_5(&group);
+            }
+            6 => {
+                self.decode_group_type_6(&group);
+            }
+            7 => {
+                self.decode_group_type_7(&group);
+            }
+            8 => {
+                self.decode_group_type_8(&group);
+            }
+            9 => {
+                self.decode_group_type_9(&group);
+            }
+            10 => {
+                self.decode_group_type_10(&group);
+            }
+            11 => {
+                self.decode_group_type_11(&group);
+            }
+            12 => {
+                self.decode_group_type_12(&group);
+            }
+            13 => {
+                self.decode_group_type_13(&group);
+            }
+            14 => {
+                self.decode_group_type_14(&group);
+            }
+            15 => {
+                self.decode_group_type_15(&group);
             }
             _ => {
                 // Other group types not implemented yet
