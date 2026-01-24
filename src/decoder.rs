@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 
 use crate::callbacks::{RdsData, RdsDecoderCallbacks};
+use crate::radiotext::RtVariant;
 use crate::types::{
     Group, GroupType, GroupVersion, ProgramInformation, ProgramType, RdsPic, SlcData, TrafficCodes,
 };
@@ -33,6 +34,15 @@ struct GroupType0BlockB {
 struct GroupType1BlockB {
     common: BlockBCommon,   // Common block B fields.
     radio_paging_codes: B5, // See Annex M.
+}
+
+// See RDS Standard section 3.1.5.3.
+#[bitfield(bits = 16)]
+#[derive(Default, Clone, PartialEq, Eq)]
+struct GroupType2BlockB {
+    common: BlockBCommon, // Common block B fields.
+    text_flag: RtVariant, // See Annex M.
+    text_segment_addr: B4,
 }
 
 pub struct Decoder<'a> {
@@ -202,7 +212,45 @@ impl<'a> Decoder<'a> {
         }
     }
 
-    fn decode_group_type_2(&mut self, _group: &Group) {}
+    fn decode_group_type_2(&mut self, group: &Group) {
+        let block_b = GroupType2BlockB::from_bytes(group.b.unwrap().to_be_bytes());
+        if block_b.common().group_type().version() == GroupVersion::A {
+            if group.c.is_none() || group.d.is_none() {
+                return;
+            }
+            let rtchars: [u8; 4] = [
+                (group.c.unwrap() >> 8) as u8,
+                (group.c.unwrap() & 0xff) as u8,
+                (group.d.unwrap() >> 8) as u8,
+                (group.d.unwrap() & 0xff) as u8,
+            ];
+            let addr = 4 * block_b.text_segment_addr();
+            self.rds_data.rt.update_rt_simple(group, 4, addr, &rtchars);
+            if self.rds_data.rt.current_variant != block_b.text_flag() {
+                self.rds_data.rt.bump_rt_validation_count();
+            }
+            self.rds_data.rt.update_rt_advance(group, 4, addr, &rtchars);
+            return;
+        }
+
+        // Version B.
+        if group.d.is_none() {
+            return;
+        }
+        let rtchars: [u8; 4] = [
+            (group.d.unwrap() >> 8) as u8,
+            (group.d.unwrap() & 0xff) as u8,
+            0,
+            0,
+        ];
+        let addr = 4 * block_b.text_segment_addr();
+        self.rds_data.rt.update_rt_simple(group, 2, addr, &rtchars);
+        if self.rds_data.rt.current_variant != block_b.text_flag() {
+            self.rds_data.rt.bump_rt_validation_count();
+        }
+        self.rds_data.rt.update_rt_advance(group, 2, addr, &rtchars);
+        return;
+    }
 
     fn decode_group_type_3(&mut self, _group: &Group) {}
 

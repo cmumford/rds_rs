@@ -1,7 +1,8 @@
 use crate::eon::EonData;
+use crate::radiotext::RtData;
 use crate::types::{
     Clock, Content, DevStats, EwsData, GroupType, OdaData, ProgramInformation, ProgramType, PsData,
-    PtynData, RdsPic, RtData, SlcData, TdcData, TrafficCodes, ValidFlags,
+    PtynData, RdsPic, SlcData, TdcData, TrafficCodes, ValidFlags,
 };
 
 use crate::frequency_table_group::AltFreqTableGroup;

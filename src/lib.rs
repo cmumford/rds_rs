@@ -5,6 +5,7 @@ mod callbacks;
 mod decoder;
 mod eon;
 mod frequency_table_group;
+mod radiotext;
 mod types;
 
 pub use callbacks::{RdsData, RdsDecoderCallbacks};

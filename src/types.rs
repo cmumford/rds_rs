@@ -103,22 +103,6 @@ pub struct RdsPic {
     pub minute: B6,
 }
 
-/// Radiotext (RT) decoding state for one variant (A or B)
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Radiotext {
-    /// Final decoded text (64 bytes)
-    pub display: [u8; 64],
-}
-
-impl Default for Radiotext {
-    fn default() -> Self {
-        let mut display = [0u8; 64];
-        display.fill(b' ');
-
-        Self { display }
-    }
-}
-
 #[derive(Default, Clone, PartialEq, Eq)]
 pub struct OdaData {
     pub count: u8,
@@ -130,14 +114,6 @@ pub struct OdaEntry {
     pub id: u16,
     pub group_type: GroupType,
     pub packet_count: u16,
-}
-
-/// Which RT variant is currently being decoded
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub enum RtVariant {
-    #[default]
-    A,
-    B,
 }
 
 /// Clock Time and Date (CT)
@@ -262,13 +238,6 @@ pub struct PsPrivate {
     pub hi_prob: [u8; 8],
     pub lo_prob: [u8; 8],
     pub hi_prob_cnt: [u8; 8],
-}
-
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
-pub struct RtData {
-    pub a: Radiotext,
-    pub b: Radiotext,
-    pub current_variant: RtVariant,
 }
 
 /// Slow labelling code variant
