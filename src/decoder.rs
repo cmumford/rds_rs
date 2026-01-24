@@ -1,9 +1,7 @@
 #![allow(dead_code)]
 
-use crate::callbacks::RdsDecoderCallbacks;
-use crate::types::{
-    Group, GroupType, GroupVersion, ProgramInformation, ProgramType, RdsData, TrafficCodes,
-};
+use crate::callbacks::{RdsData, RdsDecoderCallbacks};
+use crate::types::{Group, GroupType, GroupVersion, ProgramInformation, ProgramType, TrafficCodes};
 use modular_bitfield_msb::prelude::*;
 
 /// All type B blocks share the same 11-bit common prefix.
@@ -56,7 +54,15 @@ impl<'a> Decoder<'a> {
         self.rds_data.valid.set_pty(true);
     }
 
-    fn decode_alt_freq(&mut self, _group: &Group) {}
+    fn decode_alt_freq(&mut self, group: &Group) {
+        if group.c.is_none() {
+            return;
+        }
+        self.rds_data.valid.set_af(true);
+        self.rds_data
+            .alternative_freqs
+            .decode_freq_group_block(group.c.unwrap());
+    }
 
     fn decode_ta(&mut self, _group: &Group) {}
 

@@ -120,14 +120,6 @@ pub struct AltFreqDecodeTable {
     pub pvt: RdsAfDecodeTablePrivate,
 }
 
-/// Group of multiple decoded AF tables
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
-pub struct AltFreqTableGroup {
-    pub current_table_idx: i8,
-    pub count: u8,
-    pub tables: [AltFreqDecodeTable; 20],
-}
-
 /// Program Item Number Code (PIN)
 /// See the RBDS Standard section 3.2.1.7.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
@@ -285,60 +277,6 @@ pub enum Content {
     Speech = 0,
     #[default]
     Music = 1,
-}
-
-/// Main container for all decoded RDS data
-#[derive(Default, Clone, PartialEq, Eq)]
-pub struct RdsData {
-    /// Program Identification Code
-    pub program_information: ProgramInformation,
-
-    /// Program Item Number Code
-    pub program_item_number: RdsPic,
-
-    /// Program Type (PTY)
-    pub program_type: ProgramType,
-
-    /// Traffic Program / Announcement codes.
-    pub traffic: TrafficCodes,
-
-    /// Music/Speech flag.
-    pub content: Content,
-
-    /// Program Service name (8 bytes, not null-terminated)
-    pub ps: PsData,
-
-    /// Radiotext
-    pub rt: RtData,
-
-    /// Clock time
-    pub clock: Clock,
-
-    /// Slow labelling codes
-    pub slc: SlcData,
-
-    /// Program Type Name (extended PTY)
-    pub program_type_name: PtynData,
-
-    /// Alternative frequencies
-    pub alternative_freqs: AltFreqTableGroup,
-
-    /// Enhanced Other Networks
-    pub eon: EonData,
-
-    /// Active Open Data Applications
-    pub oda: OdaData,
-
-    /// Transparent Data Channels
-    pub tdc: TdcData,
-
-    /// Emergency Warning System
-    pub ews: EwsData,
-
-    /// Bitmask of which fields are valid
-    pub valid: ValidFlags,
-
-    pub stats: DevStats,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
