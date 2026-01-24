@@ -1,13 +1,6 @@
+use crate::af_codes::*;
 use crate::af_decode_table::AltFreqDecodeTable;
 use crate::types::{AltFreqAttribute, AltFreqEncoding, Band, Frequency};
-
-// See table 12 in RBDS spec section 3.2.1.6.1.
-const AF_MIN_FREQ_CODE: u8 = 1;
-const AF_MAX_FREQ_CODE: u8 = 204;
-const AF_FILLER_CODE: u8 = 205;
-const AF_MIN_COUNT_CODE: u8 = 225;
-const AF_MAX_COUNT_CODE: u8 = 249;
-const AF_LF_MF_FOLLOWS: u8 = 250;
 
 fn is_freq_code_count(freq_code: u8) -> bool {
     AF_MIN_COUNT_CODE <= freq_code && freq_code <= AF_MAX_COUNT_CODE
@@ -17,7 +10,7 @@ fn freq_code_to_count(freq_code: u8) -> u8 {
     1 + freq_code - AF_MIN_COUNT_CODE
 }
 
-fn af_code_to_freq(freq_code: u8, band: Band) -> u16 {
+pub fn af_code_to_freq(freq_code: u8, band: Band) -> u16 {
     if band == Band::Uhf {
         // If a UHF band.
         return 876u16 + (freq_code as u16) - 1;

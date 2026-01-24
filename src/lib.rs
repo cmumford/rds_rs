@@ -1,3 +1,4 @@
+mod af_codes;
 mod af_decode_table;
 mod af_table;
 mod callbacks;
