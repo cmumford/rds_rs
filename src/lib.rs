@@ -1,5 +1,8 @@
+mod af_decode_table;
+mod af_table;
 mod callbacks;
 mod decoder;
+mod eon;
 mod frequency_table_group;
 mod types;
 

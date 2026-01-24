@@ -1,4 +1,4 @@
-use crate::types::AltFreqDecodeTable;
+use crate::af_decode_table::AltFreqDecodeTable;
 
 // See table 12 in RBDS spec section 3.2.1.6.1.
 const AF_MIN_FREQ_CODE: u8 = 1;
@@ -19,9 +19,9 @@ fn freq_code_to_count(freq_code: u8) -> u8 {
 /// Group of multiple decoded AF tables
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct AltFreqTableGroup {
-    pub current_table_idx: i8,
-    pub count: u8,
-    pub tables: [AltFreqDecodeTable; 20],
+    pub pvt_current_table_idx: i8,        // Index of current decode table.
+    pub count: u8,                        // Number of tables in use.
+    pub tables: [AltFreqDecodeTable; 20], // Decoded alternative frequencies.
 }
 
 impl AltFreqTableGroup {

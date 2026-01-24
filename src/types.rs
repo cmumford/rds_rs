@@ -72,16 +72,6 @@ pub enum AltFreqAttribute {
     RegionalVariant = 1,
 }
 
-/// Alternative frequency encoding method.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-#[repr(u8)]
-pub enum AltFreqEncoding {
-    #[default]
-    Unknown = 0,
-    MethodA = 1,
-    MethodB = 2,
-}
-
 /// A single alternative frequency entry
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct Frequency {
@@ -91,33 +81,6 @@ pub struct Frequency {
     /// - UHF: in 100 kHz steps (885 = 88.5 MHz)
     /// - LF/MF: in kHz (531 = 531 kHz)
     pub freq: u16,
-}
-
-/// Decoded table of alternative frequencies
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
-pub struct AltFreqTable {
-    /// Tuned frequency (used in Method B)
-    pub tuned_freq: Frequency,
-    /// Number of valid entries in `entries`
-    pub count: u8,
-    /// Alternative frequencies
-    pub entries: [Frequency; 25],
-}
-
-/// Internal state while decoding an AF table
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub struct RdsAfDecodeTablePrivate {
-    pub band: Band,
-    pub prev_encoding: AltFreqEncoding,
-    pub expected_count: u8,
-}
-
-/// One AF decoding context
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
-pub struct AltFreqDecodeTable {
-    pub table: AltFreqTable,
-    pub encoding: AltFreqEncoding,
-    pub pvt: RdsAfDecodeTablePrivate,
 }
 
 /// Program Item Number Code (PIN)
@@ -143,6 +106,19 @@ impl Default for Radiotext {
 
         Self { display }
     }
+}
+
+#[derive(Default, Clone, PartialEq, Eq)]
+pub struct OdaData {
+    pub count: u8,
+    pub entries: [OdaEntry; 10],
+}
+
+#[derive(Default, Clone, PartialEq, Eq)]
+pub struct OdaEntry {
+    pub id: u16,
+    pub group_type: GroupType,
+    pub packet_count: u16,
 }
 
 /// Which RT variant is currently being decoded
@@ -327,42 +303,6 @@ impl Default for SlcPayload {
 pub struct PtynData {
     pub display: [u8; 8],
     pub last_ab: bool,
-}
-
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
-pub struct EonData {
-    pub on: EonOtherNetwork,
-    pub maps: [EonMap; 5],
-}
-
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
-pub struct EonOtherNetwork {
-    pub ps: [u8; 8],
-    pub pty: u8,
-    pub tp: bool,
-    pub ta: bool,
-    pub af: AltFreqDecodeTable,
-    pub pi_code: u16,
-    pub pic: RdsPic,
-}
-
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub struct EonMap {
-    pub tn_tuned_freq: Frequency,
-    pub on_freq: Frequency,
-}
-
-#[derive(Default, Clone, PartialEq, Eq)]
-pub struct OdaData {
-    pub count: u8,
-    pub entries: [OdaEntry; 10],
-}
-
-#[derive(Default, Clone, PartialEq, Eq)]
-pub struct OdaEntry {
-    pub id: u16,
-    pub group_type: GroupType,
-    pub packet_count: u16,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
