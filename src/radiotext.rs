@@ -34,8 +34,39 @@ pub struct RtData {
     pub current_variant: RtVariant,
 }
 
-impl RtData {
-    pub fn update_rt_simple(&mut self, group: &Group, count: u8, addr: u8, chars: &[u8]) {}
+impl Radiotext {
+    pub fn update_rt_simple(&mut self, group: &Group, count: usize, addr: usize, chars: &[u8]) {
+        for i in 0..count {
+            // Choose the appropriate block. Count > 2 check is necessary for 2B groups.
+            if (i < 2) && (count > 2) {
+                if group.c.is_none() {
+                    continue;
+                }
+            } else {
+                if group.d.is_none() {
+                    continue;
+                }
+            }
+
+            // Store the data in our temporary array.
+            self.display[addr + i] = chars[i];
+            if chars[i as usize] == 0x0d {
+                // The end of message character has been received.
+                // Wipe out the rest of the text.
+                for j in (addr + i + 1)..self.display.len() {
+                    self.display[j] = 0;
+                }
+                break;
+            }
+        }
+
+        // Any null character before this should become a space.
+        for i in 0..addr {
+            if self.display[i] == 0 {
+                self.display[i] = ' ' as u8;
+            }
+        }
+    }
 
     pub fn update_rt_advance(&mut self, group: &Group, count: u8, addr: u8, chars: &[u8]) {}
 

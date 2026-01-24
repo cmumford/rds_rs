@@ -224,12 +224,13 @@ impl<'a> Decoder<'a> {
                 (group.d.unwrap() >> 8) as u8,
                 (group.d.unwrap() & 0xff) as u8,
             ];
+            let rt = &mut self.rds_data.rt.a;
             let addr = 4 * block_b.text_segment_addr();
-            self.rds_data.rt.update_rt_simple(group, 4, addr, &rtchars);
+            rt.update_rt_simple(group, 4, addr as usize, &rtchars);
             if self.rds_data.rt.current_variant != block_b.text_flag() {
-                self.rds_data.rt.bump_rt_validation_count();
+                rt.bump_rt_validation_count();
             }
-            self.rds_data.rt.update_rt_advance(group, 4, addr, &rtchars);
+            rt.update_rt_advance(group, 4, addr, &rtchars);
             return;
         }
 
@@ -243,12 +244,13 @@ impl<'a> Decoder<'a> {
             0,
             0,
         ];
+        let rt = &mut self.rds_data.rt.b;
         let addr = 4 * block_b.text_segment_addr();
-        self.rds_data.rt.update_rt_simple(group, 2, addr, &rtchars);
+        rt.update_rt_simple(group, 2, addr as usize, &rtchars);
         if self.rds_data.rt.current_variant != block_b.text_flag() {
-            self.rds_data.rt.bump_rt_validation_count();
+            rt.bump_rt_validation_count();
         }
-        self.rds_data.rt.update_rt_advance(group, 2, addr, &rtchars);
+        rt.update_rt_advance(group, 2, addr, &rtchars);
         return;
     }
 
