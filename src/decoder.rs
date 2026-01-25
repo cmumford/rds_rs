@@ -3,9 +3,10 @@
 use crate::callbacks::{RdsData, RdsDecoderCallbacks};
 use crate::radiotext::RtVariant;
 use crate::types::{
-    Group, GroupType, GroupVersion, NUM_TDC, OdaData, ProgramInformation, ProgramType, RdsPic,
+    Group, GroupType, GroupVersion, NUM_TDC, OdaEntry, ProgramInformation, ProgramType, RdsPic,
     SlcData, TrafficCodes,
 };
+use heapless::LinearMap;
 use modular_bitfield_msb::prelude::*;
 
 /// All type B blocks share the same 11-bit common prefix.
@@ -51,16 +52,13 @@ fn is_valid_oda_app_id(app_id: u16) -> bool {
     return app_id != 0x0;
 }
 
-impl OdaData {
-    /// Is the ODA data supposed to be in the given group type?
-    fn is_group_type_used(&self, gt: GroupType) -> bool {
-        for i in 0..(self.count as usize) {
-            if self.entries[i].group_type == gt {
-                return true;
-            }
+fn is_group_type_used(map: &LinearMap<u16, OdaEntry, 10>, gt: GroupType) -> bool {
+    for (_key, val) in map.iter() {
+        if val.group_type == gt {
+            return true;
         }
-        return false;
     }
+    return false;
 }
 
 pub struct Decoder<'a> {
@@ -291,24 +289,21 @@ impl<'a> Decoder<'a> {
         if !is_valid_oda_app_id(app_id) {
             return;
         }
-        // See if this ODA is already in our iist.
-        let mut idx: usize = 0;
-        while idx < self.rds_data.oda.count as usize {
-            if self.rds_data.oda.entries[idx].id == app_id {
-                // Reset it - just in case it changes.
-                self.rds_data.oda.entries[idx].group_type = block_b.common().group_type();
-                self.rds_data.oda.entries[idx].packet_count = 0;
-                break;
-            }
-            idx += 1;
-        }
-        if idx == self.rds_data.oda.count as usize && idx < self.rds_data.oda.entries.len() {
-            self.rds_data.oda.entries[idx].id = app_id;
-            self.rds_data.oda.entries[idx].group_type = block_b.common().group_type();
-            self.rds_data.oda.entries[idx].packet_count = 0;
-            self.rds_data.oda.count += 1;
 
-            // TODO - Finish Group 3A ODA bits.
+        let entry = self.rds_data.oda.get_mut(&app_id);
+        if entry.is_some() {
+            let e = entry.unwrap();
+            e.group_type = block_b.common().group_type();
+        } else {
+            if !self.rds_data.oda.is_full() {
+                let _ = self.rds_data.oda.insert(
+                    app_id,
+                    OdaEntry {
+                        group_type: block_b.common().group_type(),
+                        packet_count: 0,
+                    },
+                );
+            }
         }
     }
 
@@ -382,11 +377,7 @@ impl<'a> Decoder<'a> {
         }
         let block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
 
-        if self
-            .rds_data
-            .oda
-            .is_group_type_used(block_b.common().group_type())
-        {
+        if is_group_type_used(&self.rds_data.oda, block_b.common().group_type()) {
             self.decode_oda(group);
             return;
         }
@@ -402,7 +393,7 @@ impl<'a> Decoder<'a> {
     fn decode_group_type_5b(&mut self, group: &Group) {
         // See RDS Standard section 3.1.5.8.
         const GROUP_TYPE: GroupType = GroupType::from_bytes([5 << 1 + GroupVersion::B as u8]);
-        if self.rds_data.oda.is_group_type_used(GROUP_TYPE) {
+        if is_group_type_used(&self.rds_data.oda, GROUP_TYPE) {
             self.decode_oda(group);
             return;
         }

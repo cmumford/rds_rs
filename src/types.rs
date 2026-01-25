@@ -106,15 +106,7 @@ pub struct RdsPic {
 }
 
 #[derive(Default, Clone, PartialEq, Eq)]
-pub struct OdaData {
-    pub count: u8,
-    // TODO: Convert this list to a better Rust type: arrayvec or heapless?
-    pub entries: [OdaEntry; 10],
-}
-
-#[derive(Default, Clone, PartialEq, Eq)]
 pub struct OdaEntry {
-    pub id: u16,
     pub group_type: GroupType,
     pub packet_count: u16,
 }

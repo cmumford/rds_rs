@@ -1,9 +1,10 @@
 use crate::eon::EonData;
 use crate::radiotext::RtData;
 use crate::types::{
-    Clock, Content, DevStats, EwsData, GroupType, OdaData, ProgramInformation, ProgramType, PsData,
-    PtynData, RdsPic, SlcData, TdcData, TrafficCodes, ValidFlags,
+    Clock, Content, DevStats, EwsData, GroupType, OdaEntry, ProgramInformation, ProgramType,
+    PsData, PtynData, RdsPic, SlcData, TdcData, TrafficCodes, ValidFlags,
 };
+use heapless::LinearMap;
 
 use crate::frequency_table_group::AltFreqTableGroup;
 
@@ -47,7 +48,7 @@ pub struct RdsData {
     pub eon: EonData,
 
     /// Active Open Data Applications
-    pub oda: OdaData,
+    pub oda: LinearMap<u16, OdaEntry, 10>,
 
     /// Transparent Data Channels
     pub tdc: TdcData,
