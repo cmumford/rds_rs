@@ -248,6 +248,7 @@ impl<'a> Decoder<'a> {
             (group.d.unwrap() >> 8) as u8,
             (group.d.unwrap() & 0xff) as u8,
         ];
+        self.rds_data.valid.set_rt(true);
         let rt = &mut self.rds_data.rt.a;
         let addr = 4 * block_b.text_segment_addr();
         rt.update_rt_simple(group, 4, addr as usize, &rtchars);
@@ -269,6 +270,7 @@ impl<'a> Decoder<'a> {
             0,
             0,
         ];
+        self.rds_data.valid.set_rt(true);
         let rt = &mut self.rds_data.rt.b;
         let addr = 4 * block_b.text_segment_addr();
         rt.update_rt_simple(group, 2, addr as usize, &rtchars);

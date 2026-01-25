@@ -10,4 +10,5 @@ mod types;
 
 pub use callbacks::{RdsData, RdsDecoderCallbacks};
 pub use decoder::Decoder;
+pub use radiotext::RtVariant;
 pub use types::{Group, GroupType};

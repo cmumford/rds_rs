@@ -69,7 +69,7 @@ impl Radiotext {
                 // The end of message character has been received.
                 // Wipe out the rest of the text.
                 for j in (addr + i + 1)..self.display.len() {
-                    self.display[j] = 0;
+                    self.display[j] = ' ' as u8;
                 }
                 break;
             }

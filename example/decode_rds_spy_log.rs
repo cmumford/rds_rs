@@ -1,5 +1,6 @@
-use rds::{Decoder, Group, GroupType, RdsData, RdsDecoderCallbacks};
+use rds::{Decoder, Group, GroupType, RdsData, RdsDecoderCallbacks, RtVariant};
 use rdspy::RdsGroupIterator;
+use std::str;
 
 use std::{
     env,
@@ -48,8 +49,18 @@ fn main() -> io::Result<()> {
 struct DecoderLogger {}
 
 impl RdsDecoderCallbacks for DecoderLogger {
-    fn on_oda(&mut self, app_id: u16, _rds_data: &RdsData, _group_type: &GroupType) {
-        println!("Received ODA app_id: {}", app_id);
+    fn on_oda(&mut self, _app_id: u16, rds_data: &RdsData, _group_type: &GroupType) {
+        if rds_data.valid.rt() {
+            let rt = if rds_data.rt.current_variant == RtVariant::A {
+                &rds_data.rt.a
+            } else {
+                &rds_data.rt.b
+            };
+            let text = str::from_utf8(&rt.display);
+            if text.is_ok() {
+                println!("PT: {}", text.unwrap());
+            }
+        }
     }
 
     fn on_clear(&mut self) {
