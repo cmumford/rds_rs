@@ -254,7 +254,29 @@ impl<'a> Decoder<'a> {
         return;
     }
 
-    fn decode_group_type_3(&mut self, _group: &Group) {}
+    fn decode_group_type_3a(&mut self, group: &Group) {
+        // See RDS Standard section 3.1.5.4.
+        #[bitfield(bits = 16)]
+        #[derive(Default, Clone, PartialEq, Eq)]
+        struct GroupType3ABlockB {
+            common: BlockBCommon,         // Common block B fields.
+            application_group: GroupType, // See Annex M.
+        }
+
+        let block_b = GroupType3ABlockB::from_bytes(group.b.unwrap().to_be_bytes());
+    }
+
+    fn decode_group_type_3b(&mut self, group: &Group) {
+        // See RDS Standard section 3.1.5.4.
+        #[bitfield(bits = 16)]
+        #[derive(Default, Clone, PartialEq, Eq)]
+        struct GroupType3BBlockB {
+            common: BlockBCommon, // Common block B fields.
+            data: B5,             // Data to be combined with block D.
+        }
+
+        let block_b = GroupType3BBlockB::from_bytes(group.b.unwrap().to_be_bytes());
+    }
 
     fn decode_group_type_4(&mut self, _group: &Group) {}
 
@@ -293,53 +315,59 @@ impl<'a> Decoder<'a> {
         let block_b = GroupType0BlockB::from_bytes(group.b.unwrap().to_be_bytes());
         self.decode_block_b_common(&block_b.common());
 
-        match block_b.common().group_type().code() {
-            0 => {
+        match (
+            block_b.common().group_type().code(),
+            block_b.common().group_type().version(),
+        ) {
+            (0, GroupVersion::A) | (0, GroupVersion::B) => {
                 self.decode_group_type_0(&group);
             }
-            1 => {
+            (1, GroupVersion::A) | (1, GroupVersion::B) => {
                 self.decode_group_type_1(&group);
             }
-            2 => {
+            (2, GroupVersion::A) | (2, GroupVersion::B) => {
                 self.decode_group_type_2(&group);
             }
-            3 => {
-                self.decode_group_type_3(&group);
+            (3, GroupVersion::A) => {
+                self.decode_group_type_3a(&group);
             }
-            4 => {
+            (3, GroupVersion::B) => {
+                self.decode_group_type_3b(&group);
+            }
+            (4, GroupVersion::A) | (4, GroupVersion::B) => {
                 self.decode_group_type_4(&group);
             }
-            5 => {
+            (5, GroupVersion::A) | (5, GroupVersion::B) => {
                 self.decode_group_type_5(&group);
             }
-            6 => {
+            (6, GroupVersion::A) | (6, GroupVersion::B) => {
                 self.decode_group_type_6(&group);
             }
-            7 => {
+            (7, GroupVersion::A) | (7, GroupVersion::B) => {
                 self.decode_group_type_7(&group);
             }
-            8 => {
+            (8, GroupVersion::A) | (8, GroupVersion::B) => {
                 self.decode_group_type_8(&group);
             }
-            9 => {
+            (9, GroupVersion::A) | (9, GroupVersion::B) => {
                 self.decode_group_type_9(&group);
             }
-            10 => {
+            (10, GroupVersion::A) | (10, GroupVersion::B) => {
                 self.decode_group_type_10(&group);
             }
-            11 => {
+            (11, GroupVersion::A) | (11, GroupVersion::B) => {
                 self.decode_group_type_11(&group);
             }
-            12 => {
+            (12, GroupVersion::A) | (12, GroupVersion::B) => {
                 self.decode_group_type_12(&group);
             }
-            13 => {
+            (13, GroupVersion::A) | (13, GroupVersion::B) => {
                 self.decode_group_type_13(&group);
             }
-            14 => {
+            (14, GroupVersion::A) | (14, GroupVersion::B) => {
                 self.decode_group_type_14(&group);
             }
-            15 => {
+            (15, GroupVersion::A) | (15, GroupVersion::B) => {
                 self.decode_group_type_15(&group);
             }
             _ => {
