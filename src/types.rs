@@ -268,11 +268,17 @@ pub struct TdcData {
     pub current_channel: u8,
 }
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[bitfield(bits = 37)]
+#[derive(Default, Clone, PartialEq, Eq)]
 pub struct EwsData {
-    pub b: u16,
-    pub c: u16,
-    pub d: u16,
+    // The data is the bottom five bits of block B, and all of C and D.
+    //
+    // The spec says:
+    // > Format and application of these EWS message bits may be
+    // > assigned unilaterally by each country.
+    pub block_b_lsb: B5,
+    pub block_c: u16,
+    pub block_d: u16,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]

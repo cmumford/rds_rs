@@ -456,7 +456,30 @@ impl<'a> Decoder<'a> {
         }
     }
 
-    fn decode_group_type_9(&mut self, _group: &Group) {}
+    // Type 9 groups: Emergency warning systems or ODA.
+    fn decode_group_type_9(&mut self, group: &Group) {
+        // See RDS Standard section 3.1.5.13.
+        let gt = group.get_type();
+        if is_group_type_used(&self.rds_data.oda, gt) {
+            self.decode_oda(group);
+            return;
+        }
+
+        if gt.version() == GroupVersion::B {
+            return;
+        }
+
+        if group.c.is_none() || group.d.is_none() {
+            return;
+        }
+
+        self.rds_data.valid.set_ews(true);
+        self.rds_data
+            .ews
+            .set_block_b_lsb((group.b.unwrap() & 0b11111) as u8);
+        self.rds_data.ews.set_block_c(group.c.unwrap());
+        self.rds_data.ews.set_block_d(group.d.unwrap());
+    }
 
     fn decode_group_type_10(&mut self, _group: &Group) {}
 
