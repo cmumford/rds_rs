@@ -3,7 +3,8 @@
 use crate::callbacks::{RdsData, RdsDecoderCallbacks};
 use crate::radiotext::RtVariant;
 use crate::types::{
-    Group, GroupType, GroupVersion, ProgramInformation, ProgramType, RdsPic, SlcData, TrafficCodes,
+    Group, GroupType, GroupVersion, OdaData, ProgramInformation, ProgramType, RdsPic, SlcData,
+    TrafficCodes,
 };
 use modular_bitfield_msb::prelude::*;
 
@@ -48,6 +49,18 @@ struct GroupType2BlockB {
 /// Is the ODA application ID valid?
 fn is_valid_oda_app_id(app_id: u16) -> bool {
     return app_id != 0x0;
+}
+
+impl OdaData {
+    /// Is the ODA data supposed to be in the given group type?
+    fn is_group_type_used(&self, gt: GroupType) -> bool {
+        for i in 0..(self.count as usize) {
+            if self.entries[i].group_type == gt {
+                return true;
+            }
+        }
+        return false;
+    }
 }
 
 pub struct Decoder<'a> {
@@ -347,7 +360,21 @@ impl<'a> Decoder<'a> {
         self.decode_oda(group);
     }
 
-    fn decode_group_type_5(&mut self, _group: &Group) {}
+    fn decode_group_type_5a(&mut self, group: &Group) {
+        const GROUP_TYPE: GroupType = GroupType::from_bytes([5 << 1 + GroupVersion::A as u8]);
+        if self.rds_data.oda.is_group_type_used(GROUP_TYPE) {
+            self.decode_oda(group);
+            return;
+        }
+    }
+
+    fn decode_group_type_5b(&mut self, group: &Group) {
+        const GROUP_TYPE: GroupType = GroupType::from_bytes([5 << 1 + GroupVersion::B as u8]);
+        if self.rds_data.oda.is_group_type_used(GROUP_TYPE) {
+            self.decode_oda(group);
+            return;
+        }
+    }
 
     fn decode_group_type_6(&mut self, _group: &Group) {}
 
@@ -410,8 +437,11 @@ impl<'a> Decoder<'a> {
             (4, GroupVersion::B) => {
                 self.decode_group_type_4b(&group);
             }
-            (5, GroupVersion::A) | (5, GroupVersion::B) => {
-                self.decode_group_type_5(&group);
+            (5, GroupVersion::A) => {
+                self.decode_group_type_5a(&group);
+            }
+            (5, GroupVersion::B) => {
+                self.decode_group_type_5b(&group);
             }
             (6, GroupVersion::A) | (6, GroupVersion::B) => {
                 self.decode_group_type_6(&group);
