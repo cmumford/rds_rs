@@ -259,6 +259,7 @@ pub struct SlcData {
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct PtynData {
     pub display: [u8; 8],
+    // TODO: Unify A/B flag types.
     pub last_ab: bool,
 }
 

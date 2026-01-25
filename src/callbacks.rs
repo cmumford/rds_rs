@@ -39,7 +39,7 @@ pub struct RdsData {
     pub slc: SlcData,
 
     /// Program Type Name (extended PTY)
-    pub program_type_name: PtynData,
+    pub ptyn: PtynData,
 
     /// Alternative frequencies
     pub alternative_freqs: AltFreqTableGroup,
