@@ -106,6 +106,7 @@ pub struct RdsPic {
 #[derive(Default, Clone, PartialEq, Eq)]
 pub struct OdaData {
     pub count: u8,
+    // TODO: Convert this list to a better Rust type: arrayvec or heapless?
     pub entries: [OdaEntry; 10],
 }
 
