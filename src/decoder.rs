@@ -218,7 +218,7 @@ impl<'a> Decoder<'a> {
             if group.c.is_none() || group.d.is_none() {
                 return;
             }
-            let rtchars: [u8; 4] = [
+            let mut rtchars: [u8; 4] = [
                 (group.c.unwrap() >> 8) as u8,
                 (group.c.unwrap() & 0xff) as u8,
                 (group.d.unwrap() >> 8) as u8,
@@ -230,7 +230,7 @@ impl<'a> Decoder<'a> {
             if self.rds_data.rt.current_variant != block_b.text_flag() {
                 rt.bump_rt_validation_count();
             }
-            rt.update_rt_advance(group, 4, addr, &rtchars);
+            rt.update_rt_advance(group, 4, addr as usize, &mut rtchars);
             return;
         }
 
@@ -238,7 +238,7 @@ impl<'a> Decoder<'a> {
         if group.d.is_none() {
             return;
         }
-        let rtchars: [u8; 4] = [
+        let mut rtchars: [u8; 4] = [
             (group.d.unwrap() >> 8) as u8,
             (group.d.unwrap() & 0xff) as u8,
             0,
@@ -250,7 +250,7 @@ impl<'a> Decoder<'a> {
         if self.rds_data.rt.current_variant != block_b.text_flag() {
             rt.bump_rt_validation_count();
         }
-        rt.update_rt_advance(group, 2, addr, &rtchars);
+        rt.update_rt_advance(group, 2, addr as usize, &mut rtchars);
         return;
     }
 
