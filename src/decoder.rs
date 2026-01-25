@@ -484,7 +484,6 @@ impl<'a> Decoder<'a> {
     fn decode_ptyn(&mut self, group: &Group) {
         // See RDS Standard section 3.1.5.14.
         #[bitfield(bits = 16)]
-        #[derive(Default, Clone, PartialEq, Eq)]
         struct BlockB {
             common: BlockBCommon, // Common block B fields.
             ab_flag: bool,
@@ -526,13 +525,66 @@ impl<'a> Decoder<'a> {
         }
     }
 
-    fn decode_group_type_11(&mut self, _group: &Group) {}
+    // Type 11 groups: Open Data Application
+    fn decode_group_type_11(&mut self, group: &Group) {
+        // See RDS Standard section 3.1.5.15.
+        self.decode_oda(group);
+    }
 
-    fn decode_group_type_12(&mut self, _group: &Group) {}
+    fn decode_group_type_12(&mut self, group: &Group) {
+        // See RDS Standard section 3.1.5.16.
+        self.decode_oda(group);
+    }
 
-    fn decode_group_type_13(&mut self, _group: &Group) {}
+    // Type 13A groups: Enhanced Radio Paging or ODA.
+    fn decode_group_type_13a(&mut self, group: &Group) {
+        // See RDS Standard section 3.1.5.17.
+        #[bitfield(bits = 16)]
+        struct BlockB {
+            common: BlockBCommon, // Common block B fields.
+            information: B2,
+            sty: B3,
+        }
+        let _block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
 
-    fn decode_group_type_14(&mut self, _group: &Group) {}
+        // The type 13A group may be used for ODA when it is not used for Radio
+        // Paging, and its group structure is then as shown in 3.1.4.2
+
+        // TODO: How to determine if this is used for radio paging???
+    }
+
+    // Type 13B groups: Open Data Application
+    fn decode_group_type_13b(&mut self, group: &Group) {
+        // See RDS Standard section 3.1.5.18.
+        self.decode_oda(group);
+    }
+
+    // Type 14 groups: Enhanced Other Networks information.
+    fn decode_group_type_14a(&mut self, group: &Group) {
+        // See RDS Standard section 3.1.5.19.
+        #[bitfield(bits = 16)]
+        struct BlockB {
+            common: BlockBCommon, // Common block B fields.
+            tp_on: bool,          // TP (ON).
+            variant_code: B4,
+        }
+        let _block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
+        // TODO: finish me.
+    }
+
+    // Type 14 groups: Enhanced Other Networks information.
+    fn decode_group_type_14b(&mut self, group: &Group) {
+        // See RDS Standard section 3.1.5.19.
+        #[bitfield(bits = 16)]
+        struct BlockB {
+            common: BlockBCommon, // Common block B fields.
+            tp_on: bool,          // TP (ON).
+            ta_on: bool,          // TA (ON).
+            unused: B3,
+        }
+        let _block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
+        // TODO: finish me.
+    }
 
     fn decode_group_type_15(&mut self, _group: &Group) {}
 
@@ -610,11 +662,17 @@ impl<'a> Decoder<'a> {
             (12, GroupVersion::A) | (12, GroupVersion::B) => {
                 self.decode_group_type_12(&group);
             }
-            (13, GroupVersion::A) | (13, GroupVersion::B) => {
-                self.decode_group_type_13(&group);
+            (13, GroupVersion::A) => {
+                self.decode_group_type_13a(&group);
             }
-            (14, GroupVersion::A) | (14, GroupVersion::B) => {
-                self.decode_group_type_14(&group);
+            (13, GroupVersion::B) => {
+                self.decode_group_type_13b(&group);
+            }
+            (14, GroupVersion::A) => {
+                self.decode_group_type_14a(&group);
+            }
+            (14, GroupVersion::B) => {
+                self.decode_group_type_14b(&group);
             }
             (15, GroupVersion::A) | (15, GroupVersion::B) => {
                 self.decode_group_type_15(&group);
