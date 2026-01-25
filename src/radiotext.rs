@@ -155,5 +155,19 @@ impl Radiotext {
         }
     }
 
-    pub fn bump_rt_validation_count(&mut self) {}
+    pub fn bump_rt_validation_count(&mut self) {
+        for i in 0..self.pvt.hi_prob_cnt.len() {
+            if self.pvt.hi_prob[i] == 0 {
+                self.pvt.hi_prob[i] = ' ' as u8;
+                self.pvt.hi_prob_cnt[i] += 1;
+            }
+            for i in 0..self.pvt.hi_prob_cnt.len() {
+                self.pvt.hi_prob_cnt[i] += 1;
+            }
+        }
+        // Wipe out the cached text.
+        self.pvt.hi_prob_cnt.fill(0);
+        self.pvt.hi_prob.fill(0);
+        self.pvt.lo_prob.fill(0);
+    }
 }
