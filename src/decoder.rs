@@ -45,6 +45,11 @@ struct GroupType2BlockB {
     text_segment_addr: B4,
 }
 
+/// Is the ODA application ID valid?
+fn is_valid_oda_app_id(app_id: u16) -> bool {
+    return app_id != 0x0;
+}
+
 pub struct Decoder<'a> {
     callbacks: &'a mut dyn RdsDecoderCallbacks,
     advanced_ps_decoding: bool,
@@ -254,6 +259,8 @@ impl<'a> Decoder<'a> {
         return;
     }
 
+    fn decode_oda(&mut self, _group: &Group) {}
+
     fn decode_group_type_3a(&mut self, group: &Group) {
         // See RDS Standard section 3.1.5.4.
         #[bitfield(bits = 16)]
@@ -263,19 +270,38 @@ impl<'a> Decoder<'a> {
             application_group: GroupType, // See Annex M.
         }
 
+        if group.d.is_none() {
+            return;
+        }
         let block_b = GroupType3ABlockB::from_bytes(group.b.unwrap().to_be_bytes());
+        let app_id = group.d.unwrap();
+        if !is_valid_oda_app_id(app_id) {
+            return;
+        }
+        // See if this ODA is already in our iist.
+        let mut idx: usize = 0;
+        while idx < self.rds_data.oda.count as usize {
+            if self.rds_data.oda.entries[idx].id == app_id {
+                // Reset it - just in case it changes.
+                self.rds_data.oda.entries[idx].group_type = block_b.common().group_type();
+                self.rds_data.oda.entries[idx].packet_count = 0;
+                break;
+            }
+            idx += 1;
+        }
+        if idx == self.rds_data.oda.count as usize && idx < self.rds_data.oda.entries.len() {
+            self.rds_data.oda.entries[idx].id = app_id;
+            self.rds_data.oda.entries[idx].group_type = block_b.common().group_type();
+            self.rds_data.oda.entries[idx].packet_count = 0;
+            self.rds_data.oda.count += 1;
+
+            // TODO - Finish Group 3A ODA bits.
+        }
     }
 
     fn decode_group_type_3b(&mut self, group: &Group) {
         // See RDS Standard section 3.1.5.4.
-        #[bitfield(bits = 16)]
-        #[derive(Default, Clone, PartialEq, Eq)]
-        struct GroupType3BBlockB {
-            common: BlockBCommon, // Common block B fields.
-            data: B5,             // Data to be combined with block D.
-        }
-
-        let block_b = GroupType3BBlockB::from_bytes(group.b.unwrap().to_be_bytes());
+        self.decode_oda(group);
     }
 
     fn decode_group_type_4(&mut self, _group: &Group) {}
