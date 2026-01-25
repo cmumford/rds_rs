@@ -1,3 +1,4 @@
+use log::{error, info};
 use rds::{Decoder, Group, GroupType, RdsData, RdsDecoderCallbacks, RtVariant};
 use rdspy::RdsGroupIterator;
 use std::str;
@@ -99,7 +100,7 @@ fn process_directory(dir: &Path) -> io::Result<()> {
         if path.is_file() {
             if let Some(ext) = path.extension() {
                 if ext == "rds" || ext == "spy" {
-                    println!("Processing file: {}", path.display());
+                    info!("Processing file: {}", path.display());
                     let file = match File::open(path) {
                         Ok(f) => f,
                         Err(e) => {
@@ -108,7 +109,7 @@ fn process_directory(dir: &Path) -> io::Result<()> {
                         }
                     };
                     if let Err(e) = process_reader(BufReader::new(file)) {
-                        eprintln!("Error processing {}: {}", path.display(), e);
+                        error!("Error processing {}: {}", path.display(), e);
                     }
                 }
             }
