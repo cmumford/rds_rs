@@ -8,7 +8,7 @@ use crate::types::{
 use crate::frequency_table_group::AltFreqTableGroup;
 
 /// Main container for all decoded RDS data
-#[derive(Default, Clone, PartialEq, Eq)]
+#[derive(Default, Clone, PartialEq)]
 pub struct RdsData {
     /// Program Identification Code
     pub program_information: ProgramInformation,

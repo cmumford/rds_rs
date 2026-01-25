@@ -3,8 +3,8 @@
 use crate::callbacks::{RdsData, RdsDecoderCallbacks};
 use crate::radiotext::RtVariant;
 use crate::types::{
-    Group, GroupType, GroupVersion, OdaData, ProgramInformation, ProgramType, RdsPic, SlcData,
-    TrafficCodes,
+    Group, GroupType, GroupVersion, NUM_TDC, OdaData, ProgramInformation, ProgramType, RdsPic,
+    SlcData, TrafficCodes,
 };
 use modular_bitfield_msb::prelude::*;
 
@@ -360,15 +360,47 @@ impl<'a> Decoder<'a> {
         self.decode_oda(group);
     }
 
+    fn decode_tdc_block(&mut self, block: u16) {
+        // See RDS Standard section 4.18.
+
+        let channel = self.rds_data.tdc.current_channel as usize;
+        // `channel` comes from a 5-bit value, so shouldn't be greater than 31.
+        assert!(channel < NUM_TDC);
+
+        self.rds_data.valid.set_tdc(true);
+        self.rds_data.tdc.data[channel].write((block >> 8) as u8);
+        self.rds_data.tdc.data[channel].write((block & 0xff) as u8);
+    }
+
     fn decode_group_type_5a(&mut self, group: &Group) {
-        const GROUP_TYPE: GroupType = GroupType::from_bytes([5 << 1 + GroupVersion::A as u8]);
-        if self.rds_data.oda.is_group_type_used(GROUP_TYPE) {
+        // See RDS Standard section 3.1.5.8.
+        #[bitfield(bits = 16)]
+        struct BlockB {
+            common: BlockBCommon, // Common block B fields.
+            // Address code identifies "channel number" (out of 32) to which the data are addressed.
+            address: B5,
+        }
+        let block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
+
+        if self
+            .rds_data
+            .oda
+            .is_group_type_used(block_b.common().group_type())
+        {
             self.decode_oda(group);
             return;
+        }
+        self.rds_data.tdc.current_channel = block_b.address();
+        if group.c.is_some() {
+            self.decode_tdc_block(group.c.unwrap());
+        }
+        if group.d.is_some() {
+            self.decode_tdc_block(group.d.unwrap());
         }
     }
 
     fn decode_group_type_5b(&mut self, group: &Group) {
+        // See RDS Standard section 3.1.5.8.
         const GROUP_TYPE: GroupType = GroupType::from_bytes([5 << 1 + GroupVersion::B as u8]);
         if self.rds_data.oda.is_group_type_used(GROUP_TYPE) {
             self.decode_oda(group);

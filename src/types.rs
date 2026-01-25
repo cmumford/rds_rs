@@ -2,6 +2,8 @@
 
 use modular_bitfield_msb::prelude::*;
 
+use heapless::HistoryBuf;
+
 /// An RDS group, when transmitted, is a 104 bit item consisting of 4 blocks
 /// (A, B, C, D). Each block consists of 26 bits: a 16 data information word
 /// followed by a 10 bit checkword. The receiver strips the 10 bit checkword,
@@ -268,9 +270,9 @@ pub struct PtynData {
     pub last_ab: bool,
 }
 
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, PartialEq)]
 pub struct TdcData {
-    pub data: [[u8; TDC_LEN]; NUM_TDC],
+    pub data: [HistoryBuf<u8, TDC_LEN>; NUM_TDC],
     pub current_channel: u8,
 }
 
