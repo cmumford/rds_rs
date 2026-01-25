@@ -217,29 +217,30 @@ impl<'a> Decoder<'a> {
         }
     }
 
-    fn decode_group_type_2(&mut self, group: &Group) {
+    fn decode_group_type_2a(&mut self, group: &Group) {
+        // See specification setion 3.1.5.3.
         let block_b = GroupType2BlockB::from_bytes(group.b.unwrap().to_be_bytes());
-        if block_b.common().group_type().version() == GroupVersion::A {
-            if group.c.is_none() || group.d.is_none() {
-                return;
-            }
-            let mut rtchars: [u8; 4] = [
-                (group.c.unwrap() >> 8) as u8,
-                (group.c.unwrap() & 0xff) as u8,
-                (group.d.unwrap() >> 8) as u8,
-                (group.d.unwrap() & 0xff) as u8,
-            ];
-            let rt = &mut self.rds_data.rt.a;
-            let addr = 4 * block_b.text_segment_addr();
-            rt.update_rt_simple(group, 4, addr as usize, &rtchars);
-            if self.rds_data.rt.current_variant != block_b.text_flag() {
-                rt.bump_rt_validation_count();
-            }
-            rt.update_rt_advance(group, 4, addr as usize, &mut rtchars);
+        if group.c.is_none() || group.d.is_none() {
             return;
         }
+        let mut rtchars: [u8; 4] = [
+            (group.c.unwrap() >> 8) as u8,
+            (group.c.unwrap() & 0xff) as u8,
+            (group.d.unwrap() >> 8) as u8,
+            (group.d.unwrap() & 0xff) as u8,
+        ];
+        let rt = &mut self.rds_data.rt.a;
+        let addr = 4 * block_b.text_segment_addr();
+        rt.update_rt_simple(group, 4, addr as usize, &rtchars);
+        if self.rds_data.rt.current_variant != block_b.text_flag() {
+            rt.bump_rt_validation_count();
+        }
+        rt.update_rt_advance(group, 4, addr as usize, &mut rtchars);
+    }
 
-        // Version B.
+    fn decode_group_type_2b(&mut self, group: &Group) {
+        // See specification setion 3.1.5.3.
+        let block_b = GroupType2BlockB::from_bytes(group.b.unwrap().to_be_bytes());
         if group.d.is_none() {
             return;
         }
@@ -256,7 +257,6 @@ impl<'a> Decoder<'a> {
             rt.bump_rt_validation_count();
         }
         rt.update_rt_advance(group, 2, addr as usize, &mut rtchars);
-        return;
     }
 
     fn decode_oda(&mut self, _group: &Group) {}
@@ -392,8 +392,11 @@ impl<'a> Decoder<'a> {
             (1, GroupVersion::A) | (1, GroupVersion::B) => {
                 self.decode_group_type_1(&group);
             }
-            (2, GroupVersion::A) | (2, GroupVersion::B) => {
-                self.decode_group_type_2(&group);
+            (2, GroupVersion::A) => {
+                self.decode_group_type_2a(&group);
+            }
+            (2, GroupVersion::B) => {
+                self.decode_group_type_2b(&group);
             }
             (3, GroupVersion::A) => {
                 self.decode_group_type_3a(&group);
