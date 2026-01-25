@@ -120,12 +120,10 @@ pub struct OdaEntry {
 /// Clock Time and Date (CT)
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct Clock {
-    pub mjd_high: bool,
-    pub mjd_low: u16,
-    pub hour: u8,
-    pub minute: u8,
-    /// Local time offset from UTC in half-hours
-    pub utc_offset_half_hours: i8,
+    pub mjd: u32,                  // Modified Julian Day.
+    pub hour: u8,                  // UTC hour.
+    pub minute: u8,                // UTC minute.
+    pub utc_offset_half_hours: i8, // Local time offset from UTC in half-hours
 }
 
 /// Bitflags indicating which RDS fields are valid / have been received

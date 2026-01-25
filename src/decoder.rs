@@ -300,11 +300,52 @@ impl<'a> Decoder<'a> {
     }
 
     fn decode_group_type_3b(&mut self, group: &Group) {
-        // See RDS Standard section 3.1.5.4.
+        // See RDS Standard section 3.1.5.5.
         self.decode_oda(group);
     }
 
-    fn decode_group_type_4(&mut self, _group: &Group) {}
+    fn decode_group_type_4a(&mut self, group: &Group) {
+        // See RDS Standard section 3.1.5.6.
+        #[bitfield(bits = 16)]
+        struct BlockB {
+            common: BlockBCommon, // Common block B fields.
+            spare: B3,            // Unused.
+            date_msb: B2,         // Top two MSB bits of julian date.
+        }
+        #[bitfield(bits = 16)]
+        struct BlockC {
+            date: B15,
+            hour_msb: B1,
+        }
+        #[bitfield(bits = 16)]
+        struct BlockD {
+            hour: B4,
+            minute: B6,
+            local_offset_dir: B1, // Offset direction from UTC: 0=+, 1=-;
+            local_offset_val: B5, // Offset in half-hour increments
+        }
+
+        if group.c.is_none() || group.d.is_none() {
+            return;
+        }
+        let block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
+        let block_c = BlockC::from_bytes(group.b.unwrap().to_be_bytes());
+        let block_d = BlockD::from_bytes(group.b.unwrap().to_be_bytes());
+
+        self.rds_data.clock.mjd = ((block_b.date_msb() as u32) << 15) + block_c.date() as u32;
+        self.rds_data.clock.hour = ((block_c.hour_msb() as u8) << 4) + block_d.hour();
+        self.rds_data.clock.minute = block_d.minute();
+        if block_d.local_offset_dir() == 0 {
+            self.rds_data.clock.utc_offset_half_hours = block_d.local_offset_val() as i8;
+        } else {
+            self.rds_data.clock.utc_offset_half_hours = -(block_d.local_offset_val() as i8);
+        }
+    }
+
+    fn decode_group_type_4b(&mut self, group: &Group) {
+        // See RDS Standard section 3.1.5.7.
+        self.decode_oda(group);
+    }
 
     fn decode_group_type_5(&mut self, _group: &Group) {}
 
@@ -360,8 +401,11 @@ impl<'a> Decoder<'a> {
             (3, GroupVersion::B) => {
                 self.decode_group_type_3b(&group);
             }
-            (4, GroupVersion::A) | (4, GroupVersion::B) => {
-                self.decode_group_type_4(&group);
+            (4, GroupVersion::A) => {
+                self.decode_group_type_4a(&group);
+            }
+            (4, GroupVersion::B) => {
+                self.decode_group_type_4b(&group);
             }
             (5, GroupVersion::A) | (5, GroupVersion::B) => {
                 self.decode_group_type_5(&group);
