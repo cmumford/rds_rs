@@ -61,6 +61,14 @@ fn is_group_type_used(map: &LinearMap<u16, OdaEntry, 10>, gt: GroupType) -> bool
     return false;
 }
 
+impl Group {
+    fn get_type(&self) -> GroupType {
+        GroupType0BlockB::from_bytes(self.b.unwrap().to_be_bytes())
+            .common()
+            .group_type()
+    }
+}
+
 pub struct Decoder<'a> {
     callbacks: &'a mut dyn RdsDecoderCallbacks,
     advanced_ps_decoding: bool,
@@ -417,9 +425,36 @@ impl<'a> Decoder<'a> {
         // information coded in these groups".
     }
 
-    fn decode_group_type_7(&mut self, _group: &Group) {}
+    // Type 7A groups: Radio Paging or ODA
+    fn decode_group_type_7a(&mut self, group: &Group) {
+        // See RDS Standard section 3.1.5.10.
+        const GROUP_TYPE: GroupType = GroupType::from_bytes([7 << 1 + GroupVersion::A as u8]);
+        if is_group_type_used(&self.rds_data.oda, GROUP_TYPE) {
+            self.decode_oda(group);
+            return;
+        }
 
-    fn decode_group_type_8(&mut self, _group: &Group) {}
+        // No stations seem to broadcast this data. Will implement if/when needed.
+    }
+
+    // Type 7B groups: Open data application
+    fn decode_group_type_7b(&mut self, group: &Group) {
+        // See RDS Standard section 3.1.5.11.
+        self.decode_oda(group);
+    }
+
+    // Type 8 groups: Traffic Message Channel or ODA
+    fn decode_group_type_8(&mut self, group: &Group) {
+        // See RDS Standard section 3.1.5.12.
+        let gt = group.get_type();
+        if is_group_type_used(&self.rds_data.oda, gt) {
+            self.decode_oda(group);
+            return;
+        }
+        if gt.version() == GroupVersion::A {
+            // Decode TMC data. This requires obtaining a copy of EN ISO 14819-1:2013.
+        }
+    }
 
     fn decode_group_type_9(&mut self, _group: &Group) {}
 
@@ -485,8 +520,11 @@ impl<'a> Decoder<'a> {
             (6, GroupVersion::A) | (6, GroupVersion::B) => {
                 self.decode_group_type_6(&group);
             }
-            (7, GroupVersion::A) | (7, GroupVersion::B) => {
-                self.decode_group_type_7(&group);
+            (7, GroupVersion::A) => {
+                self.decode_group_type_7a(&group);
+            }
+            (7, GroupVersion::B) => {
+                self.decode_group_type_7b(&group);
             }
             (8, GroupVersion::A) | (8, GroupVersion::B) => {
                 self.decode_group_type_8(&group);

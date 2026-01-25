@@ -29,7 +29,7 @@ pub const TDC_LEN: usize = 32;
 /// Group type version.
 /// See the RDS Standard section 3.1.3.
 /// #[derive(BitfieldSpecifier)]
-#[derive(BitfieldSpecifier, Clone, PartialEq, Eq)]
+#[derive(BitfieldSpecifier, Clone, Copy, PartialEq, Eq)]
 #[bits = 1]
 pub enum GroupVersion {
     A = 0,
@@ -39,7 +39,7 @@ pub enum GroupVersion {
 /// Group type code and version.
 /// See the RDS Standard section 3.1.3 - Table 3.
 #[bitfield(bits = 5)]
-#[derive(BitfieldSpecifier, Default, Clone, PartialEq, Eq)]
+#[derive(BitfieldSpecifier, Default, Copy, Clone, PartialEq, Eq)]
 pub struct GroupType {
     pub code: B4,              // Group type code.
     pub version: GroupVersion, // Group version (A/B).
