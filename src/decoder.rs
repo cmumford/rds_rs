@@ -399,7 +399,23 @@ impl<'a> Decoder<'a> {
         }
     }
 
-    fn decode_group_type_6(&mut self, _group: &Group) {}
+    // Type 6 groups: In-house applications or ODA/
+    // See RDS Standard section 3.1.5.9.
+    fn decode_group_type_6(&mut self, group: &Group) {
+        #[bitfield(bits = 16)]
+        struct BlockB {
+            common: BlockBCommon, // Common block B fields.
+            unused: B5,
+        }
+        let block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
+        if is_group_type_used(&self.rds_data.oda, block_b.common().group_type()) {
+            self.decode_oda(group);
+            return;
+        }
+
+        // According to RBDS spec.: "Consumer receivers should ignore the in-house
+        // information coded in these groups".
+    }
 
     fn decode_group_type_7(&mut self, _group: &Group) {}
 
