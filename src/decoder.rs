@@ -10,7 +10,7 @@ use heapless::LinearMap;
 use modular_bitfield_msb::prelude::*;
 
 /// All type B blocks share the same 11-bit common prefix.
-/// See RDS Standard section 3.1.4.2.
+/// See RBDS Standard section 3.1.4.2.
 #[bitfield(bits = 11)]
 #[derive(BitfieldSpecifier)]
 struct BlockBCommon {
@@ -19,7 +19,7 @@ struct BlockBCommon {
     program_type: ProgramType, // PTY: Program type.
 }
 
-// See RDS Standard section 3.1.5.1.
+// See RBDS Standard section 3.1.5.1.
 #[bitfield(bits = 16)]
 struct GroupType0BlockB {
     common: BlockBCommon,         // Common block B fields.
@@ -29,7 +29,7 @@ struct GroupType0BlockB {
     c: B2,                        // Prog. service name and DI segment addr.
 }
 
-// See RDS Standard section 3.1.5.3.
+// See RBDS Standard section 3.1.5.3.
 #[bitfield(bits = 16)]
 struct GroupType2BlockB {
     common: BlockBCommon, // Common block B fields.
@@ -205,7 +205,7 @@ impl<'a> Decoder {
 
     // Type 1 groups: Program Item Number and slow labeling codes
     fn decode_group_type_1(&mut self, group: &Group, rds_data: &mut RdsData) {
-        // See RDS Standard section 3.1.5.2.
+        // See RBDS Standard section 3.1.5.2.
         #[bitfield(bits = 16)]
         struct GroupType1BlockB {
             common: BlockBCommon,   // Common block B fields.
@@ -232,7 +232,7 @@ impl<'a> Decoder {
 
     // Type 2 groups: Radiotext.
     fn decode_group_type_2a(&mut self, group: &Group, rds_data: &mut RdsData) {
-        // See specification setion 3.1.5.3.
+        // See RBDS Standard setion 3.1.5.3.
         let block_b = GroupType2BlockB::from_bytes(group.b.unwrap().to_be_bytes());
         if group.c.is_none() || group.d.is_none() {
             return;
@@ -256,7 +256,7 @@ impl<'a> Decoder {
 
     // Type 2 groups: Radiotext.
     fn decode_group_type_2b(&mut self, group: &Group, rds_data: &mut RdsData) {
-        // See specification setion 3.1.5.3.
+        // See RBDS Standard setion 3.1.5.3.
         let block_b = GroupType2BlockB::from_bytes(group.b.unwrap().to_be_bytes());
         if group.d.is_none() {
             return;
@@ -281,7 +281,7 @@ impl<'a> Decoder {
     fn decode_oda(&mut self, _group: &Group, _rds_data: &mut RdsData) {}
 
     fn decode_group_type_3a(&mut self, group: &Group, rds_data: &mut RdsData) {
-        // See RDS Standard section 3.1.5.4.
+        // See RBDS Standard section 3.1.5.4.
         #[bitfield(bits = 16)]
         #[derive(Default, Clone, PartialEq, Eq)]
         struct GroupType3ABlockB {
@@ -316,12 +316,12 @@ impl<'a> Decoder {
     }
 
     fn decode_group_type_3b(&mut self, group: &Group, rds_data: &mut RdsData) {
-        // See RDS Standard section 3.1.5.5.
+        // See RBDS Standard section 3.1.5.5.
         self.decode_oda(group, rds_data);
     }
 
     fn decode_group_type_4a(&mut self, group: &Group, rds_data: &mut RdsData) {
-        // See RDS Standard section 3.1.5.6.
+        // See RBDS Standard section 3.1.5.6.
         #[bitfield(bits = 16)]
         struct BlockB {
             common: BlockBCommon, // Common block B fields.
@@ -359,12 +359,12 @@ impl<'a> Decoder {
     }
 
     fn decode_group_type_4b(&mut self, group: &Group, rds_data: &mut RdsData) {
-        // See RDS Standard section 3.1.5.7.
+        // See RBDS Standard section 3.1.5.7.
         self.decode_oda(group, rds_data);
     }
 
     fn decode_tdc_block(&mut self, block: u16, rds_data: &mut RdsData) {
-        // See RDS Standard section 4.18.
+        // See RBDS Standard section 4.18.
 
         let channel = rds_data.tdc.current_channel as usize;
         // `channel` comes from a 5-bit value, so shouldn't be greater than 31.
@@ -376,7 +376,7 @@ impl<'a> Decoder {
     }
 
     fn decode_group_type_5a(&mut self, group: &Group, rds_data: &mut RdsData) {
-        // See RDS Standard section 3.1.5.8.
+        // See RBDS Standard section 3.1.5.8.
         #[bitfield(bits = 16)]
         struct BlockB {
             common: BlockBCommon, // Common block B fields.
@@ -399,7 +399,7 @@ impl<'a> Decoder {
     }
 
     fn decode_group_type_5b(&mut self, group: &Group, rds_data: &mut RdsData) {
-        // See RDS Standard section 3.1.5.8.
+        // See RBDS Standard section 3.1.5.8.
         const GROUP_TYPE: GroupType = GroupType::from_bytes([5 << 1 + GroupVersion::B as u8]);
         if is_group_type_used(&rds_data.oda, GROUP_TYPE) {
             self.decode_oda(group, rds_data);
@@ -408,7 +408,7 @@ impl<'a> Decoder {
     }
 
     // Type 6 groups: In-house applications or ODA/
-    // See RDS Standard section 3.1.5.9.
+    // See RBDS Standard section 3.1.5.9.
     fn decode_group_type_6(&mut self, group: &Group, rds_data: &mut RdsData) {
         #[bitfield(bits = 16)]
         struct BlockB {
@@ -427,7 +427,7 @@ impl<'a> Decoder {
 
     // Type 7A groups: Radio Paging or ODA
     fn decode_group_type_7a(&mut self, group: &Group, rds_data: &mut RdsData) {
-        // See RDS Standard section 3.1.5.10.
+        // See RBDS Standard section 3.1.5.10.
         const GROUP_TYPE: GroupType = GroupType::from_bytes([7 << 1 + GroupVersion::A as u8]);
         if is_group_type_used(&rds_data.oda, GROUP_TYPE) {
             self.decode_oda(group, rds_data);
@@ -439,13 +439,13 @@ impl<'a> Decoder {
 
     // Type 7B groups: Open data application
     fn decode_group_type_7b(&mut self, group: &Group, rds_data: &mut RdsData) {
-        // See RDS Standard section 3.1.5.11.
+        // See RBDS Standard section 3.1.5.11.
         self.decode_oda(group, rds_data);
     }
 
     // Type 8 groups: Traffic Message Channel or ODA
     fn decode_group_type_8(&mut self, group: &Group, rds_data: &mut RdsData) {
-        // See RDS Standard section 3.1.5.12.
+        // See RBDS Standard section 3.1.5.12.
         let gt = group.get_type();
         if is_group_type_used(&rds_data.oda, gt) {
             self.decode_oda(group, rds_data);
@@ -458,7 +458,7 @@ impl<'a> Decoder {
 
     // Type 9 groups: Emergency warning systems or ODA.
     fn decode_group_type_9(&mut self, group: &Group, rds_data: &mut RdsData) {
-        // See RDS Standard section 3.1.5.13.
+        // See RBDS Standard section 3.1.5.13.
         let gt = group.get_type();
         if is_group_type_used(&rds_data.oda, gt) {
             self.decode_oda(group, rds_data);
@@ -482,7 +482,7 @@ impl<'a> Decoder {
     }
 
     fn decode_ptyn(&mut self, group: &Group, rds_data: &mut RdsData) {
-        // See RDS Standard section 3.1.5.14.
+        // See RBDS Standard section 3.1.5.14.
         #[bitfield(bits = 16)]
         struct BlockB {
             common: BlockBCommon, // Common block B fields.
@@ -511,13 +511,13 @@ impl<'a> Decoder {
 
     // Type 10 groups: Program Type Name.
     fn decode_group_type_10a(&mut self, group: &Group, rds_data: &mut RdsData) {
-        // See RDS Standard section 3.1.5.14.
+        // See RBDS Standard section 3.1.5.14.
         self.decode_ptyn(group, rds_data);
     }
 
     // Type 10 groups: Open data.
     fn decode_group_type_10b(&mut self, group: &Group, rds_data: &mut RdsData) {
-        // See RDS Standard section 3.1.5.14.
+        // See RBDS Standard section 3.1.5.14.
         if group.get_type().version() == GroupVersion::A {
             self.decode_ptyn(group, rds_data);
         } else {
@@ -527,18 +527,18 @@ impl<'a> Decoder {
 
     // Type 11 groups: Open Data Application
     fn decode_group_type_11(&mut self, group: &Group, rds_data: &mut RdsData) {
-        // See RDS Standard section 3.1.5.15.
+        // See RBDS Standard section 3.1.5.15.
         self.decode_oda(group, rds_data);
     }
 
     fn decode_group_type_12(&mut self, group: &Group, rds_data: &mut RdsData) {
-        // See RDS Standard section 3.1.5.16.
+        // See RBDS Standard section 3.1.5.16.
         self.decode_oda(group, rds_data);
     }
 
     // Type 13A groups: Enhanced Radio Paging or ODA.
     fn decode_group_type_13a(&mut self, group: &Group, _rds_data: &mut RdsData) {
-        // See RDS Standard section 3.1.5.17.
+        // See RBDS Standard section 3.1.5.17.
         #[bitfield(bits = 16)]
         struct BlockB {
             common: BlockBCommon, // Common block B fields.
@@ -555,13 +555,13 @@ impl<'a> Decoder {
 
     // Type 13B groups: Open Data Application
     fn decode_group_type_13b(&mut self, group: &Group, rds_data: &mut RdsData) {
-        // See RDS Standard section 3.1.5.18.
+        // See RBDS Standard section 3.1.5.18.
         self.decode_oda(group, rds_data);
     }
 
     // Type 14 groups: Enhanced Other Networks information.
     fn decode_group_type_14a(&mut self, group: &Group, _rds_data: &mut RdsData) {
-        // See RDS Standard section 3.1.5.19.
+        // See RBDS Standard section 3.1.5.19.
         #[bitfield(bits = 16)]
         struct BlockB {
             common: BlockBCommon, // Common block B fields.
@@ -574,7 +574,7 @@ impl<'a> Decoder {
 
     // Type 14 groups: Enhanced Other Networks information.
     fn decode_group_type_14b(&mut self, group: &Group, _rds_data: &mut RdsData) {
-        // See RDS Standard section 3.1.5.19.
+        // See RBDS Standard section 3.1.5.19.
         #[bitfield(bits = 16)]
         struct BlockB {
             common: BlockBCommon, // Common block B fields.
