@@ -7,7 +7,13 @@ use crate::types::{
 };
 use heapless::LinearMap;
 
-/// Main container for all decoded RDS data
+/// Container for all decoded RDS data.
+///
+/// This struct is populated by the `Decoder`, which is passed many blocks
+/// of raw RDS data to decode. Depending what information is broadcast
+/// and passed to the decoder, some of the fields in this struct will contain
+/// valid data. The `valid` field is a bitmask that should be used first before
+/// dereferencing any members of this struct.
 #[derive(Default, Clone, PartialEq)]
 pub struct RdsData {
     /// Program Identification Code
