@@ -11,7 +11,6 @@ use heapless::HistoryBuf;
 /// decoding.
 ///
 /// See the RDS Standard section 2.1.
-#[derive(Clone, PartialEq, Eq)]
 pub struct Group {
     pub a: Option<u16>, // Block A data word.
     pub b: Option<u16>, // Block B data word.
@@ -29,7 +28,7 @@ pub const TDC_LEN: usize = 32;
 /// Group type version.
 /// See the RDS Standard section 3.1.3.
 /// #[derive(BitfieldSpecifier)]
-#[derive(BitfieldSpecifier, Clone, Copy, PartialEq, Eq)]
+#[derive(BitfieldSpecifier, PartialEq, Eq)]
 #[bits = 1]
 pub enum GroupVersion {
     A = 0,
