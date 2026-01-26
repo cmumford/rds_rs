@@ -49,6 +49,19 @@ pub struct RtData {
     pub decode_rt: RtVariant, // Which RT text currently being decoded.
 }
 
+fn rds_to_utf8_lossy(bytes: &[u8]) -> String {
+    bytes
+        .iter()
+        .map(|&b| match b {
+            0x80..=0x9F => '�', // control range often invalid
+            0xA0 => ' ',        // non-breaking space (common)
+            // Add more mappings from IEC 62106 Table E.1
+            // e.g. 0xE4 => 'ä', 0xF6 => 'ö', 0xFC => 'ü', etc.
+            _ => b as char,
+        })
+        .collect()
+}
+
 impl Radiotext {
     pub fn update_rt_simple(&mut self, group: &Group, count: usize, addr: usize, chars: &[u8]) {
         for i in 0..count {

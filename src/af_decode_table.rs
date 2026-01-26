@@ -1,6 +1,6 @@
 use crate::af_codes::*;
 use crate::af_table::AltFreqTable;
-use crate::frequency_table_group::af_code_to_freq;
+use crate::af_table_group::af_code_to_freq;
 use crate::types::{AltFreqAttribute, AltFreqEncoding, Band, Frequency};
 
 /// Internal state while decoding an AF table

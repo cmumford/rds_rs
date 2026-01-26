@@ -1,9 +1,9 @@
 mod af_codes;
 mod af_decode_table;
 mod af_table;
+mod af_table_group;
 mod decoder;
 mod eon;
-mod frequency_table_group;
 mod radiotext;
 mod rds;
 mod types;

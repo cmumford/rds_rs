@@ -1,5 +1,5 @@
+use crate::af_table_group::AltFreqTableGroup;
 use crate::eon::EonData;
-use crate::frequency_table_group::AltFreqTableGroup;
 use crate::radiotext::RtData;
 use crate::types::{
     Clock, Content, DevStats, EwsData, OdaEntry, ProgramInformation, ProgramType, PsData, PtynData,
