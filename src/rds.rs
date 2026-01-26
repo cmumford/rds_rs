@@ -1,12 +1,12 @@
 use crate::eon::EonData;
+use crate::frequency_table_group::AltFreqTableGroup;
 use crate::radiotext::RtData;
 use crate::types::{
-    Clock, Content, DevStats, EwsData, GroupType, OdaEntry, ProgramInformation, ProgramType,
-    PsData, PtynData, RdsPic, SlcData, TdcData, TrafficCodes, ValidFlags,
+    Clock, Content, DevStats, EwsData, OdaEntry, ProgramInformation, ProgramType, PsData, PtynData,
+    RdsPic, SlcData, TdcData, TrafficCodes, ValidFlags,
 };
-use heapless::LinearMap;
 
-use crate::frequency_table_group::AltFreqTableGroup;
+use heapless::LinearMap;
 
 /// Main container for all decoded RDS data
 #[derive(Default, Clone, PartialEq)]
@@ -60,9 +60,4 @@ pub struct RdsData {
     pub valid: ValidFlags,
 
     pub stats: DevStats,
-}
-
-pub trait RdsDecoderCallbacks {
-    fn on_oda(&mut self, app_id: u16, rds_data: &RdsData, group_type: &GroupType);
-    fn on_clear(&mut self);
 }

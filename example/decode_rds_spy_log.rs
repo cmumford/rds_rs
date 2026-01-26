@@ -1,5 +1,5 @@
 use log::{error, info};
-use rds::{Decoder, Group, GroupType, RdsData, RdsDecoderCallbacks, RtVariant};
+use rds::{Decoder, Group, RdsData, RtVariant};
 use rdspy::RdsGroupIterator;
 use std::str;
 
@@ -47,39 +47,11 @@ fn main() -> io::Result<()> {
     Ok(())
 }
 
-struct DecoderLogger {
-    last_rt: String,
-}
-
-impl RdsDecoderCallbacks for DecoderLogger {
-    fn on_oda(&mut self, _app_id: u16, rds_data: &RdsData, _group_type: &GroupType) {
-        if rds_data.valid.rt() {
-            let rt = if rds_data.rt.decode_rt == RtVariant::A {
-                &rds_data.rt.a
-            } else {
-                &rds_data.rt.b
-            };
-            let text = str::from_utf8(&rt.display);
-            if text.is_ok() {
-                let trimmed = text.unwrap().trim();
-                if self.last_rt != trimmed {
-                    println!("PT: {}", trimmed);
-                    self.last_rt = trimmed.to_string();
-                }
-            }
-        }
-    }
-
-    fn on_clear(&mut self) {
-        println!("Received clear");
-    }
-}
-
 fn process_reader<R: BufRead + 'static>(reader: R) -> io::Result<()> {
-    let mut logger = DecoderLogger {
-        last_rt: String::new(),
-    };
-    let mut decoder = Decoder::new(&mut logger);
+    let mut last_rt: String = "".to_string();
+
+    let mut rds_data = RdsData::default();
+    let mut decoder = Decoder::new();
     for group_result in RdsGroupIterator::new(reader) {
         match group_result {
             Ok(group) => {
@@ -89,7 +61,22 @@ fn process_reader<R: BufRead + 'static>(reader: R) -> io::Result<()> {
                     c: group.c,
                     d: group.d,
                 };
-                decoder.decode(&blocks);
+                decoder.decode(&blocks, &mut rds_data);
+                if rds_data.valid.rt() {
+                    let rt = if rds_data.rt.decode_rt == RtVariant::A {
+                        &rds_data.rt.a
+                    } else {
+                        &rds_data.rt.b
+                    };
+                    let text = str::from_utf8(&rt.display);
+                    if text.is_ok() {
+                        let trimmed = text.unwrap().trim();
+                        if last_rt != trimmed {
+                            println!("PT: {}", trimmed);
+                            last_rt = trimmed.to_string();
+                        }
+                    }
+                }
             }
             Err(e) => eprintln!("Error: {}", e),
         }
