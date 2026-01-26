@@ -29,13 +29,6 @@ struct GroupType0BlockB {
     c: B2,                        // Prog. service name and DI segment addr.
 }
 
-// See RDS Standard section 3.1.5.2.
-#[bitfield(bits = 16)]
-struct GroupType1BlockB {
-    common: BlockBCommon,   // Common block B fields.
-    radio_paging_codes: B5, // See Annex M.
-}
-
 // See RDS Standard section 3.1.5.3.
 #[bitfield(bits = 16)]
 struct GroupType2BlockB {
@@ -214,7 +207,15 @@ impl<'a> Decoder<'a> {
         }
     }
 
+    // Type 1 groups: Program Item Number and slow labeling codes
     fn decode_group_type_1(&mut self, group: &Group) {
+        // See RDS Standard section 3.1.5.2.
+        #[bitfield(bits = 16)]
+        struct GroupType1BlockB {
+            common: BlockBCommon,   // Common block B fields.
+            radio_paging_codes: B5, // See Annex M.
+        }
+
         let block_b = GroupType1BlockB::from_bytes(group.b.unwrap().to_be_bytes());
         if block_b.common().group_type().version() == GroupVersion::A && group.c.is_some() {
             self.rds_data.slc = SlcData::from_bytes(group.c.unwrap().to_be_bytes());
@@ -233,6 +234,7 @@ impl<'a> Decoder<'a> {
         }
     }
 
+    // Type 2 groups: Radiotext.
     fn decode_group_type_2a(&mut self, group: &Group) {
         // See specification setion 3.1.5.3.
         let block_b = GroupType2BlockB::from_bytes(group.b.unwrap().to_be_bytes());
@@ -255,6 +257,7 @@ impl<'a> Decoder<'a> {
         rt.update_rt_advance(group, 4, addr as usize, &mut rtchars);
     }
 
+    // Type 2 groups: Radiotext.
     fn decode_group_type_2b(&mut self, group: &Group) {
         // See specification setion 3.1.5.3.
         let block_b = GroupType2BlockB::from_bytes(group.b.unwrap().to_be_bytes());
