@@ -21,16 +21,6 @@ struct BlockBCommon {
     program_type: ProgramType, // PTY: Program type.
 }
 
-// See RBDS Standard section 3.1.5.1.
-#[bitfield(bits = 16)]
-struct GroupType0BlockB {
-    common: BlockBCommon,         // Common block B fields.
-    traffic_announcement: bool,   // TA bit: section 3.2.1.3.
-    ms: bool,                     // M/S bit: section 3.2.1.4.
-    decoder_identification: bool, // DI bit: section 3.2.1.5.
-    c: B2,                        // Prog. service name and DI segment addr.
-}
-
 // See RBDS Standard section 3.1.5.3.
 #[bitfield(bits = 16)]
 struct GroupType2BlockB {
@@ -55,7 +45,7 @@ fn is_oda_group_type_used(map: &LinearMap<u16, OdaEntry, 10>, gt: GroupType) -> 
 
 impl Group {
     fn get_type(&self) -> GroupType {
-        GroupType0BlockB::from_bytes(self.b.unwrap().to_be_bytes())
+        GroupType2BlockB::from_bytes(self.b.unwrap().to_be_bytes())
             .common()
             .group_type()
     }
@@ -192,8 +182,18 @@ fn decode_group_type_0(
     rds_data: &mut RdsData,
     advanced_ps_decoding: bool,
 ) -> ValidFields {
+    // See RBDS Standard section 3.1.5.1.
+    #[bitfield(bits = 16)]
+    struct BlockB {
+        common: BlockBCommon,         // Common block B fields.
+        traffic_announcement: bool,   // TA bit: section 3.2.1.3.
+        ms: bool,                     // M/S bit: section 3.2.1.4.
+        decoder_identification: bool, // DI bit: section 3.2.1.5.
+        c: B2,                        // Prog. service name and DI segment addr.
+    }
+
     let mut valid = ValidFields::new();
-    let block_b = GroupType0BlockB::from_bytes(group.b.unwrap().to_be_bytes());
+    let block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
     if block_b.common().group_type().version() == GroupVersion::A {
         decode_alt_freq(group, rds_data);
     }
@@ -671,7 +671,7 @@ impl<'a> Decoder {
         }
 
         // All groups have block B common fields.
-        let block_b = GroupType0BlockB::from_bytes(group.b.unwrap().to_be_bytes());
+        let block_b = GroupType2BlockB::from_bytes(group.b.unwrap().to_be_bytes());
         valid = decode_block_b_common(&block_b.common(), rds_data);
 
         match (
