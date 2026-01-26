@@ -54,7 +54,7 @@ struct DecoderLogger {
 impl RdsDecoderCallbacks for DecoderLogger {
     fn on_oda(&mut self, _app_id: u16, rds_data: &RdsData, _group_type: &GroupType) {
         if rds_data.valid.rt() {
-            let rt = if rds_data.rt.current_variant == RtVariant::A {
+            let rt = if rds_data.rt.decode_rt == RtVariant::A {
                 &rds_data.rt.a
             } else {
                 &rds_data.rt.b

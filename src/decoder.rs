@@ -247,14 +247,15 @@ impl<'a> Decoder<'a> {
             (group.d.unwrap() >> 8) as u8,
             (group.d.unwrap() & 0xff) as u8,
         ];
-        self.rds_data.valid.set_rt(true);
         let rt = &mut self.rds_data.rt.a;
         let addr = 4 * block_b.text_segment_addr();
         rt.update_rt_simple(group, 4, addr as usize, &rtchars);
-        if self.rds_data.rt.current_variant != block_b.text_flag() {
+        if self.rds_data.rt.decode_rt != block_b.text_flag() {
             rt.bump_rt_validation_count();
         }
         rt.update_rt_advance(group, 4, addr as usize, &mut rtchars);
+        self.rds_data.valid.set_rt(true);
+        self.rds_data.rt.decode_rt = block_b.text_flag();
     }
 
     // Type 2 groups: Radiotext.
@@ -270,14 +271,15 @@ impl<'a> Decoder<'a> {
             0,
             0,
         ];
-        self.rds_data.valid.set_rt(true);
         let rt = &mut self.rds_data.rt.b;
         let addr = 4 * block_b.text_segment_addr();
         rt.update_rt_simple(group, 2, addr as usize, &rtchars);
-        if self.rds_data.rt.current_variant != block_b.text_flag() {
+        if self.rds_data.rt.decode_rt != block_b.text_flag() {
             rt.bump_rt_validation_count();
         }
         rt.update_rt_advance(group, 2, addr as usize, &mut rtchars);
+        self.rds_data.valid.set_rt(true);
+        self.rds_data.rt.decode_rt = block_b.text_flag();
     }
 
     fn decode_oda(&mut self, _group: &Group) {}

@@ -44,9 +44,9 @@ pub enum RtVariant {
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct RtData {
-    pub a: Radiotext,
-    pub b: Radiotext,
-    pub current_variant: RtVariant,
+    pub a: Radiotext,         // RT A text.
+    pub b: Radiotext,         // RT B text.
+    pub decode_rt: RtVariant, // Which RT text currently being decoded.
 }
 
 impl Radiotext {
