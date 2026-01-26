@@ -8,6 +8,7 @@ use crate::types::{
 };
 use heapless::LinearMap;
 use modular_bitfield_msb::prelude::*;
+use std::ops::BitOr;
 
 const INVALID_ODA_APP_ID: u16 = 0x0;
 
@@ -29,12 +30,18 @@ struct GroupType2BlockB {
     text_segment_addr: B4,
 }
 
-impl ValidFields {
-    fn merge(&self, rhs: ValidFields) -> ValidFields {
+impl BitOr for ValidFields {
+    type Output = Self;
+
+    fn bitor(self, rhs: Self) -> Self {
+        const N: usize = std::mem::size_of::<ValidFields>();
         let l = self.into_bytes();
         let r = rhs.into_bytes();
-        let m = [l[0] | r[0], l[1] | r[1], l[2] | r[2]];
-        ValidFields::from_bytes(m)
+        let mut m = [0u8; N];
+        for i in 0..N {
+            m[i] = l[i] | r[i];
+        }
+        Self::from_bytes(m)
     }
 }
 
@@ -692,7 +699,7 @@ impl<'a> Decoder {
             valid.set_pi_code(true);
         }
         if group.b.is_none() {
-            rds_data.valid = rds_data.valid.merge(valid);
+            rds_data.valid = rds_data.valid | valid;
             return valid;
         }
 
@@ -735,8 +742,8 @@ impl<'a> Decoder {
                 ValidFields::new()
             }
         };
-        valid = valid.merge(new_valid);
-        rds_data.valid = rds_data.valid.merge(valid);
+        valid = valid | new_valid; // Merge in group decoding fields
+        rds_data.valid = rds_data.valid | valid; // And into RDS object.
         valid
     }
 }
