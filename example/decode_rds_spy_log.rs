@@ -47,7 +47,9 @@ fn main() -> io::Result<()> {
     Ok(())
 }
 
-struct DecoderLogger {}
+struct DecoderLogger {
+    last_rt: String,
+}
 
 impl RdsDecoderCallbacks for DecoderLogger {
     fn on_oda(&mut self, _app_id: u16, rds_data: &RdsData, _group_type: &GroupType) {
@@ -59,7 +61,11 @@ impl RdsDecoderCallbacks for DecoderLogger {
             };
             let text = str::from_utf8(&rt.display);
             if text.is_ok() {
-                println!("PT: {}", text.unwrap().trim());
+                let trimmed = text.unwrap().trim();
+                if self.last_rt != trimmed {
+                    println!("PT: {}", trimmed);
+                    self.last_rt = trimmed.to_string();
+                }
             }
         }
     }
@@ -70,7 +76,9 @@ impl RdsDecoderCallbacks for DecoderLogger {
 }
 
 fn process_reader<R: BufRead + 'static>(reader: R) -> io::Result<()> {
-    let mut logger = DecoderLogger {};
+    let mut logger = DecoderLogger {
+        last_rt: String::new(),
+    };
     let mut decoder = Decoder::new(&mut logger);
     for group_result in RdsGroupIterator::new(reader) {
         match group_result {
