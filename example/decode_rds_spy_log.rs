@@ -48,7 +48,7 @@ fn main() -> io::Result<()> {
 }
 
 fn process_reader<R: BufRead + 'static>(reader: R) -> io::Result<()> {
-    let mut last_rt: String = "".to_string();
+    let mut last_rt = String::new();
 
     let mut rds_data = RdsData::default();
     let mut decoder = Decoder::new();
@@ -72,7 +72,7 @@ fn process_reader<R: BufRead + 'static>(reader: R) -> io::Result<()> {
                     if text.is_ok() {
                         let trimmed = text.unwrap().trim();
                         if last_rt != trimmed {
-                            println!("PT: {}", trimmed);
+                            println!("RT: {}", trimmed);
                             last_rt = trimmed.to_string();
                         }
                     }
