@@ -187,6 +187,7 @@ fn update_ps_advanced(char_idx: usize, byte: u8, rds_data: &mut RdsData) {
     }
 }
 
+// Type 0 groups: Basic tuning and switching information.
 fn decode_group_type_0(group: &Group, rds_data: &mut RdsData, advanced_ps_decoding: bool) {
     let block_b = GroupType0BlockB::from_bytes(group.b.unwrap().to_be_bytes());
     if block_b.common().group_type().version() == GroupVersion::A {
@@ -296,6 +297,7 @@ fn decode_group_type_2b(group: &Group, rds_data: &mut RdsData) {
 
 fn decode_oda(_group: &Group, _rds_data: &mut RdsData) {}
 
+// Type 3A groups: Application identification for Open data.
 fn decode_group_type_3a(group: &Group, rds_data: &mut RdsData) {
     // See RBDS Standard section 3.1.5.4.
     #[bitfield(bits = 16)]
@@ -331,11 +333,13 @@ fn decode_group_type_3a(group: &Group, rds_data: &mut RdsData) {
     }
 }
 
+// Type 3B groups: Open Data Application.
 fn decode_group_type_3b(group: &Group, rds_data: &mut RdsData) {
     // See RBDS Standard section 3.1.5.5.
     decode_oda(group, rds_data);
 }
 
+// Type 4A groups : Clock-time and date.
 fn decode_group_type_4a(group: &Group, rds_data: &mut RdsData) {
     // See RBDS Standard section 3.1.5.6.
     #[bitfield(bits = 16)]
@@ -374,6 +378,7 @@ fn decode_group_type_4a(group: &Group, rds_data: &mut RdsData) {
     }
 }
 
+// Type 4B groups: Open data application.
 fn decode_group_type_4b(group: &Group, rds_data: &mut RdsData) {
     // See RBDS Standard section 3.1.5.7.
     decode_oda(group, rds_data);
@@ -391,6 +396,7 @@ fn decode_tdc_block(block: u16, rds_data: &mut RdsData) {
     rds_data.tdc.data[channel].write((block & 0xff) as u8);
 }
 
+// Type 5 groups: Transparent data channels or ODA.
 fn decode_group_type_5a(group: &Group, rds_data: &mut RdsData) {
     // See RBDS Standard section 3.1.5.8.
     #[bitfield(bits = 16)]
@@ -414,6 +420,7 @@ fn decode_group_type_5a(group: &Group, rds_data: &mut RdsData) {
     }
 }
 
+// Type 5 groups: ODA.
 fn decode_group_type_5b(group: &Group, rds_data: &mut RdsData) {
     // See RBDS Standard section 3.1.5.8.
     const GROUP_TYPE: GroupType = GroupType::from_bytes([5 << 1 + GroupVersion::B as u8]);
@@ -547,6 +554,7 @@ fn decode_group_type_11(group: &Group, rds_data: &mut RdsData) {
     decode_oda(group, rds_data);
 }
 
+// Type 12 groups: Open Data Application.
 fn decode_group_type_12(group: &Group, rds_data: &mut RdsData) {
     // See RBDS Standard section 3.1.5.16.
     decode_oda(group, rds_data);
@@ -602,6 +610,7 @@ fn decode_group_type_14b(group: &Group, _rds_data: &mut RdsData) {
     // TODO: finish me.
 }
 
+// Type 15 groups: Fast basic tuning and switching information.
 fn decode_group_type_15(_group: &Group, _rds_data: &RdsData) {}
 
 pub struct Decoder {
