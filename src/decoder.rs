@@ -243,7 +243,11 @@ impl<'a> Decoder {
             (group.d.unwrap() >> 8) as u8,
             (group.d.unwrap() & 0xff) as u8,
         ];
-        let rt = &mut rds_data.rt.a;
+        let rt = if block_b.text_flag() == RtVariant::A {
+            &mut rds_data.rt.a
+        } else {
+            &mut rds_data.rt.b
+        };
         let addr = 4 * block_b.text_segment_addr();
         rt.update_rt_simple(group, 4, addr as usize, &rtchars);
         if rds_data.rt.decode_rt != block_b.text_flag() {
@@ -267,7 +271,11 @@ impl<'a> Decoder {
             0,
             0,
         ];
-        let rt = &mut rds_data.rt.b;
+        let rt = if block_b.text_flag() == RtVariant::A {
+            &mut rds_data.rt.a
+        } else {
+            &mut rds_data.rt.b
+        };
         let addr = 4 * block_b.text_segment_addr();
         rt.update_rt_simple(group, 2, addr as usize, &rtchars);
         if rds_data.rt.decode_rt != block_b.text_flag() {
