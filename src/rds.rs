@@ -5,7 +5,6 @@ use crate::types::{
     Clock, Content, DevStats, EwsData, OdaEntry, ProgramInformation, ProgramType, PsData, PtynData,
     RdsPic, SlcData, TdcData, TrafficCodes, ValidFlags,
 };
-
 use heapless::LinearMap;
 
 /// Main container for all decoded RDS data
