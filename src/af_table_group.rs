@@ -24,7 +24,7 @@ pub fn af_code_to_freq(freq_code: u8, band: Band) -> u16 {
     531u16 + 9 * ((freq_code as u16) - 16) // MF
 }
 
-/// Group of multiple decoded AF tables
+/// Group of multiple decoded AF tables.
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct AltFreqTableGroup {
     pub pvt_current_table_idx: i8,       // Index of current decode table.

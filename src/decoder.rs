@@ -34,7 +34,7 @@ struct GroupType0BlockB {
 // See RBDS Standard section 3.1.5.3.
 #[bitfield(bits = 16)]
 struct GroupType2BlockB {
-    common: BlockBCommon, // Common block B fields.
+    common: BlockBCommon,
     text_flag: RtVariant, // See Annex M.
     text_segment_addr: B4,
 }
@@ -64,7 +64,7 @@ impl Group {
 fn decode_ms(blockb: u16, rds_data: &mut RdsData) {
     #[bitfield(bits = 16)]
     struct Block {
-        common: BlockBCommon, // Common block B fields.
+        common: BlockBCommon,
         ta: bool,
         content: Content,
         unused: B3,
@@ -95,7 +95,7 @@ fn decode_alt_freq(group: &Group, rds_data: &mut RdsData) {
 fn decode_ta(blockb: u16, rds_data: &mut RdsData) {
     #[bitfield(bits = 16)]
     struct Block {
-        common: BlockBCommon, // Common block B fields.
+        common: BlockBCommon,
         ta_flag: bool,
         unused: B4,
     }
@@ -210,7 +210,7 @@ fn decode_group_type_0(group: &Group, rds_data: &mut RdsData, advanced_ps_decodi
     }
 }
 
-// Type 1 groups: Program Item Number and slow labeling codes
+// Type 1 groups: Program Item Number and slow labeling codes.
 fn decode_group_type_1(group: &Group, rds_data: &mut RdsData) {
     // See RBDS Standard section 3.1.5.2.
     #[bitfield(bits = 16)]
@@ -354,9 +354,9 @@ fn decode_group_type_4a(group: &Group, rds_data: &mut RdsData) {
     // See RBDS Standard section 3.1.5.6.
     #[bitfield(bits = 16)]
     struct BlockB {
-        common: BlockBCommon, // Common block B fields.
-        spare: B3,            // Unused.
-        date_msb: B2,         // Top two MSB bits of julian date.
+        common: BlockBCommon,
+        spare: B3,    // Unused.
+        date_msb: B2, // Top two MSB bits of julian date.
     }
     #[bitfield(bits = 16)]
     struct BlockC {
@@ -411,7 +411,7 @@ fn decode_group_type_5a(group: &Group, rds_data: &mut RdsData) {
     // See RBDS Standard section 3.1.5.8.
     #[bitfield(bits = 16)]
     struct BlockB {
-        common: BlockBCommon, // Common block B fields.
+        common: BlockBCommon,
         // Address code identifies "channel number" (out of 32) to which the data are addressed.
         address: B5,
     }
@@ -445,7 +445,7 @@ fn decode_group_type_5b(group: &Group, rds_data: &mut RdsData) {
 fn decode_group_type_6(group: &Group, rds_data: &mut RdsData) {
     #[bitfield(bits = 16)]
     struct BlockB {
-        common: BlockBCommon, // Common block B fields.
+        common: BlockBCommon,
         unused: B5,
     }
     let block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
@@ -458,7 +458,7 @@ fn decode_group_type_6(group: &Group, rds_data: &mut RdsData) {
     // information coded in these groups".
 }
 
-// Type 7A groups: Radio Paging or ODA
+// Type 7A groups: Radio Paging or ODA.
 fn decode_group_type_7a(group: &Group, rds_data: &mut RdsData) {
     // See RBDS Standard section 3.1.5.10.
     const GROUP_TYPE: GroupType = GroupType::from_bytes([7 << 1 + GroupVersion::A as u8]);
@@ -470,7 +470,7 @@ fn decode_group_type_7a(group: &Group, rds_data: &mut RdsData) {
     // No stations seem to broadcast this data. Will implement if/when needed.
 }
 
-// Type 7B groups: Open data application
+// Type 7B groups: Open data application.
 fn decode_group_type_7b(group: &Group, rds_data: &mut RdsData) {
     // See RBDS Standard section 3.1.5.11.
     decode_oda(group, group.get_type(), rds_data);
@@ -518,7 +518,7 @@ fn decode_ptyn(group: &Group, rds_data: &mut RdsData) {
     // See RBDS Standard section 3.1.5.14.
     #[bitfield(bits = 16)]
     struct BlockB {
-        common: BlockBCommon, // Common block B fields.
+        common: BlockBCommon,
         ab_flag: bool,
         reserved: B3,
         segment_addr: B1,
@@ -558,7 +558,7 @@ fn decode_group_type_10b(group: &Group, rds_data: &mut RdsData) {
     }
 }
 
-// Type 11 groups: Open Data Application
+// Type 11 groups: Open Data Application.
 fn decode_group_type_11(group: &Group, rds_data: &mut RdsData) {
     // See RBDS Standard section 3.1.5.15.
     decode_oda(group, group.get_type(), rds_data);
@@ -575,7 +575,7 @@ fn decode_group_type_13a(group: &Group, _rds_data: &mut RdsData) {
     // See RBDS Standard section 3.1.5.17.
     #[bitfield(bits = 16)]
     struct BlockB {
-        common: BlockBCommon, // Common block B fields.
+        common: BlockBCommon,
         information: B2,
         sty: B3,
     }
@@ -587,7 +587,7 @@ fn decode_group_type_13a(group: &Group, _rds_data: &mut RdsData) {
     // TODO: How to determine if this is used for radio paging???
 }
 
-// Type 13B groups: Open Data Application
+// Type 13B groups: Open Data Application.
 fn decode_group_type_13b(group: &Group, rds_data: &mut RdsData) {
     // See RBDS Standard section 3.1.5.18.
     decode_oda(group, group.get_type(), rds_data);
@@ -598,8 +598,8 @@ fn decode_group_type_14a(group: &Group, _rds_data: &mut RdsData) {
     // See RBDS Standard section 3.1.5.19.
     #[bitfield(bits = 16)]
     struct BlockB {
-        common: BlockBCommon, // Common block B fields.
-        tp_on: bool,          // TP (ON).
+        common: BlockBCommon,
+        tp_on: bool, // TP (ON).
         variant_code: B4,
     }
     let _block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
@@ -611,9 +611,9 @@ fn decode_group_type_14b(group: &Group, _rds_data: &mut RdsData) {
     // See RBDS Standard section 3.1.5.19.
     #[bitfield(bits = 16)]
     struct BlockB {
-        common: BlockBCommon, // Common block B fields.
-        tp_on: bool,          // TP (ON).
-        ta_on: bool,          // TA (ON).
+        common: BlockBCommon,
+        tp_on: bool, // TP (ON).
+        ta_on: bool, // TA (ON).
         unused: B3,
     }
     let _block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
