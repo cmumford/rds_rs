@@ -64,15 +64,11 @@ fn decode_ms(blockb: u16, rds_data: &mut RdsData) {
     struct Block {
         common: BlockBCommon, // Common block B fields.
         ta: bool,
-        ms: bool,
+        content: Content,
         unused: B3,
     }
     let block_b = Block::from_bytes(blockb.to_be_bytes());
-    rds_data.content = if block_b.ms() {
-        Content::Music
-    } else {
-        Content::Speech
-    };
+    rds_data.content = block_b.content();
     rds_data.valid.set_ms(true);
 }
 

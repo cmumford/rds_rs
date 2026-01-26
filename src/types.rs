@@ -201,7 +201,8 @@ pub enum ProgramType {
 
 /// Music/speech (M/S) switch code.
 /// See the RBDS Standard section 3.2.1.4.
-#[derive(Default, Clone, PartialEq, Eq)]
+#[derive(BitfieldSpecifier, Default, Clone, PartialEq, Eq)]
+#[bits = 1]
 pub enum Content {
     Speech = 0,
     #[default]
