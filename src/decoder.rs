@@ -3,8 +3,8 @@
 use crate::radiotext::RtVariant;
 use crate::rds::RdsData;
 use crate::types::{
-    Group, GroupType, GroupVersion, NUM_TDC, OdaEntry, ProgramInformation, ProgramType, RdsPic,
-    SlcData,
+    Content, Group, GroupType, GroupVersion, NUM_TDC, OdaEntry, ProgramInformation, ProgramType,
+    RdsPic, SlcData,
 };
 use heapless::LinearMap;
 use modular_bitfield_msb::prelude::*;
@@ -59,6 +59,23 @@ impl Group {
     }
 }
 
+fn decode_ms(blockb: u16, rds_data: &mut RdsData) {
+    #[bitfield(bits = 16)]
+    struct Block {
+        common: BlockBCommon, // Common block B fields.
+        ta: bool,
+        ms: bool,
+        unused: B3,
+    }
+    let block_b = Block::from_bytes(blockb.to_be_bytes());
+    rds_data.content = if block_b.ms() {
+        Content::Music
+    } else {
+        Content::Speech
+    };
+    rds_data.valid.set_ms(true);
+}
+
 pub struct Decoder {
     advanced_ps_decoding: bool,
 }
@@ -99,8 +116,6 @@ impl<'a> Decoder {
         rds_data.traffic.set_ta(block_b.ta_flag());
         rds_data.valid.set_ta_code(true);
     }
-
-    fn decode_ms(&mut self, _group: &Group) {}
 
     fn update_ps_simple(&mut self, char_idx: u8, current_ps_byte: u8, rds_data: &mut RdsData) {
         assert!(char_idx < 8);
@@ -192,7 +207,7 @@ impl<'a> Decoder {
             return;
         }
         self.decode_ta(group.b.unwrap(), rds_data);
-        self.decode_ms(group);
+        decode_ms(group.b.unwrap(), rds_data);
 
         let pair_idx = 2 * block_b.c();
         let d_val = group.d.unwrap();
