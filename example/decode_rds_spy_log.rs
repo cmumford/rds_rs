@@ -59,7 +59,7 @@ impl RdsDecoderCallbacks for DecoderLogger {
             };
             let text = str::from_utf8(&rt.display);
             if text.is_ok() {
-                println!("PT: {}", text.unwrap());
+                println!("PT: {}", text.unwrap().trim());
             }
         }
     }
