@@ -154,22 +154,11 @@ pub struct ProgramInformation {
 
 // A combination of Traffic Program (TP) and Traffic Announcement (TA) codes
 // See the RBDS Standard section 3.2.1.3.
+#[bitfield(bits = 2)]
 #[derive(Default, Clone, PartialEq, Eq)]
-#[repr(u8)]
-pub enum TrafficCodes {
-    /// This program does not carry traffic announcements nor does it refer,
-    /// via EON, to a program that does.
-    #[default]
-    TrafficNoEonNo = 0,
-    /// This program carries EON information about another program which gives
-    /// traffic information.
-    TrafficNoEonYes = 1,
-    /// This program carries traffic announcements but none are being broadcast
-    /// at present and may also carry EON information about other traffic
-    /// announcements.
-    TrafficMaybeEonMaybe = 2,
-    /// A traffic announcement is being broadcast on this program at present.
-    TrafficYes = 3,
+pub struct TrafficCodes {
+    pub tp: bool, // Traffic Program code (TP).
+    pub ta: bool, // Traffic Announcement code (TA).
 }
 
 #[derive(BitfieldSpecifier, Default, Clone, PartialEq, Eq)]

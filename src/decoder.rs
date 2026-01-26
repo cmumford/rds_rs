@@ -4,7 +4,7 @@ use crate::radiotext::RtVariant;
 use crate::rds::RdsData;
 use crate::types::{
     Group, GroupType, GroupVersion, NUM_TDC, OdaEntry, ProgramInformation, ProgramType, RdsPic,
-    SlcData, TrafficCodes,
+    SlcData,
 };
 use heapless::LinearMap;
 use modular_bitfield_msb::prelude::*;
@@ -71,13 +71,7 @@ impl<'a> Decoder {
     }
 
     fn decode_block_b_common(&mut self, block: &BlockBCommon, rds_data: &mut RdsData) {
-        // TODO: This is only setting the TP bit and not the TA bit.
-        // Might have to decouple these if they come from different groups.
-        if block.traffic_program() {
-            rds_data.traffic = TrafficCodes::TrafficYes;
-        } else {
-            rds_data.traffic = TrafficCodes::TrafficNoEonNo;
-        }
+        rds_data.traffic.set_tp(block.traffic_program());
         rds_data.valid.set_tp_code(true);
 
         rds_data.program_type = block.program_type();
@@ -94,7 +88,17 @@ impl<'a> Decoder {
             .decode_freq_group_block(group.c.unwrap());
     }
 
-    fn decode_ta(&mut self, _group: &Group) {}
+    fn decode_ta(&mut self, blockb: u16, rds_data: &mut RdsData) {
+        #[bitfield(bits = 16)]
+        struct Block {
+            common: BlockBCommon, // Common block B fields.
+            ta_flag: bool,
+            unused: B4,
+        }
+        let block_b = Block::from_bytes(blockb.to_be_bytes());
+        rds_data.traffic.set_ta(block_b.ta_flag());
+        rds_data.valid.set_ta_code(true);
+    }
 
     fn decode_ms(&mut self, _group: &Group) {}
 
@@ -187,7 +191,7 @@ impl<'a> Decoder {
         if group.d.is_none() {
             return;
         }
-        self.decode_ta(group);
+        self.decode_ta(group.b.unwrap(), rds_data);
         self.decode_ms(group);
 
         let pair_idx = 2 * block_b.c();
