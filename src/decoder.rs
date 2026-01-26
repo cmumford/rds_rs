@@ -29,6 +29,15 @@ struct GroupType2BlockB {
     text_segment_addr: B4,
 }
 
+impl ValidFields {
+    fn merge(&self, rhs: ValidFields) -> ValidFields {
+        let l = self.into_bytes();
+        let r = rhs.into_bytes();
+        let m = [l[0] | r[0], l[1] | r[1], l[2] | r[2]];
+        ValidFields::from_bytes(m)
+    }
+}
+
 /// Is the ODA application ID valid?
 fn is_valid_oda_app_id(app_id: u16) -> bool {
     return app_id != INVALID_ODA_APP_ID;
@@ -225,7 +234,7 @@ fn decode_group_type_0(
 }
 
 // Type 1 groups: Program Item Number and slow labeling codes.
-fn decode_group_type_1(group: &Group, rds_data: &mut RdsData) {
+fn decode_group_type_1(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     // See RBDS Standard section 3.1.5.2.
     #[bitfield(bits = 16)]
     struct GroupType1BlockB {
@@ -239,9 +248,10 @@ fn decode_group_type_1(group: &Group, rds_data: &mut RdsData) {
         rds_data.valid.set_slc(true);
     }
 
+    let mut valid = ValidFields::new();
     if group.d.is_some() {
         rds_data.program_item_number = RdsPic::from_bytes(group.d.unwrap().to_be_bytes());
-        rds_data.valid.set_pic(true);
+        valid.set_pic(true);
     } else {
         // Per spec (3.2.1.7): If a type 1 group is transmitted without a
         // valid PIN, the day of the month shall be set to zero. In this
@@ -249,14 +259,16 @@ fn decode_group_type_1(group: &Group, rds_data: &mut RdsData) {
         // information in block 4.
         rds_data.program_item_number = RdsPic::default();
     }
+    valid
 }
 
 // Type 2 groups: Radiotext.
-fn decode_group_type_2a(group: &Group, rds_data: &mut RdsData) {
+fn decode_group_type_2a(group: &Group, rds_data: &mut RdsData) -> ValidFields {
+    let mut valid = ValidFields::new();
     // See RBDS Standard setion 3.1.5.3.
     let block_b = GroupType2BlockB::from_bytes(group.b.unwrap().to_be_bytes());
     if group.c.is_none() || group.d.is_none() {
-        return;
+        return valid;
     }
     let mut rtchars: [u8; 4] = [
         (group.c.unwrap() >> 8) as u8,
@@ -275,16 +287,18 @@ fn decode_group_type_2a(group: &Group, rds_data: &mut RdsData) {
         rt.bump_rt_validation_count();
     }
     rt.update_rt_advance(group, 4, addr as usize, &mut rtchars);
-    rds_data.valid.set_rt(true);
+    valid.set_rt(true);
     rds_data.rt.decode_rt = block_b.text_flag();
+    valid
 }
 
 // Type 2 groups: Radiotext.
-fn decode_group_type_2b(group: &Group, rds_data: &mut RdsData) {
+fn decode_group_type_2b(group: &Group, rds_data: &mut RdsData) -> ValidFields {
+    let mut valid = ValidFields::new();
     // See RBDS Standard setion 3.1.5.3.
     let block_b = GroupType2BlockB::from_bytes(group.b.unwrap().to_be_bytes());
     if group.d.is_none() {
-        return;
+        return valid;
     }
     let mut rtchars: [u8; 4] = [
         (group.d.unwrap() >> 8) as u8,
@@ -303,11 +317,12 @@ fn decode_group_type_2b(group: &Group, rds_data: &mut RdsData) {
         rt.bump_rt_validation_count();
     }
     rt.update_rt_advance(group, 2, addr as usize, &mut rtchars);
-    rds_data.valid.set_rt(true);
+    valid.set_rt(true);
     rds_data.rt.decode_rt = block_b.text_flag();
+    valid
 }
 
-fn decode_oda(_group: &Group, gt: GroupType, rds_data: &mut RdsData) {
+fn decode_oda(_group: &Group, gt: GroupType, rds_data: &mut RdsData) -> ValidFields {
     let mut app_id: u16 = INVALID_ODA_APP_ID;
     for (key, val) in rds_data.oda.iter() {
         if val.group_type == gt {
@@ -316,13 +331,15 @@ fn decode_oda(_group: &Group, gt: GroupType, rds_data: &mut RdsData) {
         }
     }
     if app_id == INVALID_ODA_APP_ID {
-        return;
+        return ValidFields::new();
     }
     // TODO: Finish this. Either use callback, or another way for caller to know new ODA has arrived.
+    ValidFields::new()
 }
 
 // Type 3A groups: Application identification for Open data.
-fn decode_group_type_3a(group: &Group, rds_data: &mut RdsData) {
+fn decode_group_type_3a(group: &Group, rds_data: &mut RdsData) -> ValidFields {
+    let valid = ValidFields::new();
     // See RBDS Standard section 3.1.5.4.
     #[bitfield(bits = 16)]
     #[derive(Default, Clone, PartialEq, Eq)]
@@ -332,12 +349,12 @@ fn decode_group_type_3a(group: &Group, rds_data: &mut RdsData) {
     }
 
     if group.d.is_none() {
-        return;
+        return valid;
     }
     let block_b = GroupType3ABlockB::from_bytes(group.b.unwrap().to_be_bytes());
     let app_id = group.d.unwrap();
     if !is_valid_oda_app_id(app_id) {
-        return;
+        return valid;
     }
 
     let entry = rds_data.oda.get_mut(&app_id);
@@ -355,16 +372,17 @@ fn decode_group_type_3a(group: &Group, rds_data: &mut RdsData) {
             );
         }
     }
+    valid
 }
 
 // Type 3B groups: Open Data Application.
-fn decode_group_type_3b(group: &Group, rds_data: &mut RdsData) {
+fn decode_group_type_3b(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     // See RBDS Standard section 3.1.5.5.
-    decode_oda(group, group.get_type(), rds_data);
+    decode_oda(group, group.get_type(), rds_data)
 }
 
 // Type 4A groups : Clock-time and date.
-fn decode_group_type_4a(group: &Group, rds_data: &mut RdsData) {
+fn decode_group_type_4a(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     // See RBDS Standard section 3.1.5.6.
     #[bitfield(bits = 16)]
     struct BlockB {
@@ -386,7 +404,7 @@ fn decode_group_type_4a(group: &Group, rds_data: &mut RdsData) {
     }
 
     if group.c.is_none() || group.d.is_none() {
-        return;
+        return ValidFields::new();
     }
     let block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
     let block_c = BlockC::from_bytes(group.b.unwrap().to_be_bytes());
@@ -400,12 +418,13 @@ fn decode_group_type_4a(group: &Group, rds_data: &mut RdsData) {
     } else {
         rds_data.clock.utc_offset_half_hours = -(block_d.local_offset_val() as i8);
     }
+    ValidFields::new().with_clock(true)
 }
 
 // Type 4B groups: Open data application.
-fn decode_group_type_4b(group: &Group, rds_data: &mut RdsData) {
+fn decode_group_type_4b(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     // See RBDS Standard section 3.1.5.7.
-    decode_oda(group, group.get_type(), rds_data);
+    decode_oda(group, group.get_type(), rds_data)
 }
 
 fn decode_tdc_block(block: u16, rds_data: &mut RdsData) {
@@ -415,13 +434,12 @@ fn decode_tdc_block(block: u16, rds_data: &mut RdsData) {
     // `channel` comes from a 5-bit value, so shouldn't be greater than 31.
     assert!(channel < NUM_TDC);
 
-    rds_data.valid.set_tdc(true);
     rds_data.tdc.data[channel].write((block >> 8) as u8);
     rds_data.tdc.data[channel].write((block & 0xff) as u8);
 }
 
 // Type 5 groups: Transparent data channels or ODA.
-fn decode_group_type_5a(group: &Group, rds_data: &mut RdsData) {
+fn decode_group_type_5a(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     // See RBDS Standard section 3.1.5.8.
     #[bitfield(bits = 16)]
     struct BlockB {
@@ -432,31 +450,34 @@ fn decode_group_type_5a(group: &Group, rds_data: &mut RdsData) {
     let block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
 
     if is_oda_group_type_used(&rds_data.oda, block_b.common().group_type()) {
-        decode_oda(group, block_b.common().group_type(), rds_data);
-        return;
+        return decode_oda(group, block_b.common().group_type(), rds_data);
     }
+    let mut valid = ValidFields::new();
     rds_data.tdc.current_channel = block_b.address();
     if group.c.is_some() {
         decode_tdc_block(group.c.unwrap(), rds_data);
+        valid.set_tdc(true);
     }
     if group.d.is_some() {
         decode_tdc_block(group.d.unwrap(), rds_data);
+        valid.set_tdc(true);
     }
+    valid
 }
 
 // Type 5 groups: ODA.
-fn decode_group_type_5b(group: &Group, rds_data: &mut RdsData) {
+fn decode_group_type_5b(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     // See RBDS Standard section 3.1.5.8.
     const GROUP_TYPE: GroupType = GroupType::from_bytes([5 << 1 + GroupVersion::B as u8]);
     if is_oda_group_type_used(&rds_data.oda, GROUP_TYPE) {
-        decode_oda(group, GROUP_TYPE, rds_data);
-        return;
+        return decode_oda(group, GROUP_TYPE, rds_data);
     }
+    ValidFields::new()
 }
 
 // Type 6 groups: In-house applications or ODA/
 // See RBDS Standard section 3.1.5.9.
-fn decode_group_type_6(group: &Group, rds_data: &mut RdsData) {
+fn decode_group_type_6(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     #[bitfield(bits = 16)]
     struct BlockB {
         common: BlockBCommon,
@@ -464,71 +485,72 @@ fn decode_group_type_6(group: &Group, rds_data: &mut RdsData) {
     }
     let block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
     if is_oda_group_type_used(&rds_data.oda, block_b.common().group_type()) {
-        decode_oda(group, block_b.common().group_type(), rds_data);
-        return;
+        return decode_oda(group, block_b.common().group_type(), rds_data);
     }
 
     // According to RBDS spec.: "Consumer receivers should ignore the in-house
     // information coded in these groups".
+    ValidFields::new()
 }
 
 // Type 7A groups: Radio Paging or ODA.
-fn decode_group_type_7a(group: &Group, rds_data: &mut RdsData) {
+fn decode_group_type_7a(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     // See RBDS Standard section 3.1.5.10.
     const GROUP_TYPE: GroupType = GroupType::from_bytes([7 << 1 + GroupVersion::A as u8]);
     if is_oda_group_type_used(&rds_data.oda, GROUP_TYPE) {
-        decode_oda(group, GROUP_TYPE, rds_data);
-        return;
+        return decode_oda(group, GROUP_TYPE, rds_data);
     }
 
     // No stations seem to broadcast this data. Will implement if/when needed.
+    ValidFields::new()
 }
 
 // Type 7B groups: Open data application.
-fn decode_group_type_7b(group: &Group, rds_data: &mut RdsData) {
+fn decode_group_type_7b(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     // See RBDS Standard section 3.1.5.11.
-    decode_oda(group, group.get_type(), rds_data);
+    return decode_oda(group, group.get_type(), rds_data);
 }
 
 // Type 8 groups: Traffic Message Channel or ODA
-fn decode_group_type_8(group: &Group, rds_data: &mut RdsData) {
+fn decode_group_type_8(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     // See RBDS Standard section 3.1.5.12.
     let gt = group.get_type();
     if is_oda_group_type_used(&rds_data.oda, gt) {
-        decode_oda(group, gt, rds_data);
-        return;
+        return decode_oda(group, gt, rds_data);
     }
     if gt.version() == GroupVersion::A {
         // Decode TMC data. This requires obtaining a copy of EN ISO 14819-1:2013.
     }
+    ValidFields::new()
 }
 
 // Type 9 groups: Emergency warning systems or ODA.
-fn decode_group_type_9(group: &Group, rds_data: &mut RdsData) {
+fn decode_group_type_9(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     // See RBDS Standard section 3.1.5.13.
     let gt = group.get_type();
     if is_oda_group_type_used(&rds_data.oda, gt) {
-        decode_oda(group, gt, rds_data);
-        return;
+        return decode_oda(group, gt, rds_data);
     }
 
+    let mut valid = ValidFields::new();
     if gt.version() == GroupVersion::B {
-        return;
+        return valid;
     }
 
     if group.c.is_none() || group.d.is_none() {
-        return;
+        return valid;
     }
 
-    rds_data.valid.set_ews(true);
     rds_data
         .ews
         .set_block_b_lsb((group.b.unwrap() & 0b11111) as u8);
     rds_data.ews.set_block_c(group.c.unwrap());
     rds_data.ews.set_block_d(group.d.unwrap());
+    valid.set_ews(true);
+    valid
 }
 
-fn decode_ptyn(group: &Group, rds_data: &mut RdsData) {
+fn decode_ptyn(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     // See RBDS Standard section 3.1.5.14.
     #[bitfield(bits = 16)]
     struct BlockB {
@@ -539,7 +561,8 @@ fn decode_ptyn(group: &Group, rds_data: &mut RdsData) {
     }
     let block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
 
-    rds_data.valid.set_ptyn(true);
+    let mut valid = ValidFields::new();
+    valid.set_ptyn(true);
     if rds_data.ptyn.last_ab != block_b.ab_flag() {
         rds_data.ptyn.display.fill(0);
         rds_data.ptyn.last_ab = block_b.ab_flag();
@@ -554,38 +577,39 @@ fn decode_ptyn(group: &Group, rds_data: &mut RdsData) {
         rds_data.ptyn.display[base + 2] = (group.d.unwrap() >> 8) as u8;
         rds_data.ptyn.display[base + 3] = (group.d.unwrap() & 0xff) as u8;
     }
+    valid
 }
 
 // Type 10 groups: Program Type Name.
-fn decode_group_type_10a(group: &Group, rds_data: &mut RdsData) {
+fn decode_group_type_10a(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     // See RBDS Standard section 3.1.5.14.
-    decode_ptyn(group, rds_data);
+    decode_ptyn(group, rds_data)
 }
 
 // Type 10 groups: Open data.
-fn decode_group_type_10b(group: &Group, rds_data: &mut RdsData) {
+fn decode_group_type_10b(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     // See RBDS Standard section 3.1.5.14.
     if group.get_type().version() == GroupVersion::A {
-        decode_ptyn(group, rds_data);
+        return decode_ptyn(group, rds_data);
     } else {
-        decode_oda(group, group.get_type(), rds_data);
+        return decode_oda(group, group.get_type(), rds_data);
     }
 }
 
 // Type 11 groups: Open Data Application.
-fn decode_group_type_11(group: &Group, rds_data: &mut RdsData) {
+fn decode_group_type_11(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     // See RBDS Standard section 3.1.5.15.
-    decode_oda(group, group.get_type(), rds_data);
+    decode_oda(group, group.get_type(), rds_data)
 }
 
 // Type 12 groups: Open Data Application.
-fn decode_group_type_12(group: &Group, rds_data: &mut RdsData) {
+fn decode_group_type_12(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     // See RBDS Standard section 3.1.5.16.
-    decode_oda(group, group.get_type(), rds_data);
+    decode_oda(group, group.get_type(), rds_data)
 }
 
 // Type 13A groups: Enhanced Radio Paging or ODA.
-fn decode_group_type_13a(group: &Group, _rds_data: &mut RdsData) {
+fn decode_group_type_13a(group: &Group, _rds_data: &mut RdsData) -> ValidFields {
     // See RBDS Standard section 3.1.5.17.
     #[bitfield(bits = 16)]
     struct BlockB {
@@ -599,16 +623,17 @@ fn decode_group_type_13a(group: &Group, _rds_data: &mut RdsData) {
     // Paging, and its group structure is then as shown in 3.1.4.2
 
     // TODO: How to determine if this is used for radio paging???
+    ValidFields::new()
 }
 
 // Type 13B groups: Open Data Application.
-fn decode_group_type_13b(group: &Group, rds_data: &mut RdsData) {
+fn decode_group_type_13b(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     // See RBDS Standard section 3.1.5.18.
-    decode_oda(group, group.get_type(), rds_data);
+    decode_oda(group, group.get_type(), rds_data)
 }
 
 // Type 14 groups: Enhanced Other Networks information.
-fn decode_group_type_14a(group: &Group, _rds_data: &mut RdsData) {
+fn decode_group_type_14a(group: &Group, _rds_data: &mut RdsData) -> ValidFields {
     // See RBDS Standard section 3.1.5.19.
     #[bitfield(bits = 16)]
     struct BlockB {
@@ -618,10 +643,11 @@ fn decode_group_type_14a(group: &Group, _rds_data: &mut RdsData) {
     }
     let _block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
     // TODO: finish me.
+    ValidFields::new()
 }
 
 // Type 14 groups: Enhanced Other Networks information.
-fn decode_group_type_14b(group: &Group, _rds_data: &mut RdsData) {
+fn decode_group_type_14b(group: &Group, _rds_data: &mut RdsData) -> ValidFields {
     // See RBDS Standard section 3.1.5.19.
     #[bitfield(bits = 16)]
     struct BlockB {
@@ -632,18 +658,12 @@ fn decode_group_type_14b(group: &Group, _rds_data: &mut RdsData) {
     }
     let _block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
     // TODO: finish me.
+    ValidFields::new()
 }
 
 // Type 15 groups: Fast basic tuning and switching information.
-fn decode_group_type_15(_group: &Group, _rds_data: &RdsData) {}
-
-impl ValidFields {
-    fn merge(&self, rhs: ValidFields) -> ValidFields {
-        let l = self.into_bytes();
-        let r = rhs.into_bytes();
-        let m = [l[0] | r[0], l[1] | r[1], l[2] | r[2]];
-        ValidFields::from_bytes(m)
-    }
+fn decode_group_type_15(_group: &Group, _rds_data: &RdsData) -> ValidFields {
+    ValidFields::new()
 }
 
 pub struct Decoder {
@@ -657,6 +677,12 @@ impl<'a> Decoder {
         }
     }
 
+    /// Decode a group of RDS data and update the supplied RDS data object.
+    /// Will return a ValidFields bitfield which describes the updated RDS
+    /// data fields.
+    /// Note: RdsData::valid also describes the valid data fields, but those
+    /// are cumulative over all calls to `decode()` with the same RDS data
+    /// object.
     pub fn decode(&mut self, group: &Group, rds_data: &mut RdsData) -> ValidFields {
         let mut valid = ValidFields::default();
 
@@ -674,90 +700,42 @@ impl<'a> Decoder {
         let block_b = GroupType2BlockB::from_bytes(group.b.unwrap().to_be_bytes());
         valid = decode_block_b_common(&block_b.common(), rds_data);
 
-        match (
+        let new_valid = match (
             block_b.common().group_type().code(),
             block_b.common().group_type().version(),
         ) {
             (0, GroupVersion::A) | (0, GroupVersion::B) => {
-                valid = valid.merge(decode_group_type_0(
-                    &group,
-                    rds_data,
-                    self.advanced_ps_decoding,
-                ));
+                decode_group_type_0(&group, rds_data, self.advanced_ps_decoding)
             }
-            (1, GroupVersion::A) | (1, GroupVersion::B) => {
-                decode_group_type_1(&group, rds_data);
-            }
-            (2, GroupVersion::A) => {
-                decode_group_type_2a(&group, rds_data);
-            }
-            (2, GroupVersion::B) => {
-                decode_group_type_2b(&group, rds_data);
-            }
-            (3, GroupVersion::A) => {
-                decode_group_type_3a(&group, rds_data);
-            }
-            (3, GroupVersion::B) => {
-                decode_group_type_3b(&group, rds_data);
-            }
-            (4, GroupVersion::A) => {
-                decode_group_type_4a(&group, rds_data);
-            }
-            (4, GroupVersion::B) => {
-                decode_group_type_4b(&group, rds_data);
-            }
-            (5, GroupVersion::A) => {
-                decode_group_type_5a(&group, rds_data);
-            }
-            (5, GroupVersion::B) => {
-                decode_group_type_5b(&group, rds_data);
-            }
-            (6, GroupVersion::A) | (6, GroupVersion::B) => {
-                decode_group_type_6(&group, rds_data);
-            }
-            (7, GroupVersion::A) => {
-                decode_group_type_7a(&group, rds_data);
-            }
-            (7, GroupVersion::B) => {
-                decode_group_type_7b(&group, rds_data);
-            }
-            (8, GroupVersion::A) | (8, GroupVersion::B) => {
-                decode_group_type_8(&group, rds_data);
-            }
-            (9, GroupVersion::A) | (9, GroupVersion::B) => {
-                decode_group_type_9(&group, rds_data);
-            }
-            (10, GroupVersion::A) => {
-                decode_group_type_10a(&group, rds_data);
-            }
-            (10, GroupVersion::B) => {
-                decode_group_type_10b(&group, rds_data);
-            }
-            (11, GroupVersion::A) | (11, GroupVersion::B) => {
-                decode_group_type_11(&group, rds_data);
-            }
-            (12, GroupVersion::A) | (12, GroupVersion::B) => {
-                decode_group_type_12(&group, rds_data);
-            }
-            (13, GroupVersion::A) => {
-                decode_group_type_13a(&group, rds_data);
-            }
-            (13, GroupVersion::B) => {
-                decode_group_type_13b(&group, rds_data);
-            }
-            (14, GroupVersion::A) => {
-                decode_group_type_14a(&group, rds_data);
-            }
-            (14, GroupVersion::B) => {
-                decode_group_type_14b(&group, rds_data);
-            }
-            (15, GroupVersion::A) | (15, GroupVersion::B) => {
-                decode_group_type_15(&group, rds_data);
-            }
+            (1, GroupVersion::A) | (1, GroupVersion::B) => decode_group_type_1(&group, rds_data),
+            (2, GroupVersion::A) => decode_group_type_2a(&group, rds_data),
+            (2, GroupVersion::B) => decode_group_type_2b(&group, rds_data),
+            (3, GroupVersion::A) => decode_group_type_3a(&group, rds_data),
+            (3, GroupVersion::B) => decode_group_type_3b(&group, rds_data),
+            (4, GroupVersion::A) => decode_group_type_4a(&group, rds_data),
+            (4, GroupVersion::B) => decode_group_type_4b(&group, rds_data),
+            (5, GroupVersion::A) => decode_group_type_5a(&group, rds_data),
+            (5, GroupVersion::B) => decode_group_type_5b(&group, rds_data),
+            (6, GroupVersion::A) | (6, GroupVersion::B) => decode_group_type_6(&group, rds_data),
+            (7, GroupVersion::A) => decode_group_type_7a(&group, rds_data),
+            (7, GroupVersion::B) => decode_group_type_7b(&group, rds_data),
+            (8, GroupVersion::A) | (8, GroupVersion::B) => decode_group_type_8(&group, rds_data),
+            (9, GroupVersion::A) | (9, GroupVersion::B) => decode_group_type_9(&group, rds_data),
+            (10, GroupVersion::A) => decode_group_type_10a(&group, rds_data),
+            (10, GroupVersion::B) => decode_group_type_10b(&group, rds_data),
+            (11, GroupVersion::A) | (11, GroupVersion::B) => decode_group_type_11(&group, rds_data),
+            (12, GroupVersion::A) | (12, GroupVersion::B) => decode_group_type_12(&group, rds_data),
+            (13, GroupVersion::A) => decode_group_type_13a(&group, rds_data),
+            (13, GroupVersion::B) => decode_group_type_13b(&group, rds_data),
+            (14, GroupVersion::A) => decode_group_type_14a(&group, rds_data),
+            (14, GroupVersion::B) => decode_group_type_14b(&group, rds_data),
+            (15, GroupVersion::A) | (15, GroupVersion::B) => decode_group_type_15(&group, rds_data),
             _ => {
                 // Other group types not implemented yet
+                ValidFields::new()
             }
-        }
+        };
+        valid = valid.merge(new_valid);
         rds_data.valid = rds_data.valid.merge(valid);
         valid
     }
