@@ -3,7 +3,7 @@ use crate::eon::EonData;
 use crate::radiotext::RtData;
 use crate::types::{
     Clock, Content, DevStats, EwsData, OdaEntry, ProgramInformation, ProgramType, PsData, PtynData,
-    RdsPic, SlcData, TdcData, TrafficCodes, ValidFlags,
+    RdsPic, SlcData, TdcData, TrafficCodes, ValidFields,
 };
 use heapless::LinearMap;
 
@@ -62,7 +62,7 @@ pub struct RdsData {
     pub ews: EwsData,
 
     /// Bitmask of which fields are valid
-    pub valid: ValidFlags,
+    pub valid: ValidFields,
 
     pub stats: DevStats,
 }

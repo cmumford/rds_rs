@@ -4,7 +4,7 @@ use crate::radiotext::RtVariant;
 use crate::rds::RdsData;
 use crate::types::{
     Content, Group, GroupType, GroupVersion, NUM_TDC, OdaEntry, ProgramInformation, ProgramType,
-    RdsPic, SlcData,
+    RdsPic, SlcData, ValidFields,
 };
 use heapless::LinearMap;
 use modular_bitfield_msb::prelude::*;
@@ -74,12 +74,14 @@ fn decode_ms(blockb: u16, rds_data: &mut RdsData) {
     rds_data.valid.set_ms(true);
 }
 
-fn decode_block_b_common(block: &BlockBCommon, rds_data: &mut RdsData) {
+fn decode_block_b_common(block: &BlockBCommon, rds_data: &mut RdsData) -> ValidFields {
+    let mut valid = ValidFields::new();
     rds_data.traffic.set_tp(block.traffic_program());
-    rds_data.valid.set_tp_code(true);
+    valid.set_tp_code(true);
 
     rds_data.program_type = block.program_type();
-    rds_data.valid.set_pty(true);
+    valid.set_pty(true);
+    valid
 }
 
 fn decode_alt_freq(group: &Group, rds_data: &mut RdsData) {
@@ -107,7 +109,6 @@ fn decode_ta(blockb: u16, rds_data: &mut RdsData) {
 fn update_ps_simple(char_idx: u8, current_ps_byte: u8, rds_data: &mut RdsData) {
     assert!(char_idx < 8);
     rds_data.ps.display[char_idx as usize] = current_ps_byte;
-    rds_data.valid.set_ps(true);
 }
 
 /// Update the Program Service text in our buffers from the shadow registers.
@@ -117,7 +118,7 @@ fn update_ps_simple(char_idx: u8, current_ps_byte: u8, rds_data: &mut RdsData) {
 /// violation of the RBDS standard as well as providing enhanced error detection.
 ///
 /// This function is from the Silicon Labs sample application.
-fn update_ps_advanced(char_idx: usize, byte: u8, rds_data: &mut RdsData) {
+fn update_ps_advanced(char_idx: usize, byte: u8, rds_data: &mut RdsData) -> bool {
     const PS_VALIDATE_LIMIT: u8 = 2;
 
     let mut in_transition = false; // Indicates if the PS text is in transition.
@@ -177,22 +178,27 @@ fn update_ps_advanced(char_idx: usize, byte: u8, rds_data: &mut RdsData) {
     // If the PS text in the high probability array is complete copy it to the
     // display array.
     if complete {
-        rds_data.valid.set_ps(true);
         rds_data
             .ps
             .display
             .copy_from_slice(&rds_data.ps.pvt.hi_prob);
     }
+    complete
 }
 
 // Type 0 groups: Basic tuning and switching information.
-fn decode_group_type_0(group: &Group, rds_data: &mut RdsData, advanced_ps_decoding: bool) {
+fn decode_group_type_0(
+    group: &Group,
+    rds_data: &mut RdsData,
+    advanced_ps_decoding: bool,
+) -> ValidFields {
+    let mut valid = ValidFields::new();
     let block_b = GroupType0BlockB::from_bytes(group.b.unwrap().to_be_bytes());
     if block_b.common().group_type().version() == GroupVersion::A {
         decode_alt_freq(group, rds_data);
     }
     if group.d.is_none() {
-        return;
+        return valid;
     }
     decode_ta(group.b.unwrap(), rds_data);
     decode_ms(group.b.unwrap(), rds_data);
@@ -202,12 +208,20 @@ fn decode_group_type_0(group: &Group, rds_data: &mut RdsData, advanced_ps_decodi
     let hi_byte = (d_val >> 8) as u8;
     let lo_byte = (d_val & 0xFF) as u8;
     if advanced_ps_decoding {
-        update_ps_advanced((pair_idx + 0) as usize, hi_byte, rds_data);
-        update_ps_advanced((pair_idx + 1) as usize, lo_byte, rds_data);
+        let mut updated = update_ps_advanced((pair_idx + 0) as usize, hi_byte, rds_data);
+        if updated {
+            valid.set_ps(true);
+        }
+        updated = update_ps_advanced((pair_idx + 1) as usize, lo_byte, rds_data);
+        if updated {
+            valid.set_ps(true);
+        }
     } else {
         update_ps_simple(pair_idx + 0, hi_byte, rds_data);
         update_ps_simple(pair_idx + 1, lo_byte, rds_data);
+        valid.set_ps(true);
     }
+    valid
 }
 
 // Type 1 groups: Program Item Number and slow labeling codes.
@@ -623,6 +637,15 @@ fn decode_group_type_14b(group: &Group, _rds_data: &mut RdsData) {
 // Type 15 groups: Fast basic tuning and switching information.
 fn decode_group_type_15(_group: &Group, _rds_data: &RdsData) {}
 
+impl ValidFields {
+    fn merge(&self, rhs: ValidFields) -> ValidFields {
+        let l = self.into_bytes();
+        let r = rhs.into_bytes();
+        let m = [l[0] | r[0], l[1] | r[1], l[2] | r[2]];
+        ValidFields::from_bytes(m)
+    }
+}
+
 pub struct Decoder {
     advanced_ps_decoding: bool,
 }
@@ -634,25 +657,33 @@ impl<'a> Decoder {
         }
     }
 
-    pub fn decode(&mut self, group: &Group, rds_data: &mut RdsData) {
+    pub fn decode(&mut self, group: &Group, rds_data: &mut RdsData) -> ValidFields {
+        let mut valid = ValidFields::default();
+
         if group.a.is_some() {
             rds_data.program_information =
                 ProgramInformation::from_bytes(group.a.unwrap().to_be_bytes());
+            valid.set_pi_code(true);
         }
         if group.b.is_none() {
-            return;
+            rds_data.valid = rds_data.valid.merge(valid);
+            return valid;
         }
 
         // All groups have block B common fields.
         let block_b = GroupType0BlockB::from_bytes(group.b.unwrap().to_be_bytes());
-        decode_block_b_common(&block_b.common(), rds_data);
+        valid = decode_block_b_common(&block_b.common(), rds_data);
 
         match (
             block_b.common().group_type().code(),
             block_b.common().group_type().version(),
         ) {
             (0, GroupVersion::A) | (0, GroupVersion::B) => {
-                decode_group_type_0(&group, rds_data, self.advanced_ps_decoding);
+                valid = valid.merge(decode_group_type_0(
+                    &group,
+                    rds_data,
+                    self.advanced_ps_decoding,
+                ));
             }
             (1, GroupVersion::A) | (1, GroupVersion::B) => {
                 decode_group_type_1(&group, rds_data);
@@ -727,5 +758,7 @@ impl<'a> Decoder {
                 // Other group types not implemented yet
             }
         }
+        rds_data.valid = rds_data.valid.merge(valid);
+        valid
     }
 }
