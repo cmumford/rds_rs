@@ -9,6 +9,8 @@ use crate::types::{
 use heapless::LinearMap;
 use modular_bitfield_msb::prelude::*;
 
+const INVALID_ODA_APP_ID: u16 = 0x0;
+
 /// All type B blocks share the same 11-bit common prefix.
 /// See RBDS Standard section 3.1.4.2.
 #[bitfield(bits = 11)]
@@ -39,10 +41,10 @@ struct GroupType2BlockB {
 
 /// Is the ODA application ID valid?
 fn is_valid_oda_app_id(app_id: u16) -> bool {
-    return app_id != 0x0;
+    return app_id != INVALID_ODA_APP_ID;
 }
 
-fn is_group_type_used(map: &LinearMap<u16, OdaEntry, 10>, gt: GroupType) -> bool {
+fn is_oda_group_type_used(map: &LinearMap<u16, OdaEntry, 10>, gt: GroupType) -> bool {
     for (_key, val) in map.iter() {
         if val.group_type == gt {
             return true;
@@ -291,7 +293,19 @@ fn decode_group_type_2b(group: &Group, rds_data: &mut RdsData) {
     rds_data.rt.decode_rt = block_b.text_flag();
 }
 
-fn decode_oda(_group: &Group, _rds_data: &mut RdsData) {}
+fn decode_oda(_group: &Group, gt: GroupType, rds_data: &mut RdsData) {
+    let mut app_id: u16 = INVALID_ODA_APP_ID;
+    for (key, val) in rds_data.oda.iter() {
+        if val.group_type == gt {
+            app_id = *key;
+            break;
+        }
+    }
+    if app_id == INVALID_ODA_APP_ID {
+        return;
+    }
+    // TODO: Finish this. Either use callback, or another way for caller to know new ODA has arrived.
+}
 
 // Type 3A groups: Application identification for Open data.
 fn decode_group_type_3a(group: &Group, rds_data: &mut RdsData) {
@@ -332,7 +346,7 @@ fn decode_group_type_3a(group: &Group, rds_data: &mut RdsData) {
 // Type 3B groups: Open Data Application.
 fn decode_group_type_3b(group: &Group, rds_data: &mut RdsData) {
     // See RBDS Standard section 3.1.5.5.
-    decode_oda(group, rds_data);
+    decode_oda(group, group.get_type(), rds_data);
 }
 
 // Type 4A groups : Clock-time and date.
@@ -377,7 +391,7 @@ fn decode_group_type_4a(group: &Group, rds_data: &mut RdsData) {
 // Type 4B groups: Open data application.
 fn decode_group_type_4b(group: &Group, rds_data: &mut RdsData) {
     // See RBDS Standard section 3.1.5.7.
-    decode_oda(group, rds_data);
+    decode_oda(group, group.get_type(), rds_data);
 }
 
 fn decode_tdc_block(block: u16, rds_data: &mut RdsData) {
@@ -403,8 +417,8 @@ fn decode_group_type_5a(group: &Group, rds_data: &mut RdsData) {
     }
     let block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
 
-    if is_group_type_used(&rds_data.oda, block_b.common().group_type()) {
-        decode_oda(group, rds_data);
+    if is_oda_group_type_used(&rds_data.oda, block_b.common().group_type()) {
+        decode_oda(group, block_b.common().group_type(), rds_data);
         return;
     }
     rds_data.tdc.current_channel = block_b.address();
@@ -420,8 +434,8 @@ fn decode_group_type_5a(group: &Group, rds_data: &mut RdsData) {
 fn decode_group_type_5b(group: &Group, rds_data: &mut RdsData) {
     // See RBDS Standard section 3.1.5.8.
     const GROUP_TYPE: GroupType = GroupType::from_bytes([5 << 1 + GroupVersion::B as u8]);
-    if is_group_type_used(&rds_data.oda, GROUP_TYPE) {
-        decode_oda(group, rds_data);
+    if is_oda_group_type_used(&rds_data.oda, GROUP_TYPE) {
+        decode_oda(group, GROUP_TYPE, rds_data);
         return;
     }
 }
@@ -435,8 +449,8 @@ fn decode_group_type_6(group: &Group, rds_data: &mut RdsData) {
         unused: B5,
     }
     let block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
-    if is_group_type_used(&rds_data.oda, block_b.common().group_type()) {
-        decode_oda(group, rds_data);
+    if is_oda_group_type_used(&rds_data.oda, block_b.common().group_type()) {
+        decode_oda(group, block_b.common().group_type(), rds_data);
         return;
     }
 
@@ -448,8 +462,8 @@ fn decode_group_type_6(group: &Group, rds_data: &mut RdsData) {
 fn decode_group_type_7a(group: &Group, rds_data: &mut RdsData) {
     // See RBDS Standard section 3.1.5.10.
     const GROUP_TYPE: GroupType = GroupType::from_bytes([7 << 1 + GroupVersion::A as u8]);
-    if is_group_type_used(&rds_data.oda, GROUP_TYPE) {
-        decode_oda(group, rds_data);
+    if is_oda_group_type_used(&rds_data.oda, GROUP_TYPE) {
+        decode_oda(group, GROUP_TYPE, rds_data);
         return;
     }
 
@@ -459,15 +473,15 @@ fn decode_group_type_7a(group: &Group, rds_data: &mut RdsData) {
 // Type 7B groups: Open data application
 fn decode_group_type_7b(group: &Group, rds_data: &mut RdsData) {
     // See RBDS Standard section 3.1.5.11.
-    decode_oda(group, rds_data);
+    decode_oda(group, group.get_type(), rds_data);
 }
 
 // Type 8 groups: Traffic Message Channel or ODA
 fn decode_group_type_8(group: &Group, rds_data: &mut RdsData) {
     // See RBDS Standard section 3.1.5.12.
     let gt = group.get_type();
-    if is_group_type_used(&rds_data.oda, gt) {
-        decode_oda(group, rds_data);
+    if is_oda_group_type_used(&rds_data.oda, gt) {
+        decode_oda(group, gt, rds_data);
         return;
     }
     if gt.version() == GroupVersion::A {
@@ -479,8 +493,8 @@ fn decode_group_type_8(group: &Group, rds_data: &mut RdsData) {
 fn decode_group_type_9(group: &Group, rds_data: &mut RdsData) {
     // See RBDS Standard section 3.1.5.13.
     let gt = group.get_type();
-    if is_group_type_used(&rds_data.oda, gt) {
-        decode_oda(group, rds_data);
+    if is_oda_group_type_used(&rds_data.oda, gt) {
+        decode_oda(group, gt, rds_data);
         return;
     }
 
@@ -540,20 +554,20 @@ fn decode_group_type_10b(group: &Group, rds_data: &mut RdsData) {
     if group.get_type().version() == GroupVersion::A {
         decode_ptyn(group, rds_data);
     } else {
-        decode_oda(group, rds_data);
+        decode_oda(group, group.get_type(), rds_data);
     }
 }
 
 // Type 11 groups: Open Data Application
 fn decode_group_type_11(group: &Group, rds_data: &mut RdsData) {
     // See RBDS Standard section 3.1.5.15.
-    decode_oda(group, rds_data);
+    decode_oda(group, group.get_type(), rds_data);
 }
 
 // Type 12 groups: Open Data Application.
 fn decode_group_type_12(group: &Group, rds_data: &mut RdsData) {
     // See RBDS Standard section 3.1.5.16.
-    decode_oda(group, rds_data);
+    decode_oda(group, group.get_type(), rds_data);
 }
 
 // Type 13A groups: Enhanced Radio Paging or ODA.
@@ -576,7 +590,7 @@ fn decode_group_type_13a(group: &Group, _rds_data: &mut RdsData) {
 // Type 13B groups: Open Data Application
 fn decode_group_type_13b(group: &Group, rds_data: &mut RdsData) {
     // See RBDS Standard section 3.1.5.18.
-    decode_oda(group, rds_data);
+    decode_oda(group, group.get_type(), rds_data);
 }
 
 // Type 14 groups: Enhanced Other Networks information.
