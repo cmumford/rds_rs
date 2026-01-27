@@ -51,7 +51,7 @@ pub struct RtData {
     pub decode_rt: RtVariant, // Which RT text currently being decoded.
 }
 
-fn rds_to_utf8_lossy(bytes: &[u8]) -> String {
+pub fn rds_to_utf8_lossy(bytes: &[u8]) -> String {
     bytes
         .iter()
         .map(|&b| match b {
