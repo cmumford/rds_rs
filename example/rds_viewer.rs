@@ -14,7 +14,7 @@ use std::{
 };
 
 // In your render/draw function:
-fn ui(f: &mut Frame, rds_data: &RdsData, num: usize, max: usize) {
+fn draw_ui(f: &mut Frame, rds_data: &RdsData, num: usize, max: usize) {
     let area = f.area(); // or your chosen layout area
 
     let title = format!("  RDS Viewer. Block {} of {}  ", num, max);
@@ -143,7 +143,7 @@ fn main() -> io::Result<()> {
         let rds_data = rds_blocks.get(block_idx).unwrap();
 
         terminal.draw(|f| {
-            ui(f, rds_data, block_idx + 1, rds_blocks.len());
+            draw_ui(f, rds_data, block_idx + 1, rds_blocks.len());
         })?;
 
         if let Event::Key(key) = event::read()? {
