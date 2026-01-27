@@ -32,6 +32,7 @@ fn ui(f: &mut Frame, rds_data: &RdsData, num: usize, max: usize) {
         .constraints([
             Constraint::Length(1), // RTA row
             Constraint::Length(1), // RTB row
+            Constraint::Length(1), // PTYN row
             Constraint::Min(0),    // remaining space
         ])
         .split(inner_area);
@@ -58,7 +59,7 @@ fn ui(f: &mut Frame, rds_data: &RdsData, num: usize, max: usize) {
     }
 
     {
-        let rtb_label = Paragraph::new("RTB:").style(Style::default().fg(Color::LightCyan));
+        let label = Paragraph::new("RTB:").style(Style::default().fg(Color::LightCyan));
         let rtb = rds_to_utf8_lossy(&rds_data.rt.b.display);
         let rtb_content = format!(
             "{:<64}",
@@ -74,8 +75,27 @@ fn ui(f: &mut Frame, rds_data: &RdsData, num: usize, max: usize) {
                 Constraint::Min(0),
             ])
             .split(chunks[1]);
-        f.render_widget(rtb_label, rtb_area[0]);
+        f.render_widget(label, rtb_area[0]);
         f.render_widget(rtb_input, rtb_area[1]);
+    }
+
+    {
+        const PTYN_LEN: u8 = 8;
+        let label = Paragraph::new("PTYN:").style(Style::default().fg(Color::LightCyan));
+        let data = rds_to_utf8_lossy(&rds_data.ptyn.display);
+        let text = format!("{:<8}", data.chars().take(8).collect::<String>());
+        let input =
+            Paragraph::new(text).style(Style::default().bg(Color::DarkGray).fg(Color::White));
+        let area = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([
+                Constraint::Length(5),
+                Constraint::Length(PTYN_LEN as u16),
+                Constraint::Min(0),
+            ])
+            .split(chunks[2]);
+        f.render_widget(label, area[0]);
+        f.render_widget(input, area[1]);
     }
 }
 
