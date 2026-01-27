@@ -8,6 +8,7 @@ modular-bitfield-msb = "0.11.2"
 heapless = "0.9.2"
 
 [dev-dependencies]
+crossterm = "0.29.0"
 log = "0.4"
 ratatui = "0.30.0"
 rdspy = { path = "/Users/chris/src/rdspy" }
