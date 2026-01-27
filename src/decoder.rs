@@ -360,6 +360,12 @@ fn decode_group_type_3a(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     }
     let block_b = GroupType3ABlockB::from_bytes(group.b.unwrap().to_be_bytes());
     let app_id = group.d.unwrap();
+
+    // Per spec 3.1.5.4:
+    // > The AID code 0000 (Hex) may be used to indicate that the respective
+    // > group type is being used for the normal feature specified in this
+    // > standard. Application Identification codes 0001 to FFFF (Hex) indicate
+    // > applications as specified in the ODA Directory
     if !is_valid_oda_app_id(app_id) {
         return valid;
     }
