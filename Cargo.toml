@@ -17,3 +17,7 @@ walkdir = "2.5"
 [[example]]
 name = "decode_rds_spy_log"
 path = "example/decode_rds_spy_log.rs"
+
+[[example]]
+name = "rds_viewer"
+path = "example/rds_viewer.rs"
