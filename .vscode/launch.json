@@ -1,0 +1,22 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug decode_rds_spy_log",
+            "cargo": {
+                "args": [
+                    "run",
+                    "--example",
+                    "decode_rds_spy_log",
+                    "--",
+                    "third_party/rds-spy-logs/Canada/C6A8 - 2019-05-05 09-30-11.spy"
+                ],
+                "filter": "singleRp"
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}
