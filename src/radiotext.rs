@@ -2,24 +2,26 @@ use modular_bitfield_msb::prelude::*;
 
 use crate::types::Group;
 
+pub const MAX_RADIOTEXT_LEN: usize = 64;
+
 /// Radiotext (RT) decoding state for one variant (A or B)
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Radiotext {
-    /// Final decoded text (64 bytes)
-    pub display: [u8; 64],
+    /// Final decoded text.
+    pub display: [u8; MAX_RADIOTEXT_LEN],
     pvt: RadioTextPvt,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct RadioTextPvt {
-    hi_prob: [u8; 64],     // Temporary Radiotext (high probability).
-    lo_prob: [u8; 64],     // Temporary Radiotext (low probability).
-    hi_prob_cnt: [u8; 64], // Hit count of high probability Radiotext.
+    hi_prob: [u8; MAX_RADIOTEXT_LEN], // Temporary Radiotext (high probability).
+    lo_prob: [u8; MAX_RADIOTEXT_LEN], // Temporary Radiotext (low probability).
+    hi_prob_cnt: [u8; MAX_RADIOTEXT_LEN], // Hit count of high probability Radiotext.
 }
 
 impl Default for Radiotext {
     fn default() -> Self {
-        let mut spaces = [0u8; 64];
+        let mut spaces = [0u8; MAX_RADIOTEXT_LEN];
         spaces.fill(b' ');
 
         Self {
