@@ -15,7 +15,7 @@ test-all:
 
 .PHONY: viewer
 viewer:
-	cargo run $(RELEASE) --example rds_viewer third_party/rds-spy-logs/Austria/A540_-_2021-07-26_19-08-06.spy
+	cargo run $(RELEASE) --example rds_viewer "third_party/rds-spy-logs/Italy/5218 - 2023-05-10 20-41-22.spy"
 
 .PHONY: clean
 clean:

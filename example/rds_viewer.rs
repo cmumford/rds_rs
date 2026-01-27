@@ -3,11 +3,8 @@ use crossterm::{
     event::{self, Event, KeyCode},
     terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
-use ratatui::{
-    prelude::*,
-    widgets::{Block, BorderType, Borders},
-};
-use rds::{Decoder, Group, RdsData};
+use ratatui::{prelude::*, widgets::*};
+use rds::{Decoder, Group, MAX_RADIOTEXT_LEN, RdsData, rds_to_utf8_lossy};
 use rdspy::RdsGroupIterator;
 use std::{
     env,
@@ -15,6 +12,72 @@ use std::{
     io::{self, BufRead, BufReader, stdout},
     path::Path,
 };
+
+// In your render/draw function:
+fn ui(f: &mut Frame, rds_data: &RdsData, num: usize, max: usize) {
+    let area = f.area(); // or your chosen layout area
+
+    let title = format!("RDS Viewer block {} of {}", num, max);
+    let outer_block = Block::default()
+        .title(title)
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(Color::DarkGray));
+
+    let inner_area = outer_block.inner(area);
+    f.render_widget(outer_block, area);
+
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Length(1), // RTA row
+            Constraint::Length(1), // RTB row
+            Constraint::Min(0),    // remaining space
+        ])
+        .split(inner_area);
+
+    {
+        let rta_label = Paragraph::new("RTA:").style(Style::default().fg(Color::LightCyan));
+        let rta = rds_to_utf8_lossy(&rds_data.rt.a.display);
+        let rta_content = format!(
+            "{:<64}",
+            rta.chars().take(MAX_RADIOTEXT_LEN).collect::<String>()
+        );
+        let rta_input = Paragraph::new(rta_content)
+            .style(Style::default().bg(Color::DarkGray).fg(Color::White));
+        let rta_area = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([
+                Constraint::Length(4),
+                Constraint::Length(MAX_RADIOTEXT_LEN as u16),
+                Constraint::Min(0),
+            ])
+            .split(chunks[0]);
+        f.render_widget(rta_label, rta_area[0]);
+        f.render_widget(rta_input, rta_area[1]);
+    }
+
+    {
+        let rtb_label = Paragraph::new("RTB:").style(Style::default().fg(Color::LightCyan));
+        let rtb = rds_to_utf8_lossy(&rds_data.rt.b.display);
+        let rtb_content = format!(
+            "{:<64}",
+            rtb.chars().take(MAX_RADIOTEXT_LEN).collect::<String>()
+        );
+        let rtb_input = Paragraph::new(rtb_content)
+            .style(Style::default().bg(Color::DarkGray).fg(Color::White));
+        let rtb_area = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([
+                Constraint::Length(4),
+                Constraint::Length(MAX_RADIOTEXT_LEN as u16),
+                Constraint::Min(0),
+            ])
+            .split(chunks[1]);
+        f.render_widget(rtb_label, rtb_area[0]);
+        f.render_widget(rtb_input, rtb_area[1]);
+    }
+}
 
 fn main() -> io::Result<()> {
     let args: Vec<String> = env::args().collect();
@@ -60,25 +123,18 @@ fn main() -> io::Result<()> {
         let rds_data = rds_blocks.get(block_idx).unwrap();
 
         terminal.draw(|f| {
-            let area = f.area();
-            let status_title = format!(
-                "RDS block {} of {} - Press 'q' to quit",
-                block_idx + 1,
-                rds_blocks.len()
-            );
-            let block = Block::default()
-                .title(Span::styled(status_title, Style::default().fg(Color::Cyan)))
-                .borders(Borders::ALL)
-                .border_style(Style::default().fg(Color::DarkGray))
-                .border_type(BorderType::Rounded);
-
-            f.render_widget(block, area);
+            ui(f, rds_data, block_idx + 1, rds_blocks.len());
         })?;
 
         if let Event::Key(key) = event::read()? {
             match key.code {
                 KeyCode::Char('q') => {
                     break;
+                }
+                KeyCode::Left => {
+                    if block_idx > 0 {
+                        block_idx -= 1;
+                    }
                 }
                 KeyCode::Right => {
                     if block_idx + 1 < rds_blocks.len() {
@@ -95,7 +151,7 @@ fn main() -> io::Result<()> {
     Ok(())
 }
 
-fn process_reader<R: BufRead + 'static>(reader: R) -> io::Result<(Vec<RdsData>)> {
+fn process_reader<R: BufRead + 'static>(reader: R) -> io::Result<Vec<RdsData>> {
     let mut rds_blocks: Vec<RdsData> = Vec::new();
 
     let mut decoder = Decoder::new();
