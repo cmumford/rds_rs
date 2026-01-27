@@ -174,6 +174,7 @@ fn main() -> io::Result<()> {
 fn process_reader<R: BufRead + 'static>(reader: R) -> io::Result<Vec<RdsData>> {
     let mut rds_blocks: Vec<RdsData> = Vec::new();
 
+    let mut rds_data = RdsData::default();
     let mut decoder = Decoder::new();
     for group_result in RdsGroupIterator::new(reader) {
         match group_result {
@@ -184,9 +185,8 @@ fn process_reader<R: BufRead + 'static>(reader: R) -> io::Result<Vec<RdsData>> {
                     c: group.c,
                     d: group.d,
                 };
-                let mut rds_data = RdsData::default();
                 decoder.decode(&blocks, &mut rds_data);
-                rds_blocks.push(rds_data);
+                rds_blocks.push(rds_data.clone());
             }
             Err(e) => eprintln!("Error: {}", e),
         }
