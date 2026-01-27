@@ -17,7 +17,7 @@ use std::{
 fn ui(f: &mut Frame, rds_data: &RdsData, num: usize, max: usize) {
     let area = f.area(); // or your chosen layout area
 
-    let title = format!("RDS Viewer block {} of {}", num, max);
+    let title = format!("  RDS Viewer. Block {} of {}  ", num, max);
     let outer_block = Block::default()
         .title(title)
         .borders(Borders::ALL)

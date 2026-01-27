@@ -1,5 +1,5 @@
 use log::{error, info};
-use rds::{Decoder, Group, RdsData, RtVariant};
+use rds::{Decoder, Group, RdsData, RtVariant, rds_to_utf8_lossy};
 use rdspy::RdsGroupIterator;
 use std::str;
 
@@ -68,13 +68,11 @@ fn process_reader<R: BufRead + 'static>(reader: R) -> io::Result<()> {
                     } else {
                         &rds_data.rt.b
                     };
-                    let text = str::from_utf8(&rt.display);
-                    if text.is_ok() {
-                        let trimmed = text.unwrap().trim();
-                        if last_rt != trimmed {
-                            println!("RT: {}", trimmed);
-                            last_rt = trimmed.to_string();
-                        }
+                    let text = rds_to_utf8_lossy(&rt.display);
+                    let trimmed = text.trim();
+                    if last_rt != trimmed {
+                        println!("RT: {}", trimmed);
+                        last_rt = trimmed.to_string();
                     }
                 }
             }
