@@ -28,7 +28,7 @@ pub const TDC_LEN: usize = 32;
 /// Group type version.
 /// See the RDS Standard section 3.1.3.
 /// #[derive(BitfieldSpecifier)]
-#[derive(BitfieldSpecifier, PartialEq, Eq)]
+#[derive(BitfieldSpecifier, Debug, PartialEq, Eq)]
 #[bits = 1]
 pub enum GroupVersion {
     A = 0,
@@ -161,7 +161,7 @@ pub struct TrafficCodes {
     pub ta: bool, // Traffic Announcement code (TA).
 }
 
-#[derive(BitfieldSpecifier, Default, Clone, PartialEq, Eq)]
+#[derive(BitfieldSpecifier, Debug, Default, Clone, PartialEq, Eq)]
 #[bits = 5]
 pub enum ProgramType {
     #[default]
