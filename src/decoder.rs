@@ -12,21 +12,13 @@ use std::ops::BitOr;
 
 const INVALID_ODA_APP_ID: u16 = 0x0;
 
-/// All type B blocks share the same 11-bit common prefix.
-/// See RBDS Standard section 3.1.4.2.
-#[bitfield(bits = 11)]
-#[derive(BitfieldSpecifier)]
-struct BlockBCommon {
-    group_type: GroupType,     // Group type (code + version).
-    traffic_program: bool,     // TP bit.
-    program_type: ProgramType, // PTY: Program type.
-}
-
 // See RBDS Standard section 3.1.5.3.
 #[bitfield(bits = 16)]
 struct GroupType2BlockB {
-    common: BlockBCommon,
-    text_flag: RtVariant, // See Annex M.
+    group_type: GroupType,     // Group type (code + version).
+    traffic_program: bool,     // TP bit.
+    program_type: ProgramType, // PTY: Program type.
+    text_flag: RtVariant,
     text_segment_addr: B4,
 }
 
@@ -61,16 +53,16 @@ fn is_oda_group_type_used(map: &LinearMap<u16, OdaEntry, 10>, gt: GroupType) -> 
 
 impl Group {
     fn get_type(&self) -> GroupType {
-        GroupType2BlockB::from_bytes(self.b.unwrap().to_be_bytes())
-            .common()
-            .group_type()
+        GroupType2BlockB::from_bytes(self.b.unwrap().to_be_bytes()).group_type()
     }
 }
 
 fn decode_ms(blockb: u16, rds_data: &mut RdsData) {
     #[bitfield(bits = 16)]
     struct Block {
-        common: BlockBCommon,
+        group_type: GroupType,     // Group type (code + version).
+        traffic_program: bool,     // TP bit.
+        program_type: ProgramType, // PTY: Program type.
         ta: bool,
         content: Content,
         unused: B3,
@@ -80,7 +72,7 @@ fn decode_ms(blockb: u16, rds_data: &mut RdsData) {
     rds_data.valid.set_ms(true);
 }
 
-fn decode_block_b_common(block: &BlockBCommon, rds_data: &mut RdsData) -> ValidFields {
+fn decode_block_b_common(block: &GroupType2BlockB, rds_data: &mut RdsData) -> ValidFields {
     let mut valid = ValidFields::new();
     rds_data.traffic.set_tp(block.traffic_program());
     valid.set_tp_code(true);
@@ -103,7 +95,9 @@ fn decode_alt_freq(group: &Group, rds_data: &mut RdsData) {
 fn decode_ta(blockb: u16, rds_data: &mut RdsData) {
     #[bitfield(bits = 16)]
     struct Block {
-        common: BlockBCommon,
+        group_type: GroupType,     // Group type (code + version).
+        traffic_program: bool,     // TP bit.
+        program_type: ProgramType, // PTY: Program type.
         ta_flag: bool,
         unused: B4,
     }
@@ -201,7 +195,9 @@ fn decode_group_type_0(
     // See RBDS Standard section 3.1.5.1.
     #[bitfield(bits = 16)]
     struct BlockB {
-        common: BlockBCommon,         // Common block B fields.
+        group_type: GroupType,        // Group type (code + version).
+        traffic_program: bool,        // TP bit.
+        program_type: ProgramType,    // PTY: Program type.
         traffic_announcement: bool,   // TA bit: section 3.2.1.3.
         ms: bool,                     // M/S bit: section 3.2.1.4.
         decoder_identification: bool, // DI bit: section 3.2.1.5.
@@ -210,7 +206,7 @@ fn decode_group_type_0(
 
     let mut valid = ValidFields::new();
     let block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
-    if block_b.common().group_type().version() == GroupVersion::A {
+    if block_b.group_type().version() == GroupVersion::A {
         decode_alt_freq(group, rds_data);
     }
     if group.d.is_none() {
@@ -245,12 +241,14 @@ fn decode_group_type_1(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     // See RBDS Standard section 3.1.5.2.
     #[bitfield(bits = 16)]
     struct GroupType1BlockB {
-        common: BlockBCommon,   // Common block B fields.
-        radio_paging_codes: B5, // See Annex M.
+        group_type: GroupType,     // Group type (code + version).
+        traffic_program: bool,     // TP bit.
+        program_type: ProgramType, // PTY: Program type.
+        radio_paging_codes: B5,    // See Annex M.
     }
 
     let block_b = GroupType1BlockB::from_bytes(group.b.unwrap().to_be_bytes());
-    if block_b.common().group_type().version() == GroupVersion::A && group.c.is_some() {
+    if block_b.group_type().version() == GroupVersion::A && group.c.is_some() {
         rds_data.slc = SlcData::from_bytes(group.c.unwrap().to_be_bytes());
         rds_data.valid.set_slc(true);
     }
@@ -351,7 +349,9 @@ fn decode_group_type_3a(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     #[bitfield(bits = 16)]
     #[derive(Default, Clone, PartialEq, Eq)]
     struct GroupType3ABlockB {
-        common: BlockBCommon,         // Common block B fields.
+        group_type: GroupType,        // Group type (code + version).
+        traffic_program: bool,        // TP bit.
+        program_type: ProgramType,    // PTY: Program type.
         application_group: GroupType, // See Annex M.
     }
 
@@ -373,13 +373,13 @@ fn decode_group_type_3a(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     let entry = rds_data.oda.get_mut(&app_id);
     if entry.is_some() {
         let e = entry.unwrap();
-        e.group_type = block_b.common().group_type();
+        e.group_type = block_b.group_type();
     } else {
         if !rds_data.oda.is_full() {
             let _ = rds_data.oda.insert(
                 app_id,
                 OdaEntry {
-                    group_type: block_b.common().group_type(),
+                    group_type: block_b.group_type(),
                     packet_count: 0,
                 },
             );
@@ -399,9 +399,11 @@ fn decode_group_type_4a(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     // See RBDS Standard section 3.1.5.6.
     #[bitfield(bits = 16)]
     struct BlockB {
-        common: BlockBCommon,
-        spare: B3,    // Unused.
-        date_msb: B2, // Top two MSB bits of julian date.
+        group_type: GroupType,     // Group type (code + version).
+        traffic_program: bool,     // TP bit.
+        program_type: ProgramType, // PTY: Program type.
+        spare: B3,                 // Unused.
+        date_msb: B2,              // Top two MSB bits of julian date.
     }
     #[bitfield(bits = 16)]
     struct BlockC {
@@ -456,14 +458,16 @@ fn decode_group_type_5a(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     // See RBDS Standard section 3.1.5.8.
     #[bitfield(bits = 16)]
     struct BlockB {
-        common: BlockBCommon,
+        group_type: GroupType,     // Group type (code + version).
+        traffic_program: bool,     // TP bit.
+        program_type: ProgramType, // PTY: Program type.
         // Address code identifies "channel number" (out of 32) to which the data are addressed.
         address: B5,
     }
     let block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
 
-    if is_oda_group_type_used(&rds_data.oda, block_b.common().group_type()) {
-        return decode_oda(group, block_b.common().group_type(), rds_data);
+    if is_oda_group_type_used(&rds_data.oda, block_b.group_type()) {
+        return decode_oda(group, block_b.group_type(), rds_data);
     }
     let mut valid = ValidFields::new();
     rds_data.tdc.current_channel = block_b.address();
@@ -493,12 +497,14 @@ fn decode_group_type_5b(group: &Group, rds_data: &mut RdsData) -> ValidFields {
 fn decode_group_type_6(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     #[bitfield(bits = 16)]
     struct BlockB {
-        common: BlockBCommon,
+        group_type: GroupType,     // Group type (code + version).
+        traffic_program: bool,     // TP bit.
+        program_type: ProgramType, // PTY: Program type.
         unused: B5,
     }
     let block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
-    if is_oda_group_type_used(&rds_data.oda, block_b.common().group_type()) {
-        return decode_oda(group, block_b.common().group_type(), rds_data);
+    if is_oda_group_type_used(&rds_data.oda, block_b.group_type()) {
+        return decode_oda(group, block_b.group_type(), rds_data);
     }
 
     // According to RBDS spec.: "Consumer receivers should ignore the in-house
@@ -567,7 +573,9 @@ fn decode_ptyn(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     // See RBDS Standard section 3.1.5.14.
     #[bitfield(bits = 16)]
     struct BlockB {
-        common: BlockBCommon,
+        group_type: GroupType,     // Group type (code + version).
+        traffic_program: bool,     // TP bit.
+        program_type: ProgramType, // PTY: Program type.
         ab_flag: bool,
         reserved: B3,
         segment_addr: B1,
@@ -626,7 +634,9 @@ fn decode_group_type_13a(group: &Group, _rds_data: &mut RdsData) -> ValidFields 
     // See RBDS Standard section 3.1.5.17.
     #[bitfield(bits = 16)]
     struct BlockB {
-        common: BlockBCommon,
+        group_type: GroupType,     // Group type (code + version).
+        traffic_program: bool,     // TP bit.
+        program_type: ProgramType, // PTY: Program type.
         information: B2,
         sty: B3,
     }
@@ -650,8 +660,10 @@ fn decode_group_type_14a(group: &Group, _rds_data: &mut RdsData) -> ValidFields 
     // See RBDS Standard section 3.1.5.19.
     #[bitfield(bits = 16)]
     struct BlockB {
-        common: BlockBCommon,
-        tp_on: bool, // TP (ON).
+        group_type: GroupType,     // Group type (code + version).
+        traffic_program: bool,     // TP bit.
+        program_type: ProgramType, // PTY: Program type.
+        tp_on: bool,               // TP (ON).
         variant_code: B4,
     }
     let _block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
@@ -664,9 +676,11 @@ fn decode_group_type_14b(group: &Group, _rds_data: &mut RdsData) -> ValidFields 
     // See RBDS Standard section 3.1.5.19.
     #[bitfield(bits = 16)]
     struct BlockB {
-        common: BlockBCommon,
-        tp_on: bool, // TP (ON).
-        ta_on: bool, // TA (ON).
+        group_type: GroupType,     // Group type (code + version).
+        traffic_program: bool,     // TP bit.
+        program_type: ProgramType, // PTY: Program type.
+        tp_on: bool,               // TP (ON).
+        ta_on: bool,               // TA (ON).
         unused: B3,
     }
     let _block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
@@ -709,14 +723,12 @@ impl<'a> Decoder {
             return valid;
         }
 
-        // All groups have block B common fields.
+        // We don't yet know what block/version this is, but decode as 2B as all
+        // blocks share the first four common fields.
         let block_b = GroupType2BlockB::from_bytes(group.b.unwrap().to_be_bytes());
-        valid = decode_block_b_common(&block_b.common(), rds_data);
+        valid = decode_block_b_common(&block_b, rds_data);
 
-        let new_valid = match (
-            block_b.common().group_type().code(),
-            block_b.common().group_type().version(),
-        ) {
+        let new_valid = match (block_b.group_type().code(), block_b.group_type().version()) {
             (0, GroupVersion::A) | (0, GroupVersion::B) => {
                 decode_group_type_0(&group, rds_data, self.advanced_ps_decoding)
             }
