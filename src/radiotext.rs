@@ -1,10 +1,12 @@
 use modular_bitfield_msb::prelude::*;
 
-use crate::types::Group;
-
 pub const MAX_RADIOTEXT_LEN: usize = 64;
+const END_OF_MESSAGE_CHAR: u8 = 0x0d;
+const LINE_BREAK_CHAR: u8 = 0x0a;
+const BLANK_CHAR: u8 = ' ' as u8;
 
 // Code table from IEC 62106:1000 Figure E.1
+// TODO: Complete this table.
 const TABLE1: [[char; 16]; 16] = [
     [
         ' ', ' ', ' ', '0', '@', 'P', '॥', 'p', 'a', 'â', 'a', '°', 'A', 'Â', 'Ã', 'ã',
@@ -57,14 +59,14 @@ const TABLE1: [[char; 16]; 16] = [
 ];
 
 /// Radiotext (RT) decoding state for one variant (A or B)
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Radiotext {
     /// Final decoded text.
     pub display: [u8; MAX_RADIOTEXT_LEN],
     pvt: RadioTextPvt,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 struct RadioTextPvt {
     hi_prob: [u8; MAX_RADIOTEXT_LEN], // Temporary Radiotext (high probability).
     lo_prob: [u8; MAX_RADIOTEXT_LEN], // Temporary Radiotext (low probability).
@@ -96,7 +98,7 @@ pub enum RtVariant {
     B,
 }
 
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
 pub struct RtData {
     pub a: Radiotext,         // RT A text.
     pub b: Radiotext,         // RT B text.
@@ -107,6 +109,7 @@ pub fn rds_to_utf8_lossy(bytes: &[u8]) -> String {
     bytes
         .iter()
         .map(|&b| match b {
+            LINE_BREAK_CHAR => ' ',
             _ => {
                 let x: usize = (b & 0xf) as usize;
                 let y: usize = (b >> 4) as usize;
@@ -117,36 +120,36 @@ pub fn rds_to_utf8_lossy(bytes: &[u8]) -> String {
 }
 
 impl Radiotext {
-    pub fn update_rt_simple(&mut self, group: &Group, count: usize, addr: usize, chars: &[u8]) {
-        for i in 0..count {
-            // Choose the appropriate block. Count > 2 check is necessary for 2B groups.
-            if (i < 2) && (count > 2) {
-                if group.c.is_none() {
-                    continue;
-                }
-            } else {
-                if group.d.is_none() {
-                    continue;
-                }
-            }
+    pub fn reset(&mut self) {
+        self.display.fill(BLANK_CHAR);
+    }
 
-            // Store the data in our temporary array.
-            self.display[addr + i] = chars[i];
-            if chars[i as usize] == 0x0d {
-                // The end of message character has been received.
-                // Wipe out the rest of the text.
-                for j in (addr + i + 1)..self.display.len() {
-                    self.display[j] = ' ' as u8;
-                }
-                break;
-            }
-        }
+    // Write (up to) a pair of two character tuples (up to four characters) into this
+    // instance starting at character index `addr`. One or both of the two-character
+    // pairs may be missing, and if so do nothing.
+    pub fn update_rt_simple(&mut self, addr: usize, chars: &[Option<[u8; 2]>]) {
+        let mut idx = addr;
 
-        // Any null character before this should become a space.
-        for i in 0..addr {
-            if self.display[i] == 0 {
-                self.display[i] = ' ' as u8;
+        // Write two characters if provided.
+        // Return true if the end of message character (0xD) is received.
+        let mut add_pair = |pair: &Option<[u8; 2]>| -> bool {
+            if pair.is_none() {
+                return false;
             }
+            for ch in pair.unwrap() {
+                if ch == END_OF_MESSAGE_CHAR {
+                    self.display[idx..].fill(BLANK_CHAR);
+                    return true;
+                }
+                self.display[idx] = ch;
+                idx += 1;
+            }
+            false
+        };
+
+        let eom = add_pair(&chars[0]);
+        if !eom && chars.len() > 1 {
+            add_pair(&chars[1]);
         }
     }
 
@@ -155,58 +158,55 @@ impl Radiotext {
     /// This implementation of the Radiotext update attempts to further error
     /// correct the data by making sure that the data has been identical for
     /// multiple receptions of each byte.
-    pub fn update_rt_advance(&mut self, group: &Group, count: usize, addr: usize, byte: &mut [u8]) {
+    pub fn update_rt_advance(&mut self, addr: usize, byte: &[Option<[u8; 2]>]) {
         const RT_VALIDATE_LIMIT: u8 = 2;
-
         let mut text_changing = false; // Indicates if the Radiotext is changing.
+        let mut idx = addr;
 
-        for i in 0..count {
-            // Choose the appropriate block. Count > 2 check is necessary for 2B groups.
-            if (i < 2) && (count > 2) {
-                if group.c.is_none() {
-                    continue;
-                }
-            } else {
-                if group.d.is_none() {
-                    continue;
-                }
+        let mut add_pair = |pair: &Option<[u8; 2]>| {
+            if pair.is_none() {
+                return;
             }
-            if byte[i] == 0 {
-                byte[i] = ' ' as u8; // translate nulls to spaces.
+            for ch in pair.unwrap() {
+                // The new byte matches the high probability byte.
+                if self.pvt.hi_prob[idx] == ch {
+                    if self.pvt.hi_prob_cnt[idx] < RT_VALIDATE_LIMIT {
+                        self.pvt.hi_prob_cnt[idx] += 1;
+                    } else {
+                        // we have received this byte enough to max out our counter and push
+                        // it into the low probability array as well.
+                        self.pvt.hi_prob_cnt[idx] = RT_VALIDATE_LIMIT;
+                        self.pvt.lo_prob[idx] = ch;
+                    }
+                } else if self.pvt.lo_prob[idx] == ch {
+                    // The new byte is a match with the low probability byte. Swap them,
+                    // reset the counter and flag the text as in transition. Note that the
+                    // counter for this character goes higher than the validation limit
+                    // because it will get knocked down later.
+                    if self.pvt.hi_prob_cnt[idx] >= RT_VALIDATE_LIMIT {
+                        text_changing = true;
+                        self.pvt.hi_prob_cnt[idx] = RT_VALIDATE_LIMIT + 1;
+                    } else {
+                        self.pvt.hi_prob_cnt[idx] = RT_VALIDATE_LIMIT;
+                    }
+                    self.pvt.lo_prob[idx] = self.pvt.hi_prob[idx];
+                    self.pvt.hi_prob[idx] = ch;
+                } else if !self.pvt.hi_prob_cnt[idx] == 0 {
+                    // The new byte is replacing an empty byte in the high proability array.
+                    self.pvt.hi_prob[idx] = ch;
+                    self.pvt.hi_prob_cnt[idx] = 1;
+                } else {
+                    // The new byte doesn't match anything, put it in the low probability
+                    // array.
+                    self.pvt.lo_prob[idx] = ch;
+                }
+                idx += 1;
             }
+        };
 
-            // The new byte matches the high probability byte.
-            if self.pvt.hi_prob[addr + i] == byte[i] {
-                if self.pvt.hi_prob_cnt[addr + i] < RT_VALIDATE_LIMIT {
-                    self.pvt.hi_prob_cnt[addr + i] += 1;
-                } else {
-                    // we have received this byte enough to max out our counter and push
-                    // it into the low probability array as well.
-                    self.pvt.hi_prob_cnt[addr + i] = RT_VALIDATE_LIMIT;
-                    self.pvt.lo_prob[addr + i] = byte[i];
-                }
-            } else if self.pvt.lo_prob[addr + i] == byte[i] {
-                // The new byte is a match with the low probability byte. Swap them,
-                // reset the counter and flag the text as in transition. Note that the
-                // counter for this character goes higher than the validation limit
-                // because it will get knocked down later.
-                if self.pvt.hi_prob_cnt[addr + i] >= RT_VALIDATE_LIMIT {
-                    text_changing = true;
-                    self.pvt.hi_prob_cnt[addr + i] = RT_VALIDATE_LIMIT + 1;
-                } else {
-                    self.pvt.hi_prob_cnt[addr + i] = RT_VALIDATE_LIMIT;
-                }
-                self.pvt.lo_prob[addr + i] = self.pvt.hi_prob[addr + i];
-                self.pvt.hi_prob[addr + i] = byte[i];
-            } else if !self.pvt.hi_prob_cnt[addr + i] == 0 {
-                // The new byte is replacing an empty byte in the high proability array.
-                self.pvt.hi_prob[addr + i] = byte[i];
-                self.pvt.hi_prob_cnt[addr + i] = 1;
-            } else {
-                // The new byte doesn't match anything, put it in the low probability
-                // array.
-                self.pvt.lo_prob[addr + i] = byte[i];
-            }
+        add_pair(&byte[0]);
+        if byte.len() > 1 {
+            add_pair(&byte[1]);
         }
 
         if !text_changing {
@@ -225,7 +225,7 @@ impl Radiotext {
     pub fn bump_rt_validation_count(&mut self) {
         for i in 0..self.pvt.hi_prob_cnt.len() {
             if self.pvt.hi_prob[i] == 0 {
-                self.pvt.hi_prob[i] = ' ' as u8;
+                self.pvt.hi_prob[i] = BLANK_CHAR;
                 self.pvt.hi_prob_cnt[i] += 1;
             }
             for i in 0..self.pvt.hi_prob_cnt.len() {

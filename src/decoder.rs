@@ -268,63 +268,47 @@ fn decode_group_type_1(group: &Group, rds_data: &mut RdsData) -> ValidFields {
 }
 
 // Type 2 groups: Radiotext.
+// See RBDS Standard setion 3.1.5.3.
 fn decode_group_type_2a(group: &Group, rds_data: &mut RdsData) -> ValidFields {
-    let mut valid = ValidFields::new();
-    // See RBDS Standard setion 3.1.5.3.
     let block_b = GroupType2BlockB::from_bytes(group.b.unwrap().to_be_bytes());
-    if group.c.is_none() || group.d.is_none() {
-        return valid;
-    }
-    let mut rtchars: [u8; 4] = [
-        (group.c.unwrap() >> 8) as u8,
-        (group.c.unwrap() & 0xff) as u8,
-        (group.d.unwrap() >> 8) as u8,
-        (group.d.unwrap() & 0xff) as u8,
+    let chars: [Option<[u8; 2]>; 2] = [
+        group.c.map(|c| c.to_be_bytes()),
+        group.d.map(|d| d.to_be_bytes()),
     ];
-    let rt = if block_b.text_flag() == RtVariant::A {
-        &mut rds_data.rt.a
-    } else {
-        &mut rds_data.rt.b
+    let rt = match block_b.text_flag() {
+        RtVariant::A => &mut rds_data.rt.a,
+        RtVariant::B => &mut rds_data.rt.b,
     };
-    let addr = 4 * block_b.text_segment_addr();
-    rt.update_rt_simple(group, 4, addr as usize, &rtchars);
+    let addr = (block_b.text_segment_addr() as usize) * 4;
+    rt.update_rt_simple(addr, &chars);
     if rds_data.rt.decode_rt != block_b.text_flag() {
         rt.bump_rt_validation_count();
     }
-    rt.update_rt_advance(group, 4, addr as usize, &mut rtchars);
-    valid.set_rt(true);
+    rt.update_rt_advance(addr, &chars);
     rds_data.rt.decode_rt = block_b.text_flag();
-    valid
+    ValidFields::new().with_rt(true)
 }
 
 // Type 2 groups: Radiotext.
+// See RBDS Standard setion 3.1.5.3.
 fn decode_group_type_2b(group: &Group, rds_data: &mut RdsData) -> ValidFields {
-    let mut valid = ValidFields::new();
-    // See RBDS Standard setion 3.1.5.3.
-    let block_b = GroupType2BlockB::from_bytes(group.b.unwrap().to_be_bytes());
     if group.d.is_none() {
-        return valid;
+        return ValidFields::new();
     }
-    let mut rtchars: [u8; 4] = [
-        (group.d.unwrap() >> 8) as u8,
-        (group.d.unwrap() & 0xff) as u8,
-        0,
-        0,
-    ];
-    let rt = if block_b.text_flag() == RtVariant::A {
-        &mut rds_data.rt.a
-    } else {
-        &mut rds_data.rt.b
+    let block_b = GroupType2BlockB::from_bytes(group.b.unwrap().to_be_bytes());
+    let chars: [Option<[u8; 2]>; 1] = [group.d.map(|d| d.to_be_bytes())];
+    let rt = match block_b.text_flag() {
+        RtVariant::A => &mut rds_data.rt.a,
+        RtVariant::B => &mut rds_data.rt.b,
     };
-    let addr = 4 * block_b.text_segment_addr();
-    rt.update_rt_simple(group, 2, addr as usize, &rtchars);
+    let addr = (block_b.text_segment_addr() as usize) * 2;
+    rt.update_rt_simple(addr, &chars);
     if rds_data.rt.decode_rt != block_b.text_flag() {
         rt.bump_rt_validation_count();
     }
-    rt.update_rt_advance(group, 2, addr as usize, &mut rtchars);
-    valid.set_rt(true);
+    rt.update_rt_advance(addr, &chars);
     rds_data.rt.decode_rt = block_b.text_flag();
-    valid
+    ValidFields::new().with_rt(true)
 }
 
 fn decode_oda(_group: &Group, gt: GroupType, rds_data: &mut RdsData) -> ValidFields {
