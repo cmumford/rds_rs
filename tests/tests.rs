@@ -44,4 +44,12 @@ mod tests {
                 .to_string()
         );
     }
+
+    #[test]
+    fn test_rt_convert_ebu_common_language() {
+        assert_eq!(
+            rds_to_utf8_lossy(&[0b10101011, 0b10101010]),
+            "$£".to_string()
+        );
+    }
 }
