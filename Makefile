@@ -1,13 +1,15 @@
 RELEASE=--release
 RELEAES=
 
+TEST_FILE="third_party/rds-spy-logs/Canada/C6A8 - 2019-05-05 09-30-11.spy"
+
 .PHONY: build
 build:
 	cargo build $(RELEASE)
 
 .PHONY: test
 test:
-	cargo run $(RELEASE) --example decode_rds_spy_log third_party/rds-spy-logs/Austria/A540_-_2021-07-26_19-08-06.spy
+	cargo run $(RELEASE) --example decode_rds_spy_log $(TEST_FILE)
 
 .PHONY: test-all
 test-all:
@@ -15,7 +17,7 @@ test-all:
 
 .PHONY: viewer
 viewer:
-	cargo run $(RELEASE) --example rds_viewer "third_party/rds-spy-logs/Canada/C6A8 - 2019-05-05 09-30-11.spy"
+	cargo run $(RELEASE) --example rds_viewer $(TEST_FILE)
 
 .PHONY: clean
 clean:
