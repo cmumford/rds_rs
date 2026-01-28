@@ -1,7 +1,6 @@
 use log::{error, info};
 use rds::{Decoder, Group, RdsData, RtVariant, rds_to_utf8_lossy};
 use rdspy::RdsGroupIterator;
-use std::str;
 
 use std::{
     env,
@@ -54,22 +53,21 @@ fn process_reader<R: BufRead + 'static>(reader: R) -> io::Result<()> {
     let mut decoder = Decoder::new();
     for group_result in RdsGroupIterator::new(reader) {
         match group_result {
-            Ok(group) => {
-                let blocks = Group {
-                    a: group.a,
-                    b: group.b,
-                    c: group.c,
-                    d: group.d,
+            Ok(read_group) => {
+                let group = Group {
+                    a: read_group.a,
+                    b: read_group.b,
+                    c: read_group.c,
+                    d: read_group.d,
                 };
-                decoder.decode(&blocks, &mut rds_data);
+                decoder.decode(&group, &mut rds_data);
                 if rds_data.valid.rt() {
-                    let rt = if rds_data.rt.decode_rt == RtVariant::A {
-                        &rds_data.rt.a
-                    } else {
-                        &rds_data.rt.b
+                    let rt = match rds_data.rt.decode_rt {
+                        RtVariant::A => &rds_data.rt.a,
+                        RtVariant::B => &rds_data.rt.b,
                     };
                     let text = rds_to_utf8_lossy(&rt.display);
-                    let trimmed = text.trim();
+                    let trimmed = text.trim_end();
                     if last_rt != trimmed {
                         println!("RT: {}", trimmed);
                         last_rt = trimmed.to_string();
