@@ -566,14 +566,12 @@ fn decode_ptyn(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     }
     let block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
 
-    let mut valid = ValidFields::new();
-    valid.set_ptyn(true);
     if rds_data.ptyn.last_ab != block_b.ab_flag() {
-        rds_data.ptyn.display.fill(0);
+        rds_data.ptyn.display.fill(' ' as u8);
         rds_data.ptyn.last_ab = block_b.ab_flag();
     }
 
-    let base: usize = 4 * block_b.segment_addr() as usize;
+    let base: usize = 4 * (block_b.segment_addr() as usize);
     if group.c.is_some() {
         rds_data.ptyn.display[base + 0] = (group.c.unwrap() >> 8) as u8;
         rds_data.ptyn.display[base + 1] = (group.c.unwrap() & 0xff) as u8;
@@ -582,7 +580,7 @@ fn decode_ptyn(group: &Group, rds_data: &mut RdsData) -> ValidFields {
         rds_data.ptyn.display[base + 2] = (group.d.unwrap() >> 8) as u8;
         rds_data.ptyn.display[base + 3] = (group.d.unwrap() & 0xff) as u8;
     }
-    valid
+    ValidFields::new().with_ptyn(true)
 }
 
 // Type 10 groups: Program Type Name.
