@@ -2,6 +2,7 @@ RELEASE=--release
 RELEAES=
 
 TEST_FILE="third_party/rds-spy-logs/Canada/C6A8 - 2019-05-05 09-30-11.spy"
+TEST_FILE="third_party/rds-spy-logs/Sweden/EC24_-_2020-08-21_17-04-13.spy"
 
 .PHONY: build
 build:
