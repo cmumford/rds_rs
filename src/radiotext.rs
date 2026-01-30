@@ -2,20 +2,20 @@ use modular_bitfield_msb::prelude::*;
 
 pub const MAX_RADIOTEXT_LEN: usize = 64;
 const END_OF_MESSAGE_CHAR: u8 = 0x0d;
-const LINE_BREAK_CHAR: u8 = 0x0a;
-const BLANK_CHAR: u8 = ' ' as u8;
+pub const LINE_BREAK_CHAR: u8 = 0x0a;
+pub const BLANK_CHAR: u8 = ' ' as u8;
 
 // Code table from IEC 62106:1000 Figure E.1
 #[rustfmt::skip]
 const TABLE2: [char; 256] = [
-' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' , ' ', ' ', ' ', ' ', ' ' , ' ', ' ', ' ',
-' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' , ' ', ' ', ' ', ' ', ' ' , ' ', ' ', ' ',
+'␀', ' ', ' ', ' ', ' ', ' ', ' ', ' ' , ' ', ' ', '␊', ' ', '␌' , '␍', ' ', ' ',
+' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' , ' ', ' ', ' ', '␛', ' ' , ' ', ' ', ' ',
 ' ', '!', '"', '#', '¤', '%', '&', '\'', '(', ')', '*', '+', ',' , '-', '.', '/',
 '0', '1', '2', '3', '4', '5', '6', '7' , '8', '9', ':', ';', '<' , '=', '>', '?',
 '@', 'A', 'B', 'C', 'D', 'E', 'F', 'G' , 'H', 'I', 'J', 'K', 'L' , 'M', 'N', 'O',
 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W' , 'X', 'Y', 'Z', '[', '\\', ']', '―', '_',
 '║', 'a', 'b', 'c', 'd', 'e', 'f', 'g' , 'h', 'i', 'j', 'k', 'l' , 'm', 'n', 'o',
-'p', 'q', 'r', 's', 't', 'u', 'v', 'w' , 'x', 'y', 'z', '{', '|' , '}', '¯', ' ',
+'p', 'q', 'r', 's', 't', 'u', 'v', 'w' , 'x', 'y', 'z', '{', '|' , '}', '¯', '␡',
 'á', 'à', 'é', 'è', 'í', 'ì', 'ó', 'ò' , 'ú', 'ù', 'Ñ', 'Ç', 'Ş' , 'ß', '¡', 'Ĳ',
 'â', 'ä', 'ê', 'ë', 'î', 'ï', 'ô', 'ö' , 'û', 'ü', 'ñ', 'ç', 'ş' , 'ğ', 'ı', 'ĳ',
 'ª', 'α', '©', '‰', 'Ğ', 'ě', 'ň', 'ő' , 'π', '€', '£', '$', '←' , '↑', '→', '↓',
@@ -43,7 +43,7 @@ struct RadioTextPvt {
 impl Default for Radiotext {
     fn default() -> Self {
         let mut spaces = [0u8; MAX_RADIOTEXT_LEN];
-        spaces.fill(b' ');
+        spaces.fill(BLANK_CHAR);
 
         Self {
             display: spaces,
@@ -76,7 +76,6 @@ pub fn rds_to_utf8_lossy(bytes: &[u8]) -> String {
     bytes
         .iter()
         .map(|&b| match b {
-            LINE_BREAK_CHAR => ' ',
             _ => TABLE2[b as usize],
         })
         .collect()

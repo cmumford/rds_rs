@@ -282,11 +282,23 @@ pub struct SlcData {
     pub data: B12,
 }
 
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PtynData {
     pub display: [u8; 8],
     // TODO: Unify A/B flag types.
     pub last_ab: bool,
+}
+
+impl Default for PtynData {
+    fn default() -> Self {
+        let mut spaces = [0u8; 8];
+        spaces.fill(' ' as u8);
+
+        Self {
+            display: spaces,
+            last_ab: false,
+        }
+    }
 }
 
 #[derive(Debug, Default, Clone, PartialEq)]

@@ -72,7 +72,10 @@ fn process_reader<R: BufRead + 'static>(reader: R) -> io::Result<()> {
                         print!("RT: {:?}", trimmed);
                         last_rt = trimmed.to_string();
                         if rds_data.valid.ptyn() {
-                            print!(" PTYN: {:?}", rds_to_utf8_lossy(&rds_data.ptyn.display));
+                            print!(
+                                " PTYN: {:?}",
+                                rds_to_utf8_lossy(&rds_data.ptyn.display).trim_end()
+                            );
                         }
                         if rds_data.valid.clock() {
                             let c = &rds_data.clock;

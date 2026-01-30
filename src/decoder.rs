@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use crate::radiotext::RtVariant;
+use crate::radiotext::{BLANK_CHAR, RtVariant};
 use crate::rds::RdsData;
 use crate::types::{
     Content, Group, GroupType, GroupVersion, NUM_TDC, OdaEntry, ProgramInformation, ProgramType,
@@ -567,7 +567,7 @@ fn decode_ptyn(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     }
     let block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
     if rds_data.ptyn.last_ab != block_b.ab_flag() {
-        rds_data.ptyn.display.fill(' ' as u8);
+        rds_data.ptyn.display.fill(BLANK_CHAR as u8);
         rds_data.ptyn.last_ab = block_b.ab_flag();
     }
 
