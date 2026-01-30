@@ -253,18 +253,15 @@ fn decode_group_type_1(group: &Group, rds_data: &mut RdsData) -> ValidFields {
         rds_data.valid.set_slc(true);
     }
 
-    let mut valid = ValidFields::new();
-    if group.d.is_some() {
-        rds_data.program_item_number = RdsPic::from_bytes(group.d.unwrap().to_be_bytes());
-        valid.set_pic(true);
-    } else {
-        // Per spec (3.2.1.7): If a type 1 group is transmitted without a
-        // valid PIN, the day of the month shall be set to zero. In this
-        // case a receiver which evaluates PIN shall ignore the other
-        // information in block 4.
-        rds_data.program_item_number = RdsPic::default();
-    }
-    valid
+    // Per spec (3.2.1.7): If a type 1 group is transmitted without a
+    // valid PIN, the day of the month shall be set to zero. In this
+    // case a receiver which evaluates PIN shall ignore the other
+    // information in block 4.
+    rds_data.program_item_number = group
+        .d
+        .map(|d| RdsPic::from_bytes(d.to_be_bytes()))
+        .unwrap_or_default();
+    ValidFields::new().with_pic(group.d.is_some())
 }
 
 // Type 2 groups: Radiotext.
