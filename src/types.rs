@@ -101,6 +101,8 @@ pub struct Frequency {
 }
 
 /// Program Item Number Code (PIN)
+/// The scheduled broadcast start time and day of month as published by
+/// the broadcaster.
 /// See the RBDS Standard section 3.2.1.7.
 #[bitfield(bits = 16)]
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
