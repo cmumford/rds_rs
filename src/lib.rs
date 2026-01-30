@@ -4,6 +4,7 @@ mod af_table;
 mod af_table_group;
 mod decoder;
 mod eon;
+mod ps;
 mod ptyn;
 mod radiotext;
 mod rds;

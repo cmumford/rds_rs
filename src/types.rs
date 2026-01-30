@@ -258,19 +258,6 @@ pub enum Content {
     Music = 1,
 }
 
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
-pub struct PsData {
-    pub display: [u8; 8],
-    pub pvt: PsPrivate,
-}
-
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
-pub struct PsPrivate {
-    pub hi_prob: [u8; 8],
-    pub lo_prob: [u8; 8],
-    pub hi_prob_cnt: [u8; 8],
-}
-
 /// Slow labelling code variant
 #[derive(BitfieldSpecifier, Default, Clone, PartialEq, Eq)]
 #[bits = 3]
