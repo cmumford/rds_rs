@@ -565,7 +565,6 @@ fn decode_ptyn(group: &Group, rds_data: &mut RdsData) -> ValidFields {
         segment_addr: B1,
     }
     let block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
-
     if rds_data.ptyn.last_ab != block_b.ab_flag() {
         rds_data.ptyn.display.fill(' ' as u8);
         rds_data.ptyn.last_ab = block_b.ab_flag();
@@ -592,10 +591,9 @@ fn decode_group_type_10a(group: &Group, rds_data: &mut RdsData) -> ValidFields {
 // Type 10 groups: Open data.
 fn decode_group_type_10b(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     // See RBDS Standard section 3.1.5.14.
-    if group.get_type().version() == GroupVersion::A {
-        return decode_ptyn(group, rds_data);
-    } else {
-        return decode_oda(group, group.get_type(), rds_data);
+    match group.get_type().version() {
+        GroupVersion::A => decode_ptyn(group, rds_data),
+        GroupVersion::B => decode_oda(group, group.get_type(), rds_data),
     }
 }
 
