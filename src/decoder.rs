@@ -409,11 +409,11 @@ fn decode_group_type_4a(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     rds_data.clock.mjd = ((block_b.date_msb() as u32) << 15) + block_c.date() as u32;
     rds_data.clock.hour = ((block_c.hour_msb() as u8) << 4) + block_d.hour();
     rds_data.clock.minute = block_d.minute();
-    if block_d.local_offset_dir() == 0 {
-        rds_data.clock.utc_offset_half_hours = block_d.local_offset_val() as i8;
+    rds_data.clock.utc_offset_half_hours = if block_d.local_offset_dir() == 0 {
+        block_d.local_offset_val() as i8
     } else {
-        rds_data.clock.utc_offset_half_hours = -(block_d.local_offset_val() as i8);
-    }
+        -(block_d.local_offset_val() as i8)
+    };
     ValidFields::new().with_clock(true)
 }
 
