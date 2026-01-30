@@ -33,6 +33,7 @@ fn draw_ui(f: &mut Frame, rds_data: &RdsData, num: usize, max: usize) {
             Constraint::Length(1), // RTA row
             Constraint::Length(1), // RTB row
             Constraint::Length(1), // PTYN row
+            Constraint::Length(1), // PS row
             Constraint::Min(0),    // remaining space
         ])
         .split(inner_area);
@@ -91,6 +92,25 @@ fn draw_ui(f: &mut Frame, rds_data: &RdsData, num: usize, max: usize) {
             .constraints([
                 Constraint::Length(5),
                 Constraint::Length(PTYN_LEN as u16),
+                Constraint::Min(0),
+            ])
+            .split(chunks[2]);
+        f.render_widget(label, area[0]);
+        f.render_widget(input, area[1]);
+    }
+
+    {
+        const PS_LEN: u8 = 8;
+        let label = Paragraph::new("PS:").style(Style::default().fg(Color::LightCyan));
+        let data = rds_to_utf8_lossy(&rds_data.ps.display);
+        let text = format!("{:<8}", data.chars().take(8).collect::<String>());
+        let input =
+            Paragraph::new(text).style(Style::default().bg(Color::DarkGray).fg(Color::White));
+        let area = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([
+                Constraint::Length(3),
+                Constraint::Length(PS_LEN as u16),
                 Constraint::Min(0),
             ])
             .split(chunks[2]);

@@ -77,6 +77,12 @@ fn process_reader<R: BufRead + 'static>(reader: R) -> io::Result<()> {
                                 rds_to_utf8_lossy(&rds_data.ptyn.display).trim_end()
                             );
                         }
+                        if rds_data.valid.ps() {
+                            print!(
+                                " PS: {:?}",
+                                rds_to_utf8_lossy(&rds_data.ps.display).trim_end()
+                            );
+                        }
                         if rds_data.valid.clock() {
                             let c = &rds_data.clock;
                             print!(
