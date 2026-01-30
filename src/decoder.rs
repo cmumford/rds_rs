@@ -508,7 +508,7 @@ fn decode_group_type_7a(group: &Group, rds_data: &mut RdsData) -> ValidFields {
 // Type 7B groups: Open data application.
 fn decode_group_type_7b(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     // See RBDS Standard section 3.1.5.11.
-    return decode_oda(group, group.get_type(), rds_data);
+    decode_oda(group, group.get_type(), rds_data)
 }
 
 // Type 8 groups: Traffic Message Channel or ODA
