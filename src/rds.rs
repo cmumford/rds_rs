@@ -2,8 +2,8 @@ use crate::af_table_group::AltFreqTableGroup;
 use crate::eon::EonData;
 use crate::radiotext::RtData;
 use crate::types::{
-    Clock, Content, DevStats, EwsData, OdaEntry, ProgramInformation, ProgramType, PsData, PtynData,
-    RdsPic, SlcData, TdcData, TrafficCodes, ValidFields,
+    Clock, Content, EwsData, OdaEntry, ProgramInformation, ProgramType, PsData, PtynData, RdsPic,
+    SlcData, TdcData, TrafficCodes, ValidFields,
 };
 use heapless::LinearMap;
 
@@ -63,6 +63,4 @@ pub struct RdsData {
 
     /// Bitmask of which fields are valid
     pub valid: ValidFields,
-
-    pub stats: DevStats,
 }

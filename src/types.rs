@@ -319,11 +319,3 @@ pub struct EwsData {
     pub block_c: u16,
     pub block_d: u16,
 }
-
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
-pub struct DevStats {
-    pub packet_counts: [i32; 20],
-    pub group_counts: [[u16; 2]; 16], // [A, B] per group type
-    pub data_received_count: u16,
-    pub block_b_error_count: u16,
-}
