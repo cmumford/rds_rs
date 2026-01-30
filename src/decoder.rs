@@ -57,7 +57,7 @@ impl Group {
     }
 }
 
-fn decode_ms(blockb: u16, rds_data: &mut RdsData) {
+fn decode_ms(blockb: u16, rds_data: &mut RdsData) -> ValidFields {
     #[bitfield(bits = 16)]
     struct Block {
         group_type: GroupType,     // Group type (code + version).
@@ -69,7 +69,7 @@ fn decode_ms(blockb: u16, rds_data: &mut RdsData) {
     }
     let block_b = Block::from_bytes(blockb.to_be_bytes());
     rds_data.content = block_b.content();
-    rds_data.valid.set_ms(true);
+    ValidFields::new().with_ms(true)
 }
 
 fn decode_block_b_common(block: &GroupType2BlockB, rds_data: &mut RdsData) -> ValidFields {
@@ -82,17 +82,17 @@ fn decode_block_b_common(block: &GroupType2BlockB, rds_data: &mut RdsData) -> Va
     valid
 }
 
-fn decode_alt_freq(group: &Group, rds_data: &mut RdsData) {
+fn decode_alt_freq(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     if group.c.is_none() {
-        return;
+        return ValidFields::new();
     }
-    rds_data.valid.set_af(true);
     rds_data
         .alternative_freqs
         .decode_freq_group_block(group.c.unwrap());
+    ValidFields::new().with_af(true)
 }
 
-fn decode_ta(blockb: u16, rds_data: &mut RdsData) {
+fn decode_ta(blockb: u16, rds_data: &mut RdsData) -> ValidFields {
     #[bitfield(bits = 16)]
     struct Block {
         group_type: GroupType,     // Group type (code + version).
@@ -103,7 +103,7 @@ fn decode_ta(blockb: u16, rds_data: &mut RdsData) {
     }
     let block_b = Block::from_bytes(blockb.to_be_bytes());
     rds_data.traffic.set_ta(block_b.ta_flag());
-    rds_data.valid.set_ta_code(true);
+    ValidFields::new().with_ta_code(true)
 }
 
 fn update_ps_simple(char_idx: u8, current_ps_byte: u8, rds_data: &mut RdsData) {
@@ -207,13 +207,13 @@ fn decode_group_type_0(
     let mut valid = ValidFields::new();
     let block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
     if block_b.group_type().version() == GroupVersion::A {
-        decode_alt_freq(group, rds_data);
+        valid = valid | decode_alt_freq(group, rds_data);
     }
     if group.d.is_none() {
         return valid;
     }
-    decode_ta(group.b.unwrap(), rds_data);
-    decode_ms(group.b.unwrap(), rds_data);
+    valid = valid | decode_ta(group.b.unwrap(), rds_data);
+    valid = valid | decode_ms(group.b.unwrap(), rds_data);
 
     let pair_idx = 2 * block_b.c();
     let d_val = group.d.unwrap();
@@ -247,10 +247,11 @@ fn decode_group_type_1(group: &Group, rds_data: &mut RdsData) -> ValidFields {
         radio_paging_codes: B5,    // See Annex M.
     }
 
+    let mut valid = ValidFields::new();
     let block_b = GroupType1BlockB::from_bytes(group.b.unwrap().to_be_bytes());
     if block_b.group_type().version() == GroupVersion::A && group.c.is_some() {
         rds_data.slc = SlcData::from_bytes(group.c.unwrap().to_be_bytes());
-        rds_data.valid.set_slc(true);
+        valid.set_slc(true);
     }
 
     // Per spec (3.2.1.7): If a type 1 group is transmitted without a
@@ -261,7 +262,10 @@ fn decode_group_type_1(group: &Group, rds_data: &mut RdsData) -> ValidFields {
         .d
         .map(|d| RdsPic::from_bytes(d.to_be_bytes()))
         .unwrap_or_default();
-    ValidFields::new().with_pic(group.d.is_some())
+    if group.d.is_some() {
+        valid.set_pic(true);
+    }
+    valid
 }
 
 // Type 2 groups: Radiotext.

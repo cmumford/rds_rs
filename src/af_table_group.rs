@@ -11,17 +11,17 @@ fn freq_code_to_count(freq_code: u8) -> u8 {
 }
 
 pub fn af_code_to_freq(freq_code: u8, band: Band) -> u16 {
-    if band == Band::Uhf {
-        // If a UHF band.
-        return 876u16 + (freq_code as u16) - 1;
+    match band {
+        Band::Uhf => 876u16 + (freq_code as u16) - 1,
+        Band::LfMf => {
+            if freq_code < 16 {
+                // LF
+                return (153 + 9 * (freq_code - 1)) as u16;
+            }
+            // MF
+            531u16 + 9 * ((freq_code as u16) - 16)
+        }
     }
-
-    if freq_code < 16 {
-        // If LF
-        return (153 + 9 * (freq_code - 1)) as u16;
-    }
-
-    531u16 + 9 * ((freq_code as u16) - 16) // MF
 }
 
 /// Group of multiple decoded AF tables.
