@@ -40,18 +40,21 @@ struct RadioTextPvt {
     hi_prob_cnt: [u8; MAX_RADIOTEXT_LEN], // Hit count of high probability Radiotext.
 }
 
+impl Default for RadioTextPvt {
+    fn default() -> Self {
+        Self {
+            hi_prob: [BLANK_CHAR; MAX_RADIOTEXT_LEN],
+            lo_prob: [BLANK_CHAR; MAX_RADIOTEXT_LEN],
+            hi_prob_cnt: [BLANK_CHAR; MAX_RADIOTEXT_LEN],
+        }
+    }
+}
+
 impl Default for Radiotext {
     fn default() -> Self {
-        let mut spaces = [0u8; MAX_RADIOTEXT_LEN];
-        spaces.fill(BLANK_CHAR);
-
         Self {
-            display: spaces,
-            pvt: RadioTextPvt {
-                hi_prob: spaces,
-                lo_prob: spaces,
-                hi_prob_cnt: spaces,
-            },
+            display: [BLANK_CHAR; MAX_RADIOTEXT_LEN],
+            pvt: RadioTextPvt::default(),
         }
     }
 }
