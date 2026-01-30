@@ -73,13 +73,10 @@ fn decode_ms(blockb: u16, rds_data: &mut RdsData) -> ValidFields {
 }
 
 fn decode_block_b_common(block: &GroupType2BlockB, rds_data: &mut RdsData) -> ValidFields {
-    let mut valid = ValidFields::new();
     rds_data.traffic.set_tp(block.traffic_program());
-    valid.set_tp_code(true);
 
     rds_data.program_type = block.program_type();
-    valid.set_pty(true);
-    valid
+    ValidFields::new().with_tp_code(true).with_pty(true)
 }
 
 fn decode_alt_freq(group: &Group, rds_data: &mut RdsData) -> ValidFields {

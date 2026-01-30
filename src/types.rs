@@ -40,7 +40,9 @@ pub enum GroupVersion {
 #[bitfield(bits = 5)]
 #[derive(BitfieldSpecifier, Default, Copy, Clone, PartialEq, Eq)]
 pub struct GroupType {
-    pub code: B4,              // Group type code.
+    #[skip(setters)]
+    pub code: B4, // Group type code.
+    #[skip(setters)]
     pub version: GroupVersion, // Group version (A/B).
 }
 
@@ -49,9 +51,13 @@ pub struct GroupType {
 #[bitfield(bits = 4)]
 #[derive(Default, Clone, PartialEq, Eq)]
 pub struct DiCodes {
+    #[skip(setters)]
     dynamic_pty: bool,
+    #[skip(setters)]
     compressed: bool,
+    #[skip(setters)]
     artificial_head: bool,
+    #[skip(setters)]
     stereo: bool,
 }
 
@@ -99,8 +105,11 @@ pub struct Frequency {
 #[bitfield(bits = 16)]
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 pub struct RdsPic {
+    #[skip(setters)]
     pub day: B5,
+    #[skip(setters)]
     pub hour: B5,
+    #[skip(setters)]
     pub minute: B6,
 }
 
@@ -184,8 +193,11 @@ pub struct ValidFields {
 #[bitfield(bits = 16)]
 #[derive(Default, Clone, PartialEq, Eq)]
 pub struct ProgramInformation {
+    #[skip(setters)]
     pub country_code: B4,
+    #[skip(setters)]
     pub program_type: B4,
+    #[skip(setters)]
     pub program_reference_number: u8,
 }
 
@@ -277,8 +289,11 @@ pub enum SlcVariant {
 #[bitfield(bits = 16)]
 #[derive(Default, Clone, PartialEq, Eq)]
 pub struct SlcData {
+    #[skip(setters)]
     pub linkage_actuator: bool, // See RDSM spec. (3.2.1.8.3).
+    #[skip(setters)]
     pub variant: SlcVariant,
+    #[skip(setters)]
     pub data: B12,
 }
 
