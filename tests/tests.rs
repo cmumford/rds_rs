@@ -1,5 +1,5 @@
 use modular_bitfield_msb::prelude::*;
-use rds::{GroupType, GroupVersion, ProgramType, RtVariant, rds_to_utf8_lossy};
+use rds::{Clock, GroupType, GroupVersion, ProgramType, RtVariant, rds_to_utf8_lossy};
 
 #[cfg(test)]
 
@@ -51,5 +51,19 @@ mod tests {
             rds_to_utf8_lossy(&[0b10101011, 0b10101010]),
             "$£".to_string()
         );
+    }
+
+    #[test]
+    fn test_clock_date() {
+        // These values from RBDS specification Annex G.
+        let clock = Clock {
+            mjd: 45218,
+            hour: 0,
+            minute: 0,
+            utc_offset_half_hours: 0,
+        };
+        assert_eq!(1982, clock.year());
+        assert_eq!(9, clock.month());
+        assert_eq!(6, clock.day());
     }
 }

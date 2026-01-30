@@ -69,8 +69,23 @@ fn process_reader<R: BufRead + 'static>(reader: R) -> io::Result<()> {
                     let text = rds_to_utf8_lossy(&rt.display);
                     let trimmed = text.trim_end();
                     if last_rt != trimmed {
-                        println!("RT: {}", trimmed);
+                        print!("RT: {:?}", trimmed);
                         last_rt = trimmed.to_string();
+                        if rds_data.valid.ptyn() {
+                            print!(" PTYN: {:?}", rds_to_utf8_lossy(&rds_data.ptyn.display));
+                        }
+                        if rds_data.valid.clock() {
+                            let c = &rds_data.clock;
+                            print!(
+                                " CLOCK: {:04}/{:02}/{:02} {:02}:{:02}",
+                                c.year(),
+                                c.month(),
+                                c.day(),
+                                c.hour,
+                                c.minute
+                            );
+                        }
+                        println!("");
                     }
                 }
             }

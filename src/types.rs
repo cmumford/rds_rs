@@ -119,6 +119,43 @@ pub struct Clock {
     pub utc_offset_half_hours: i8, // Local time offset from UTC in half-hours
 }
 
+const AVG_DAYS_PER_MONTH: f32 = 30.6001;
+const AVT_DAYS_PER_YEAR: f32 = 365.25;
+const MJD_JAN_1_2000: f32 = 15078.2; // Likely 2000 January 1, 04:48 UT
+
+impl Clock {
+    fn yp(&self) -> i32 {
+        // Y' = int [ (MJD - 15078,2) / 365,25 ]
+        (((self.mjd as f32) - 15078.2) / AVT_DAYS_PER_YEAR) as i32
+    }
+    fn k(&self) -> i32 {
+        // If M' = 14 or M' = 15, then K = 1; else K = 0
+        match self.mp() {
+            14 | 15 => 1,
+            _ => 0,
+        }
+    }
+    pub fn year(&self) -> i32 {
+        1900 + self.yp() + self.k()
+    }
+    fn mp(&self) -> i32 {
+        // int { [ MJD - 14956,1 - int (Y' × 365,25) ] / 30,6001 }
+        let a: f32 = (self.mjd as f32) - 14956.1;
+        let b: f32 = (self.yp() as f32) * AVT_DAYS_PER_YEAR;
+        ((a - b.floor()) / AVG_DAYS_PER_MONTH) as i32
+    }
+    pub fn month(&self) -> i32 {
+        // M = M' - 1 - K × 12
+        self.mp() - 1 - self.k() * 12
+    }
+    pub fn day(&self) -> i32 {
+        // D = MJD - 14956 - int ( Y' × 365,25 ) - int ( M' × 30,6001 )
+        let a: i32 = ((self.yp() as f32) * AVT_DAYS_PER_YEAR) as i32;
+        let b: i32 = ((self.mp() as f32) * AVG_DAYS_PER_MONTH) as i32;
+        (self.mjd as i32) - 14956 - a - b
+    }
+}
+
 /// Bitflags indicating which RDS fields are valid / have been received
 #[bitfield(bits = 17)]
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
