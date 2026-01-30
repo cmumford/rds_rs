@@ -706,7 +706,7 @@ impl<'a> Decoder {
         // We don't yet know what block/version this is, but decode as 2B as all
         // blocks share the first four common fields.
         let block_b = GroupType2BlockB::from_bytes(group.b.unwrap().to_be_bytes());
-        valid = decode_block_b_common(&block_b, rds_data);
+        valid = valid | decode_block_b_common(&block_b, rds_data);
 
         let new_valid = match (block_b.group_type().code(), block_b.group_type().version()) {
             (0, GroupVersion::A) | (0, GroupVersion::B) => {
