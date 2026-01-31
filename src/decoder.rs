@@ -59,21 +59,6 @@ impl Group {
     }
 }
 
-fn decode_ms(blockb: u16, rds_data: &mut RdsData) -> ValidFields {
-    #[bitfield(bits = 16)]
-    struct Block {
-        group_type: GroupType,     // Group type (code + version).
-        traffic_program: bool,     // TP bit.
-        program_type: ProgramType, // PTY: Program type.
-        ta: bool,
-        content: Content,
-        unused: B3,
-    }
-    let block_b = Block::from_bytes(blockb.to_be_bytes());
-    rds_data.content = block_b.content();
-    ValidFields::new().with_ms(true)
-}
-
 fn decode_block_b_common(block: &GroupType2BlockB, rds_data: &mut RdsData) -> ValidFields {
     rds_data.traffic.set_tp(block.traffic_program());
 
@@ -104,7 +89,7 @@ fn decode_group_type_0(
         traffic_program: bool,        // TP bit.
         program_type: ProgramType,    // PTY: Program type.
         traffic_announcement: bool,   // TA bit: section 3.2.1.3.
-        ms: bool,                     // M/S bit: section 3.2.1.4.
+        ms: Content,                  // M/S bit: section 3.2.1.4.
         decoder_identification: bool, // DI bit: section 3.2.1.5.
         c: B2,                        // Prog. service name and DI segment addr.
     }
@@ -119,7 +104,8 @@ fn decode_group_type_0(
     }
     rds_data.traffic.set_ta(block_b.traffic_announcement());
     valid.set_ta_code(true);
-    valid = valid | decode_ms(group.b.unwrap(), rds_data);
+    rds_data.content = block_b.ms();
+    valid.set_ms(true);
 
     let pair_idx = 2 * block_b.c();
     let d_val = group.d.unwrap();
