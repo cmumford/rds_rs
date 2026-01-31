@@ -77,6 +77,10 @@ fn process_reader<R: BufRead + 'static>(reader: R) -> io::Result<()> {
                                 rds_to_utf8_lossy(&rds_data.ptyn.display).trim_end()
                             );
                         }
+                        // Too verbose
+                        // if rds_data.valid.pi_code() {
+                        //     print!(" PI: {:?}", rds_data.program_information);
+                        // }
                         if rds_data.valid.ps() {
                             print!(
                                 " PS: {:?}",

@@ -187,7 +187,7 @@ pub struct ValidFields {
 // Program identification codes and Extended country codes.
 // See the RBDS Standard Annex D.
 #[bitfield(bits = 16)]
-#[derive(Default, Clone, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct ProgramInformation {
     #[skip(setters)]
     pub country_code: B4,
