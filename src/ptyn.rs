@@ -29,17 +29,11 @@ pub fn decode_ptyn(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     // See RBDS Standard section 3.1.5.14.
     #[bitfield(bits = 16)]
     struct BlockB {
-        #[skip(setters)]
-        _group_type: GroupType, // Group type (code + version).
-        #[skip(setters)]
-        _traffic_program: bool, // TP bit.
-        #[skip(setters)]
-        _program_type: ProgramType, // PTY: Program type.
-        #[skip(setters)]
+        group_type: GroupType,     // Group type (code + version).
+        traffic_program: bool,     // TP bit.
+        program_type: ProgramType, // PTY: Program type.
         ab_flag: bool,
-        #[skip(setters)]
-        _reserved: B3,
-        #[skip(setters)]
+        reserved: B3,
         segment_addr: B1,
     }
     let block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
