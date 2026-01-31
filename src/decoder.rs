@@ -50,16 +50,6 @@ fn decode_block_b_common(block: &GroupType2BlockB, rds_data: &mut RdsData) -> Va
     ValidFields::new().with_tp_code(true).with_pty(true)
 }
 
-fn decode_alt_freq(group: &Group, rds_data: &mut RdsData) -> ValidFields {
-    if group.c.is_none() {
-        return ValidFields::new();
-    }
-    rds_data
-        .alternative_freqs
-        .decode_freq_group_block(group.c.unwrap());
-    ValidFields::new().with_af(true)
-}
-
 // Type 0 groups: Basic tuning and switching information.
 fn decode_group_type_0(
     group: &Group,
@@ -80,8 +70,11 @@ fn decode_group_type_0(
 
     let mut valid = ValidFields::new();
     let block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
-    if block_b.group_type().version() == GroupVersion::A {
-        valid = valid | decode_alt_freq(group, rds_data);
+    if block_b.group_type().version() == GroupVersion::A && group.c.is_some() {
+        rds_data
+            .alternative_freqs
+            .decode_freq_group_block(group.c.unwrap());
+        valid.set_af(true);
     }
     if group.d.is_none() {
         return valid;
