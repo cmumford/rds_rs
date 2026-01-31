@@ -13,7 +13,46 @@ pub struct PsPrivate {
     pub hi_prob_cnt: [u8; 8],
 }
 
+const PS_VALIDATE_LIMIT: u8 = 2;
+
 impl PsPrivate {
+    fn update_ps_advanced_ch(&mut self, idx: usize, byte: u8) -> bool {
+        let mut in_transition = false; // Indicates if the PS text is in transition.
+
+        if self.hi_prob[idx] == byte {
+            // The new byte matches the high probability byte.
+            if self.hi_prob_cnt[idx] < PS_VALIDATE_LIMIT {
+                self.hi_prob_cnt[idx] += 1;
+            } else {
+                // we have received this byte enough to max out our counter and push it
+                // into the low probability array as well.
+                self.hi_prob_cnt[idx] = PS_VALIDATE_LIMIT;
+                self.lo_prob[idx] = byte;
+            }
+        } else if self.lo_prob[idx] == byte {
+            // The new byte is a match with the low probability byte. Swap them, reset
+            // the counter and flag the text as in transition. Note that the counter for
+            // this character goes higher than the validation limit because it will get
+            // knocked down later.
+            if self.hi_prob_cnt[idx] >= PS_VALIDATE_LIMIT {
+                in_transition = true;
+                self.hi_prob_cnt[idx] = PS_VALIDATE_LIMIT + 1;
+            } else {
+                self.hi_prob_cnt[idx] = PS_VALIDATE_LIMIT;
+            }
+            self.lo_prob[idx] = self.hi_prob[idx];
+            self.hi_prob[idx] = byte;
+        } else if self.hi_prob_cnt[idx] == 0 {
+            // The new byte is replacing an empty byte in the high probability array.
+            self.hi_prob[idx] = byte;
+            self.hi_prob_cnt[idx] = 1;
+        } else {
+            // The new byte doesn't match anything, put it in the low probability array.
+            self.lo_prob[idx] = byte;
+        }
+        in_transition
+    }
+
     /// Update the Program Service text in our buffers from the shadow registers.
     ///
     /// This implementation of the Program Service update attempts to display only
@@ -21,45 +60,10 @@ impl PsPrivate {
     /// violation of the RBDS standard as well as providing enhanced error detection.
     ///
     /// This function is from the Silicon Labs sample application.
-    pub fn update_ps_advanced(&mut self, char_idx: usize, byte: u8) -> bool {
-        const PS_VALIDATE_LIMIT: u8 = 2;
-
-        let mut in_transition = false; // Indicates if the PS text is in transition.
+    pub fn update_ps_advanced(&mut self, idx: usize, byte: u8) -> bool {
         let mut complete = true; // Indicates the PS text is ready to be displayed.
 
-        if self.hi_prob[char_idx] == byte {
-            // The new byte matches the high probability byte.
-            if self.hi_prob_cnt[char_idx] < PS_VALIDATE_LIMIT {
-                self.hi_prob_cnt[char_idx] += 1;
-            } else {
-                // we have received this byte enough to max out our counter and push it
-                // into the low probability array as well.
-                self.hi_prob_cnt[char_idx] = PS_VALIDATE_LIMIT;
-                self.lo_prob[char_idx] = byte;
-            }
-        } else if self.lo_prob[char_idx] == byte {
-            // The new byte is a match with the low probability byte. Swap them, reset
-            // the counter and flag the text as in transition. Note that the counter for
-            // this character goes higher than the validation limit because it will get
-            // knocked down later.
-            if self.hi_prob_cnt[char_idx] >= PS_VALIDATE_LIMIT {
-                in_transition = true;
-                self.hi_prob_cnt[char_idx] = PS_VALIDATE_LIMIT + 1;
-            } else {
-                self.hi_prob_cnt[char_idx] = PS_VALIDATE_LIMIT;
-            }
-            self.lo_prob[char_idx] = self.hi_prob[char_idx];
-            self.hi_prob[char_idx] = byte;
-        } else if self.hi_prob_cnt[char_idx] == 0 {
-            // The new byte is replacing an empty byte in the high probability array.
-            self.hi_prob[char_idx] = byte;
-            self.hi_prob_cnt[char_idx] = 1;
-        } else {
-            // The new byte doesn't match anything, put it in the low probability array.
-            self.lo_prob[char_idx] = byte;
-        }
-
-        if in_transition {
+        if self.update_ps_advanced_ch(idx, byte) {
             // When the text is changing, decrement the count for all characters to
             // prevent displaying part of a message that is in transition.
             for count in self.hi_prob_cnt.iter_mut() {

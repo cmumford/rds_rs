@@ -4,6 +4,7 @@ pub const MAX_RADIOTEXT_LEN: usize = 64;
 const END_OF_MESSAGE_CHAR: u8 = 0x0d;
 pub const LINE_BREAK_CHAR: u8 = 0x0a;
 pub const BLANK_CHAR: u8 = ' ' as u8;
+const RT_VALIDATE_LIMIT: u8 = 2;
 
 // Code table from IEC 62106:1000 Figure E.1
 #[rustfmt::skip]
@@ -85,13 +86,49 @@ pub fn rds_to_utf8_lossy(bytes: &[u8]) -> String {
 }
 
 impl RadioTextPvt {
+    fn update_rt_advance_ch(&mut self, idx: usize, byte: u8) -> bool {
+        let mut text_changing = false;
+        // The new byte matches the high probability byte.
+        if self.hi_prob[idx] == byte {
+            if self.hi_prob_cnt[idx] < RT_VALIDATE_LIMIT {
+                self.hi_prob_cnt[idx] += 1;
+            } else {
+                // we have received this byte enough to max out our counter and push
+                // it into the low probability array as well.
+                self.hi_prob_cnt[idx] = RT_VALIDATE_LIMIT;
+                self.lo_prob[idx] = byte;
+            }
+        } else if self.lo_prob[idx] == byte {
+            // The new byte is a match with the low probability byte. Swap them,
+            // reset the counter and flag the text as in transition. Note that the
+            // counter for this character goes higher than the validation limit
+            // because it will get knocked down later.
+            if self.hi_prob_cnt[idx] >= RT_VALIDATE_LIMIT {
+                text_changing = true;
+                self.hi_prob_cnt[idx] = RT_VALIDATE_LIMIT + 1;
+            } else {
+                self.hi_prob_cnt[idx] = RT_VALIDATE_LIMIT;
+            }
+            self.lo_prob[idx] = self.hi_prob[idx];
+            self.hi_prob[idx] = byte;
+        } else if !self.hi_prob_cnt[idx] == 0 {
+            // The new byte is replacing an empty byte in the high proability array.
+            self.hi_prob[idx] = byte;
+            self.hi_prob_cnt[idx] = 1;
+        } else {
+            // The new byte doesn't match anything, put it in the low probability
+            // array.
+            self.lo_prob[idx] = byte;
+        }
+        text_changing
+    }
+
     /// The advanced implementation of the Radiotext update.
     ///
     /// This implementation of the Radiotext update attempts to further error
     /// correct the data by making sure that the data has been identical for
     /// multiple receptions of each byte.
     pub fn update_rt_advance(&mut self, addr: usize, byte: &[Option<[u8; 2]>]) {
-        const RT_VALIDATE_LIMIT: u8 = 2;
         let mut text_changing = false; // Indicates if the Radiotext is changing.
         let mut idx = addr;
 
@@ -100,37 +137,8 @@ impl RadioTextPvt {
                 return;
             }
             for ch in pair.unwrap() {
-                // The new byte matches the high probability byte.
-                if self.hi_prob[idx] == ch {
-                    if self.hi_prob_cnt[idx] < RT_VALIDATE_LIMIT {
-                        self.hi_prob_cnt[idx] += 1;
-                    } else {
-                        // we have received this byte enough to max out our counter and push
-                        // it into the low probability array as well.
-                        self.hi_prob_cnt[idx] = RT_VALIDATE_LIMIT;
-                        self.lo_prob[idx] = ch;
-                    }
-                } else if self.lo_prob[idx] == ch {
-                    // The new byte is a match with the low probability byte. Swap them,
-                    // reset the counter and flag the text as in transition. Note that the
-                    // counter for this character goes higher than the validation limit
-                    // because it will get knocked down later.
-                    if self.hi_prob_cnt[idx] >= RT_VALIDATE_LIMIT {
-                        text_changing = true;
-                        self.hi_prob_cnt[idx] = RT_VALIDATE_LIMIT + 1;
-                    } else {
-                        self.hi_prob_cnt[idx] = RT_VALIDATE_LIMIT;
-                    }
-                    self.lo_prob[idx] = self.hi_prob[idx];
-                    self.hi_prob[idx] = ch;
-                } else if !self.hi_prob_cnt[idx] == 0 {
-                    // The new byte is replacing an empty byte in the high proability array.
-                    self.hi_prob[idx] = ch;
-                    self.hi_prob_cnt[idx] = 1;
-                } else {
-                    // The new byte doesn't match anything, put it in the low probability
-                    // array.
-                    self.lo_prob[idx] = ch;
+                if self.update_rt_advance_ch(idx, ch) {
+                    text_changing = true;
                 }
                 idx += 1;
             }
