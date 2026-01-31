@@ -1,18 +1,16 @@
 #![allow(dead_code)]
 
+use crate::oda::{OdaEntry, decode_oda, is_oda_group_type_used, is_valid_oda_app_id};
 use crate::ps::{update_ps_advanced, update_ps_simple};
 use crate::ptyn::decode_ptyn;
 use crate::radiotext::RtVariant;
 use crate::rds::RdsData;
 use crate::types::{
-    Content, Group, GroupType, GroupVersion, NUM_TDC, OdaEntry, ProgramInformation, ProgramType,
-    RdsPic, SlcData, ValidFields,
+    Content, Group, GroupType, GroupVersion, NUM_TDC, ProgramInformation, ProgramType, RdsPic,
+    SlcData, ValidFields,
 };
-use heapless::LinearMap;
 use modular_bitfield_msb::prelude::*;
 use std::ops::BitOr;
-
-const INVALID_ODA_APP_ID: u16 = 0x0;
 
 // See RBDS Standard section 3.1.5.3.
 #[bitfield(bits = 16)]
@@ -37,20 +35,6 @@ impl BitOr for ValidFields {
         }
         Self::from_bytes(m)
     }
-}
-
-/// Is the ODA application ID valid?
-fn is_valid_oda_app_id(app_id: u16) -> bool {
-    return app_id != INVALID_ODA_APP_ID;
-}
-
-fn is_oda_group_type_used(map: &LinearMap<u16, OdaEntry, 10>, gt: GroupType) -> bool {
-    for (_key, val) in map.iter() {
-        if val.group_type == gt {
-            return true;
-        }
-    }
-    return false;
 }
 
 impl Group {
@@ -202,21 +186,6 @@ fn decode_group_type_2b(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     rt.update_rt_advance(addr, &chars);
     rds_data.rt.decode_rt = block_b.text_flag();
     ValidFields::new().with_rt(true)
-}
-
-fn decode_oda(_group: &Group, gt: GroupType, rds_data: &mut RdsData) -> ValidFields {
-    let mut app_id: u16 = INVALID_ODA_APP_ID;
-    for (key, val) in rds_data.oda.iter() {
-        if val.group_type == gt {
-            app_id = *key;
-            break;
-        }
-    }
-    if app_id == INVALID_ODA_APP_ID {
-        return ValidFields::new();
-    }
-    // TODO: Finish this. Either use callback, or another way for caller to know new ODA has arrived.
-    ValidFields::new()
 }
 
 // Type 3A groups: Application identification for Open data.

@@ -1,10 +1,11 @@
 use crate::af_table_group::AltFreqTableGroup;
 use crate::eon::EonData;
+use crate::oda::OdaEntry;
 use crate::ps::PsData;
 use crate::ptyn::PtynData;
 use crate::radiotext::RtData;
 use crate::types::{
-    Clock, Content, EwsData, OdaEntry, ProgramInformation, ProgramType, RdsPic, SlcData, TdcData,
+    Clock, Content, EwsData, ProgramInformation, ProgramType, RdsPic, SlcData, TdcData,
     TrafficCodes, ValidFields,
 };
 use heapless::LinearMap;

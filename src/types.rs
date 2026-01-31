@@ -115,12 +115,6 @@ pub struct RdsPic {
     pub minute: B6,
 }
 
-#[derive(Default, Clone, PartialEq, Eq)]
-pub struct OdaEntry {
-    pub group_type: GroupType,
-    pub packet_count: u16,
-}
-
 /// Clock Time and Date (CT)
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct Clock {
