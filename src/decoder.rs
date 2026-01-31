@@ -91,20 +91,6 @@ fn decode_alt_freq(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     ValidFields::new().with_af(true)
 }
 
-fn decode_ta(blockb: u16, rds_data: &mut RdsData) -> ValidFields {
-    #[bitfield(bits = 16)]
-    struct Block {
-        group_type: GroupType,     // Group type (code + version).
-        traffic_program: bool,     // TP bit.
-        program_type: ProgramType, // PTY: Program type.
-        ta_flag: bool,
-        unused: B4,
-    }
-    let block_b = Block::from_bytes(blockb.to_be_bytes());
-    rds_data.traffic.set_ta(block_b.ta_flag());
-    ValidFields::new().with_ta_code(true)
-}
-
 // Type 0 groups: Basic tuning and switching information.
 fn decode_group_type_0(
     group: &Group,
@@ -131,7 +117,8 @@ fn decode_group_type_0(
     if group.d.is_none() {
         return valid;
     }
-    valid = valid | decode_ta(group.b.unwrap(), rds_data);
+    rds_data.traffic.set_ta(block_b.traffic_announcement());
+    valid.set_ta_code(true);
     valid = valid | decode_ms(group.b.unwrap(), rds_data);
 
     let pair_idx = 2 * block_b.c();
