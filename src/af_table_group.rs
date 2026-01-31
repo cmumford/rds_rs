@@ -25,7 +25,7 @@ pub fn af_code_to_freq(freq_code: u8, band: Band) -> u16 {
 }
 
 /// Group of multiple decoded AF tables.
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, PartialEq)]
 pub struct AltFreqTableGroup {
     pub pvt_current_table_idx: i8,       // Index of current decode table.
     pub count: u8,                       // Number of tables in use.

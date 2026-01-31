@@ -62,7 +62,7 @@ pub struct DiCodes {
 }
 
 /// Alternative frequency band
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u8)]
 pub enum Band {
     #[default]
@@ -71,7 +71,7 @@ pub enum Band {
 }
 
 /// How an alternative frequency relates to the tuned frequency
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u8)]
 pub enum AltFreqAttribute {
     #[default]
@@ -90,7 +90,7 @@ pub enum AltFreqEncoding {
 }
 
 /// A single alternative frequency entry
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Frequency {
     pub band: Band,
     pub attribute: AltFreqAttribute,

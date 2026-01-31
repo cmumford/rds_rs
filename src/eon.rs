@@ -1,13 +1,13 @@
 use crate::af_decode_table::AltFreqDecodeTable;
 use crate::types::{Frequency, RdsPic};
 
-#[derive(Default, Clone, PartialEq, Eq)]
+#[derive(Default, Clone, PartialEq)]
 pub struct EonData {
     pub on: EonOtherNetwork,
     pub maps: [EonMap; 5],
 }
 
-#[derive(Default, Clone, PartialEq, Eq)]
+#[derive(Default, Clone, PartialEq)]
 pub struct EonOtherNetwork {
     pub ps: [u8; 8],
     pub pty: u8,

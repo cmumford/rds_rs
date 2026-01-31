@@ -12,7 +12,7 @@ pub struct RdsAfDecodeTablePrivate {
 }
 
 /// One AF decoding context
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, PartialEq)]
 pub struct AltFreqDecodeTable {
     pub table: AltFreqTable,
     pub encoding: AltFreqEncoding,
