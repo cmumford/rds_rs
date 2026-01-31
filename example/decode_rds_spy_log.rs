@@ -94,6 +94,10 @@ fn process_reader<R: BufRead + 'static>(reader: R) -> io::Result<()> {
                                 c.minute
                             );
                         }
+                        if rds_data.valid.ms() {
+                            print!(" MS: {:?}", rds_data.content);
+                        }
+
                         println!("");
                     }
                 }
