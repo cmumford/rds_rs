@@ -1,13 +1,25 @@
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
-pub struct TextProb<const N: usize> {
-    pub hi_prob: [u8; 8],
-    pub lo_prob: [u8; 8],
-    pub hi_prob_cnt: [u8; 8],
-}
-
 const VALIDATE_LIMIT: u8 = 2;
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TextProb<const N: usize> {
+    pub hi_prob: [u8; N],
+    pub lo_prob: [u8; N],
+    pub hi_prob_cnt: [u8; N],
+}
+
 impl<const N: usize> TextProb<N> {
+    pub const fn new() -> Self {
+        Self {
+            hi_prob: [0; N],
+            lo_prob: [0; N],
+            hi_prob_cnt: [0; N],
+        }
+    }
+
+    pub fn default() -> Self {
+        Self::new()
+    }
+
     pub fn update(&mut self, idx: usize, byte: u8) -> bool {
         let mut in_transition = false; // Indicates if the text is in transition.
 
@@ -43,5 +55,12 @@ impl<const N: usize> TextProb<N> {
             self.lo_prob[idx] = byte;
         }
         in_transition
+    }
+}
+
+// Optional: if you want TextProb to be usable with Default::default()
+impl<const N: usize> Default for TextProb<N> {
+    fn default() -> Self {
+        Self::new()
     }
 }
