@@ -135,6 +135,12 @@ impl Radiotext {
                 self.pvt.hi_prob_cnt[i] -= 1;
             }
         }
+        for count in self.pvt.hi_prob_cnt.iter_mut() {
+            if *count < RT_VALIDATE_LIMIT {
+                return;
+            }
+        }
+        self.display.copy_from_slice(&self.pvt.hi_prob);
     }
 
     pub fn bump_rt_validation_count(&mut self) {
