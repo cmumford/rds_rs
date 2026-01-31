@@ -89,12 +89,10 @@ fn decode_group_type_0(
     let hi_byte = (d_val >> 8) as u8;
     let lo_byte = (d_val & 0xFF) as u8;
     if advanced_ps_decoding {
-        let mut updated = update_ps_advanced((pair_idx + 0) as usize, hi_byte, rds_data);
-        if updated {
+        if update_ps_advanced((pair_idx + 0) as usize, hi_byte, rds_data) {
             valid.set_ps(true);
         }
-        updated = update_ps_advanced((pair_idx + 1) as usize, lo_byte, rds_data);
-        if updated {
+        if update_ps_advanced((pair_idx + 1) as usize, lo_byte, rds_data) {
             valid.set_ps(true);
         }
     } else {

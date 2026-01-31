@@ -9,6 +9,7 @@ mod ps;
 mod ptyn;
 mod radiotext;
 mod rds;
+mod text_prob;
 mod types;
 
 pub use decoder::Decoder;
