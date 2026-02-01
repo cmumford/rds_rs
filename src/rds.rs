@@ -5,7 +5,7 @@ use crate::ps::PsData;
 use crate::ptyn::PtynData;
 use crate::radiotext::RtData;
 use crate::types::{
-    Clock, Content, EwsData, ProgramInformation, ProgramType, RdsPic, SlcData, TdcData,
+    Clock, Content, DiCodes, EwsData, ProgramInformation, ProgramType, RdsPic, SlcData, TdcData,
     TrafficCodes, ValidFields,
 };
 use heapless::LinearMap;
@@ -63,6 +63,8 @@ pub struct RdsData {
 
     /// Emergency Warning System
     pub ews: EwsData,
+
+    pub did_pty: DiCodes,
 
     /// Bitmask of which fields are valid
     pub valid: ValidFields,

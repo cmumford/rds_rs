@@ -15,4 +15,6 @@ mod types;
 pub use decoder::Decoder;
 pub use radiotext::{BLANK_CHAR, LINE_BREAK_CHAR, MAX_RADIOTEXT_LEN, RtVariant, rds_to_utf8_lossy};
 pub use rds::RdsData;
-pub use types::{Clock, Group, GroupType, GroupVersion, ProgramType};
+pub use types::{
+    Clock, Content, DiCodes, Group, GroupType, GroupVersion, ProgramType, ValidFields,
+};

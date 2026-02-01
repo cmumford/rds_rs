@@ -59,13 +59,13 @@ fn decode_group_type_0(
     // See RBDS Standard section 3.1.5.1.
     #[bitfield(bits = 16)]
     struct BlockB {
-        group_type: GroupType,        // Group type (code + version).
-        traffic_program: bool,        // TP bit.
-        program_type: ProgramType,    // PTY: Program type.
-        traffic_announcement: bool,   // TA bit: section 3.2.1.3.
-        ms: Content,                  // M/S bit: section 3.2.1.4.
-        decoder_identification: bool, // DI bit: section 3.2.1.5.
-        c: B2,                        // Prog. service name and DI segment addr.
+        group_type: GroupType,      // Group type (code + version).
+        traffic_program: bool,      // TP bit.
+        program_type: ProgramType,  // PTY: Program type.
+        traffic_announcement: bool, // TA bit: section 3.2.1.3.
+        ms: Content,                // M/S bit: section 3.2.1.4.
+        di_bit: bool,               // DI bit: section 3.2.1.5.
+        c: B2,                      // Prog. service name and DI segment addr.
     }
 
     let mut valid = ValidFields::new();
@@ -75,6 +75,15 @@ fn decode_group_type_0(
             .alternative_freqs
             .decode_freq_group_block(group.c.unwrap());
         valid.set_af(true);
+    }
+    // Decoder identification and Dynamic PTY indicator / DI codes.
+    // The d bits come MSB first.
+    match block_b.c() {
+        0 => rds_data.did_pty.set_dynamic_pty(block_b.di_bit()),
+        1 => rds_data.did_pty.set_compressed(block_b.di_bit()),
+        2 => rds_data.did_pty.set_artificial_head(block_b.di_bit()),
+        3 => rds_data.did_pty.set_stereo(block_b.di_bit()),
+        _ => panic!("Invalid"),
     }
     if group.d.is_none() {
         return valid;
