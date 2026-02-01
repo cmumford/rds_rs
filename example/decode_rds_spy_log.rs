@@ -50,7 +50,7 @@ fn process_reader<R: BufRead + 'static>(reader: R) -> io::Result<()> {
     let mut last_rt = String::new();
 
     let mut rds_data = RdsData::default();
-    let mut decoder = Decoder::new();
+    let mut decoder = Decoder::new(false);
     for group_result in RdsGroupIterator::new(reader) {
         match group_result {
             Ok(read_group) => {

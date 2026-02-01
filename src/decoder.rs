@@ -502,9 +502,9 @@ pub struct Decoder {
 }
 
 impl<'a> Decoder {
-    pub fn new() -> Self {
+    pub fn new(advanced_ps_decoding: bool) -> Self {
         Decoder {
-            advanced_ps_decoding: true,
+            advanced_ps_decoding: advanced_ps_decoding,
         }
     }
 
