@@ -1,4 +1,5 @@
 const VALIDATE_LIMIT: u8 = 2;
+use crate::radiotext::BLANK_CHAR;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TextProb<const N: usize> {
@@ -20,7 +21,7 @@ impl<const N: usize> TextProb<N> {
         Self::new()
     }
 
-    pub fn update(&mut self, idx: usize, byte: u8) -> bool {
+    pub fn update(&mut self, idx: usize, byte: u8) {
         let mut in_transition = false; // Indicates if the text is in transition.
 
         if self.hi_prob[idx] == byte {
@@ -54,7 +55,42 @@ impl<const N: usize> TextProb<N> {
             // The new byte doesn't match anything, put it in the low probability array.
             self.lo_prob[idx] = byte;
         }
-        in_transition
+        if in_transition {
+            // When the text is changing, decrement the count for all characters to
+            // prevent displaying part of a message that is in transition.
+            for count in self.hi_prob_cnt.iter_mut() {
+                if *count > 1 {
+                    *count -= 1;
+                }
+            }
+        }
+    }
+
+    pub fn is_complete(&self) -> bool {
+        // Text is incomplete if any character in the high probability array
+        // has been seen fewer times than the validation limit.
+        for count in self.hi_prob_cnt.iter() {
+            if *count < VALIDATE_LIMIT {
+                return false;
+            }
+        }
+        true
+    }
+
+    pub fn bump_rt_validation_count(&mut self) {
+        for i in 0..self.hi_prob_cnt.len() {
+            if self.hi_prob[i] == 0 {
+                self.hi_prob[i] = BLANK_CHAR;
+                self.hi_prob_cnt[i] += 1;
+            }
+            for i in 0..self.hi_prob_cnt.len() {
+                self.hi_prob_cnt[i] += 1;
+            }
+        }
+        // Wipe out the cached text.
+        self.hi_prob_cnt.fill(0);
+        self.hi_prob.fill(0);
+        self.lo_prob.fill(0);
     }
 }
 

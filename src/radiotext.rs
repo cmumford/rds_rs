@@ -5,7 +5,6 @@ pub const MAX_RADIOTEXT_LEN: usize = 64;
 const END_OF_MESSAGE_CHAR: u8 = 0x0d;
 pub const LINE_BREAK_CHAR: u8 = 0x0a;
 pub const BLANK_CHAR: u8 = ' ' as u8;
-const RT_VALIDATE_LIMIT: u8 = 2;
 
 // Code table from IEC 62106:1000 Figure E.1
 #[rustfmt::skip]
@@ -104,7 +103,6 @@ impl Radiotext {
     }
 
     pub fn update_rt_advance(&mut self, addr: usize, byte: &[Option<[u8; 2]>]) {
-        let mut text_changing = false; // Indicates if the Radiotext is changing.
         let mut idx = addr;
 
         let mut add_pair = |pair: &Option<[u8; 2]>| {
@@ -112,9 +110,7 @@ impl Radiotext {
                 return;
             }
             for ch in pair.unwrap() {
-                if self.pvt.update(idx, ch) {
-                    text_changing = true;
-                }
+                self.pvt.update(idx, ch);
                 idx += 1;
             }
         };
@@ -123,39 +119,13 @@ impl Radiotext {
         if byte.len() > 1 {
             add_pair(&byte[1]);
         }
-
-        if !text_changing {
+        if !self.pvt.is_complete() {
             return;
-        }
-
-        // When the text is changing, decrement the count for all characters to
-        // prevent displaying part of a message that is in transition.
-        for i in 0..self.pvt.hi_prob_cnt.len() {
-            if self.pvt.hi_prob_cnt[i] > 1 {
-                self.pvt.hi_prob_cnt[i] -= 1;
-            }
-        }
-        for count in self.pvt.hi_prob_cnt.iter_mut() {
-            if *count < RT_VALIDATE_LIMIT {
-                return;
-            }
         }
         self.display.copy_from_slice(&self.pvt.hi_prob);
     }
 
     pub fn bump_rt_validation_count(&mut self) {
-        for i in 0..self.pvt.hi_prob_cnt.len() {
-            if self.pvt.hi_prob[i] == 0 {
-                self.pvt.hi_prob[i] = BLANK_CHAR;
-                self.pvt.hi_prob_cnt[i] += 1;
-            }
-            for i in 0..self.pvt.hi_prob_cnt.len() {
-                self.pvt.hi_prob_cnt[i] += 1;
-            }
-        }
-        // Wipe out the cached text.
-        self.pvt.hi_prob_cnt.fill(0);
-        self.pvt.hi_prob.fill(0);
-        self.pvt.lo_prob.fill(0);
+        self.pvt.bump_rt_validation_count();
     }
 }
