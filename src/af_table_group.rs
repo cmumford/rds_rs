@@ -6,6 +6,7 @@ fn is_freq_code_count(freq_code: u8) -> bool {
     AF_MIN_COUNT_CODE <= freq_code && freq_code <= AF_MAX_COUNT_CODE
 }
 
+// See Table 11
 fn freq_code_to_count(freq_code: u8) -> u8 {
     1 + freq_code - AF_MIN_COUNT_CODE
 }
@@ -58,7 +59,7 @@ impl AltFreqTableGroup {
         let mut encoding_method = AltFreqEncoding::Unknown;
 
         if self.count == 1 && self.table[0].encoding == AltFreqEncoding::MethodA {
-            // There is only every one "A" table, so reuse this one.
+            // There is only ever one "A" table, so reuse this one.
             self.pvt_current_table_idx = 0;
             encoding_method = AltFreqEncoding::MethodA;
         } else {
