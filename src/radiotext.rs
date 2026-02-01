@@ -76,7 +76,7 @@ impl Radiotext {
     // Write (up to) a pair of two character tuples (up to four characters) into this
     // instance starting at character index `addr`. One or both of the two-character
     // pairs may be missing, and if so do nothing.
-    pub fn update_rt_simple(&mut self, addr: usize, chars: &[Option<[u8; 2]>]) {
+    pub fn update_rt_simple(&mut self, addr: usize, char_pairs: &[Option<[u8; 2]>]) {
         let mut idx = addr;
 
         // Write two characters if provided.
@@ -96,13 +96,13 @@ impl Radiotext {
             false
         };
 
-        let eom = add_pair(&chars[0]);
-        if !eom && chars.len() > 1 {
-            add_pair(&chars[1]);
+        let eom = add_pair(&char_pairs[0]);
+        if !eom && char_pairs.len() > 1 {
+            add_pair(&char_pairs[1]);
         }
     }
 
-    pub fn update_rt_advance(&mut self, addr: usize, byte: &[Option<[u8; 2]>]) {
+    pub fn update_rt_advance(&mut self, addr: usize, char_pairs: &[Option<[u8; 2]>]) {
         let mut idx = addr;
 
         let mut add_pair = |pair: &Option<[u8; 2]>| {
@@ -115,9 +115,9 @@ impl Radiotext {
             }
         };
 
-        add_pair(&byte[0]);
-        if byte.len() > 1 {
-            add_pair(&byte[1]);
+        add_pair(&char_pairs[0]);
+        if char_pairs.len() > 1 {
+            add_pair(&char_pairs[1]);
         }
         if !self.pvt.is_complete() {
             return;
