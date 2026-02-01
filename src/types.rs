@@ -1,4 +1,7 @@
 #![allow(dead_code)]
+// Need to allow unused parens because of the way that the
+// modular-bitfields-msb Debug attribute macro expands.
+#![allow(unused_parens)]
 
 use modular_bitfield_msb::prelude::*;
 
@@ -163,7 +166,7 @@ impl Clock {
 
 /// Bitflags indicating which RDS fields are valid / have been received
 #[bitfield(bits = 17)]
-#[derive(Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ValidFields {
     pub af: bool,
     pub clock: bool,
