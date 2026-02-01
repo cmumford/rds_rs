@@ -65,7 +65,7 @@ fn decode_group_type_0(
         traffic_announcement: bool, // TA bit: section 3.2.1.3.
         ms: Content,                // M/S bit: section 3.2.1.4.
         di_bit: bool,               // DI bit: section 3.2.1.5.
-        c: B2,                      // Prog. service name and DI segment addr.
+        seg_addr: B2,               // Prog. service name and DI segment addr.
     }
 
     let mut valid = ValidFields::new();
@@ -78,12 +78,12 @@ fn decode_group_type_0(
     }
     // Decoder identification and Dynamic PTY indicator / DI codes.
     // The d bits come MSB first.
-    match block_b.c() {
+    match block_b.seg_addr() {
         0 => rds_data.did_pty.set_dynamic_pty(block_b.di_bit()),
         1 => rds_data.did_pty.set_compressed(block_b.di_bit()),
         2 => rds_data.did_pty.set_artificial_head(block_b.di_bit()),
         3 => rds_data.did_pty.set_stereo(block_b.di_bit()),
-        _ => panic!("Invalid"),
+        _ => panic!("Invalid"), // Can't happen for a B2 type.
     }
     if group.d.is_none() {
         return valid;
@@ -93,7 +93,7 @@ fn decode_group_type_0(
     rds_data.content = block_b.ms();
     valid.set_ms(true);
 
-    let pair_idx = 2 * block_b.c();
+    let pair_idx = 2 * block_b.seg_addr();
     let d_val = group.d.unwrap();
     let hi_byte = (d_val >> 8) as u8;
     let lo_byte = (d_val & 0xFF) as u8;
