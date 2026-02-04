@@ -12,7 +12,7 @@ pub struct AltFreqTable {
     /// Tuned frequency (used in Method B)
     pub tuned_freq: Frequency,
     /// Alternative frequencies
-    entries: FnvIndexSet<Frequency, 32>,
+    pub entries: FnvIndexSet<Frequency, 32>,
 }
 
 impl AltFreqTable {

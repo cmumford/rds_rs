@@ -2,6 +2,28 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Debug integration test 'ps_tests'",
+            "type": "lldb",
+            "request": "launch",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--test=ps_tests"
+                ]
+            }
+        },
+        {
+            "name": "Debug integration test 'tests'",
+            "type": "lldb",
+            "request": "launch",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--test=tests"
+                ]
+            }
+        },
+        {
             "type": "lldb",
             "request": "launch",
             "name": "Debug decode_rds_spy_log",

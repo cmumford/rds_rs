@@ -70,7 +70,7 @@ fn decode_group_type_0(
 
     let mut valid = ValidFields::new();
     let block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
-    if block_b.group_type().version() == GroupVersion::A && group.c.is_some() {
+    if block_b.group_type().version() == GroupVersion::B && group.c.is_some() {
         rds_data
             .alternative_freqs
             .decode_freq_group_block(group.c.unwrap());
