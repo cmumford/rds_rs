@@ -94,7 +94,7 @@ mod tests {
         //                  |code|v|t| pty |TA|MS|DI|Sa|
         let block_b: u16 = 0b0000_1_0_00110__1__1__1_10; // Second text segment.
         //                  |Nu|F1|
-        let block_c: u16 = 0xE1_01; // 1 freqs: 0x01 = 87.6 MHz
+        let block_c: u16 = 0xE1_01; // 1 freq: 0x01 = 87.6 MHz
         //                  |C1|C2|
         let block_d: u16 = 0x50_73; // ['P', 's']
 
@@ -104,17 +104,16 @@ mod tests {
         let mut rds_data = RdsData::default();
         let mut decoder = Decoder::new(false);
 
-        let valid = decoder.decode(
-            &Group {
-                a: Some(block_a),
-                b: Some(block_b),
-                c: Some(block_c),
-                d: Some(block_d),
-            },
-            &mut rds_data,
-        );
         assert_eq!(
-            valid,
+            decoder.decode(
+                &Group {
+                    a: Some(block_a),
+                    b: Some(block_b),
+                    c: Some(block_c),
+                    d: Some(block_d),
+                },
+                &mut rds_data,
+            ),
             ValidFields::new()
                 .with_af(true)
                 .with_af(true)
@@ -128,17 +127,15 @@ mod tests {
         // TODO: Don't believe `count` is correctly set by decoder.
         assert_eq!(rds_data.alternative_freqs.count, 0);
         assert_eq!(rds_data.alternative_freqs.table[0].table.entries.len(), 1);
-        let expected = Frequency {
-            band: Band::Uhf,
-            attribute: AltFreqAttribute::SameProgram,
-            freq: 876,
-        };
-
         assert!(
             rds_data.alternative_freqs.table[0]
                 .table
                 .entries
-                .contains(&expected),
+                .contains(&Frequency {
+                    band: Band::Uhf,
+                    attribute: AltFreqAttribute::SameProgram,
+                    freq: 876,
+                }),
         );
 
         assert_eq!(rds_to_utf8_lossy(&rds_data.ps.display), "    Ps  ");
