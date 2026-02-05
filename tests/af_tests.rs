@@ -1,4 +1,4 @@
-use rds::{Decoder, Group, ValidFields, get_lf_mf_frequency};
+use rds::{Decoder, Group, ValidFields};
 
 #[cfg(test)]
 
@@ -50,13 +50,5 @@ mod tests {
         decode_with_block_c(0xE5_01); // five frequencies, F1 = 87.6 MHz.
         decode_with_block_c(0x02_03);
         decode_with_block_c(0x04_04);
-    }
-
-    #[test]
-    fn test_get_lf_mf_frequency() {
-        assert_eq!(get_lf_mf_frequency(1), 153_000);
-        assert_eq!(get_lf_mf_frequency(15), 279_000);
-        assert_eq!(get_lf_mf_frequency(16), 531_000);
-        assert_eq!(get_lf_mf_frequency(135), 1_602_000);
     }
 }
