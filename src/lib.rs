@@ -2,6 +2,8 @@ mod af_codes;
 mod af_decode_table;
 mod af_table;
 mod af_table_group;
+mod alt_freq_table;
+mod alt_freq_table_decoder;
 mod decoder;
 mod eon;
 mod oda;
