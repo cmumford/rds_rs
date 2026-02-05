@@ -47,7 +47,7 @@ fn decode_freq_cnt(code: u8) -> u8 {
     code - 224_u8
 }
 
-pub fn get_lf_mf_frequency(idx: u8) -> u32 {
+fn get_lf_mf_frequency(idx: u8) -> u32 {
     if idx >= 1 && idx < 16 {
         return 153_000 + ((idx as u32) - 1) * 9000;
     }
@@ -107,5 +107,26 @@ impl AfDecoder {
         let _ = self.decode_freq_code((block_c.unwrap() >> 8) as u8, table);
         let _ = self.decode_freq_code((block_c.unwrap() & 0xff) as u8, table);
         Ok(())
+    }
+}
+
+#[cfg(test)]
+
+mod tests {
+    use crate::alt_freq_decoder::{decode_freq_cnt, get_lf_mf_frequency};
+
+    #[test]
+    fn test_get_lf_mf_frequency() {
+        assert_eq!(get_lf_mf_frequency(1), 153_000);
+        assert_eq!(get_lf_mf_frequency(15), 279_000);
+        assert_eq!(get_lf_mf_frequency(16), 531_000);
+        assert_eq!(get_lf_mf_frequency(135), 1_602_000);
+    }
+
+    #[test]
+    fn test_decode_freq_cnt() {
+        assert_eq!(decode_freq_cnt(224), 0);
+        assert_eq!(decode_freq_cnt(225), 1);
+        assert_eq!(decode_freq_cnt(249), 25);
     }
 }
