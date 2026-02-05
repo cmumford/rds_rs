@@ -2,8 +2,8 @@ mod af_codes;
 mod af_decode_table;
 mod af_table;
 mod af_table_group;
+mod alt_freq_decoder;
 mod alt_freq_table;
-mod alt_freq_table_decoder;
 mod decoder;
 mod eon;
 mod oda;
@@ -14,6 +14,7 @@ mod rds;
 mod text_prob;
 mod types;
 
+pub use alt_freq_decoder::get_lf_mf_frequency;
 pub use decoder::Decoder;
 pub use radiotext::{BLANK_CHAR, LINE_BREAK_CHAR, MAX_RADIOTEXT_LEN, RtVariant, rds_to_utf8_lossy};
 pub use rds::RdsData;

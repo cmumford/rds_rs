@@ -7,7 +7,7 @@ use heapless::index_set::FnvIndexSet;
 const MAX_ENTRIES: usize = 25;
 
 /// Decoded table of alternative frequencies.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone, PartialEq)]
 pub struct AfTable {
     /// Tuned frequency (used in Method B)
     pub tuned_freq: Frequency,

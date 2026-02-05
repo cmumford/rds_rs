@@ -1,4 +1,6 @@
 use crate::af_table_group::AltFreqTableGroup;
+use crate::alt_freq_decoder::AfDecoder;
+use crate::alt_freq_table::AfTable;
 use crate::eon::EonData;
 use crate::oda::OdaEntry;
 use crate::ps::PsData;
@@ -65,6 +67,10 @@ pub struct RdsData {
     pub ews: EwsData,
 
     pub did_pty: DiCodes,
+
+    pub alt_freqs: AfTable,
+
+    alt_freq_decoder: AfDecoder,
 
     /// Bitmask of which fields are valid
     pub valid: ValidFields,

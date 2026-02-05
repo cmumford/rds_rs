@@ -1030,6 +1030,7 @@ dependencies = [
  "modular-bitfield-msb",
  "ratatui",
  "rdspy",
+ "thiserror 2.0.18",
  "walkdir",
 ]
 
