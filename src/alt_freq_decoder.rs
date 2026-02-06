@@ -65,15 +65,27 @@ pub enum DecodeError {
 }
 
 #[derive(Debug, Default, Clone, PartialEq)]
+enum EcodingMethod {
+    #[default]
+    Unknown, // Not enough data yet to determine.
+    MethodA, // See RBDS Spec section 3.2.1.6.3.
+    MethodB, // See RBDS Spec section 3.2.1.6.4.
+}
+
+#[derive(Debug, Default, Clone, PartialEq)]
 pub struct AfDecoder {
     awaiting_freq_cnt: u8,
     next_freq_is_lf_mf: bool,
+    first_freq_code: u8,
+    encoding_method: EcodingMethod,
 }
 
 impl AfDecoder {
     fn reset(&mut self) {
         self.awaiting_freq_cnt = 0;
         self.next_freq_is_lf_mf = false;
+        self.first_freq_code = 0;
+        self.encoding_method = EcodingMethod::Unknown;
     }
 
     fn decode_freq_code(&mut self, code: u8, table: &mut AfTable) -> Result<(), DecodeError> {
@@ -108,11 +120,40 @@ impl AfDecoder {
             return Ok(());
         }
         assert!(code_type == CodeType::Frequency);
+        if self.first_freq_code == 0 {
+            self.first_freq_code = code;
+        }
         let _ = table.add(&Freq {
             frequency: get_uhf_frequency(code),
             freq_type: FreqType::SameProgram,
         });
 
+        Ok(())
+    }
+
+    fn decode_for_method_b(
+        &mut self,
+        code_pair: [u8; 2],
+        table: &mut AfTable,
+    ) -> Result<(), DecodeError> {
+        let freq_type = if code_pair[0] < code_pair[1] {
+            FreqType::RegionalVariant
+        } else {
+            FreqType::SameProgram
+        };
+        if code_pair[0] == self.first_freq_code {
+            let _ = table.add(&Freq {
+                frequency: get_uhf_frequency(code_pair[1]),
+                freq_type: freq_type,
+            });
+        } else if code_pair[1] == self.first_freq_code {
+            let _ = table.add(&Freq {
+                frequency: get_uhf_frequency(code_pair[0]),
+                freq_type: freq_type,
+            });
+        } else {
+            assert!(false, "Freq does not match tuned freq");
+        }
         Ok(())
     }
 
@@ -127,8 +168,21 @@ impl AfDecoder {
             self.reset();
             return Ok(());
         }
-        let _ = self.decode_freq_code((block_c.unwrap() >> 8) as u8, table);
-        let _ = self.decode_freq_code((block_c.unwrap() & 0xff) as u8, table);
+        let code_pair = block_c.unwrap().to_be_bytes();
+        if self.encoding_method == EcodingMethod::Unknown && self.first_freq_code != 0 {
+            if code_pair[0] == self.first_freq_code || code_pair[1] == self.first_freq_code {
+                self.encoding_method = EcodingMethod::MethodB;
+            } else {
+                self.encoding_method = EcodingMethod::MethodA;
+            }
+        }
+        if self.encoding_method == EcodingMethod::MethodB {
+            return self.decode_for_method_b(code_pair, table);
+        }
+        // Either unknown or method A
+        let _ = self.decode_freq_code(code_pair[0], table);
+        let _ = self.decode_freq_code(code_pair[1], table);
+
         Ok(())
     }
 }
