@@ -71,13 +71,6 @@ pub struct AfDecoder {
 }
 
 impl AfDecoder {
-    fn new() -> Self {
-        return AfDecoder {
-            awaiting_freq_cnt: 0,
-            next_freq_is_lf_mf: false,
-        };
-    }
-
     fn reset(&mut self) {
         self.awaiting_freq_cnt = 0;
         self.next_freq_is_lf_mf = false;
