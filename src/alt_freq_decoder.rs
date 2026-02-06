@@ -54,6 +54,10 @@ fn get_lf_mf_frequency(idx: u8) -> u32 {
     return 531_000 + ((idx as u32) - 16) * 9000;
 }
 
+fn get_uhf_frequency(idx: u8) -> u32 {
+    87_600_000 + ((idx - 1) as u32) * 100000
+}
+
 #[derive(Error, Debug)]
 pub enum DecodeError {
     #[error("Use of invalid code")]
@@ -74,6 +78,9 @@ impl AfDecoder {
 
     fn decode_freq_code(&mut self, code: u8, table: &mut AfTable) -> Result<(), DecodeError> {
         let code_type = categorize_uhf_code(code);
+        if code_type == CodeType::Unassigned {
+            return Err(DecodeError::InvalidCode);
+        }
         if self.awaiting_freq_cnt == 0 {
             if code_type != CodeType::AltFreqCount {
                 // Not an error because decoding may have started after the
@@ -92,6 +99,13 @@ impl AfDecoder {
             }
             let _ = table.add(get_lf_mf_frequency(code));
         }
+        if code_type == CodeType::LfMfFollows {
+            self.next_freq_is_lf_mf = true;
+            return Ok(());
+        }
+        assert!(code_type == CodeType::Frequency);
+        let _ = table.add(get_uhf_frequency(code));
+
         Ok(())
     }
 
@@ -115,7 +129,7 @@ impl AfDecoder {
 #[cfg(test)]
 
 mod tests {
-    use crate::alt_freq_decoder::{decode_freq_cnt, get_lf_mf_frequency};
+    use crate::alt_freq_decoder::{decode_freq_cnt, get_lf_mf_frequency, get_uhf_frequency};
 
     #[test]
     fn test_get_lf_mf_frequency() {
@@ -123,6 +137,13 @@ mod tests {
         assert_eq!(get_lf_mf_frequency(15), 279_000);
         assert_eq!(get_lf_mf_frequency(16), 531_000);
         assert_eq!(get_lf_mf_frequency(135), 1_602_000);
+    }
+
+    #[test]
+    fn test_get_uhf_frequency() {
+        assert_eq!(get_uhf_frequency(1), 87_600_000);
+        assert_eq!(get_uhf_frequency(2), 87_700_000);
+        assert_eq!(get_uhf_frequency(204), 107_900_000);
     }
 
     #[test]
