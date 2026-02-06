@@ -71,6 +71,13 @@ pub struct AfDecoder {
 }
 
 impl AfDecoder {
+    fn new() -> Self {
+        return AfDecoder {
+            awaiting_freq_cnt: 0,
+            next_freq_is_lf_mf: false,
+        };
+    }
+
     fn reset(&mut self) {
         self.awaiting_freq_cnt = 0;
         self.next_freq_is_lf_mf = false;
@@ -98,6 +105,7 @@ impl AfDecoder {
                 return Err(DecodeError::InvalidCode);
             }
             let _ = table.add(get_lf_mf_frequency(code));
+            return Ok(());
         }
         if code_type == CodeType::LfMfFollows {
             self.next_freq_is_lf_mf = true;
@@ -129,7 +137,10 @@ impl AfDecoder {
 #[cfg(test)]
 
 mod tests {
-    use crate::alt_freq_decoder::{decode_freq_cnt, get_lf_mf_frequency, get_uhf_frequency};
+    use crate::alt_freq_decoder::{
+        AfDecoder, decode_freq_cnt, get_lf_mf_frequency, get_uhf_frequency,
+    };
+    use crate::alt_freq_table::AfTable;
 
     #[test]
     fn test_get_lf_mf_frequency() {
@@ -151,5 +162,64 @@ mod tests {
         assert_eq!(decode_freq_cnt(224), 0);
         assert_eq!(decode_freq_cnt(225), 1);
         assert_eq!(decode_freq_cnt(249), 25);
+    }
+
+    #[test]
+    fn test_decoder_one_freq() {
+        let mut table = AfTable::default();
+        let mut decoder = AfDecoder::default();
+        let result = decoder.decode_freq_block(Some(0xE1_01), &mut table);
+        assert!(result.is_ok(), "Expected Ok, got {:?}", result);
+        assert_eq!(table.entries.len(), 1);
+        let actual: Vec<_> = table.entries.iter().copied().collect();
+        assert_eq!(actual, [87_600_000]);
+    }
+
+    // test to very scenario from Example A in RBDS Specification section 3.2.1.6.3.
+    #[test]
+    fn test_decoder_example_a() {
+        let mut table = AfTable::default();
+        let mut decoder = AfDecoder::default();
+        let blocks = [0xE5_01, 0x02_03, 0x04_05];
+        for block in blocks {
+            let result = decoder.decode_freq_block(Some(block), &mut table);
+            assert!(result.is_ok(), "Expected Ok, got {:?}", result);
+        }
+        assert_eq!(table.entries.len(), 5);
+        let actual: Vec<_> = table.entries.iter().copied().collect();
+        assert_eq!(
+            actual,
+            [87_600_000, 87_700_000, 87_800_000, 87_900_000, 88_000_000]
+        );
+    }
+
+    // test to very scenario from Example B in RBDS Specification section 3.2.1.6.3.
+    #[test]
+    fn test_decoder_example_b() {
+        let mut table = AfTable::default();
+        let mut decoder = AfDecoder::default();
+        let blocks = [0xE5_01, 0x02_03, 0x04_CE];
+        for block in blocks {
+            let result = decoder.decode_freq_block(Some(block), &mut table);
+            assert!(result.is_ok(), "Expected Ok, got {:?}", result);
+        }
+        assert_eq!(table.entries.len(), 4);
+        let actual: Vec<_> = table.entries.iter().copied().collect();
+        assert_eq!(actual, [87_600_000, 87_700_000, 87_800_000, 87_900_000]);
+    }
+
+    // test to very scenario from Example C in RBDS Specification section 3.2.1.6.3.
+    #[test]
+    fn test_decoder_example_c() {
+        let mut table = AfTable::default();
+        let mut decoder = AfDecoder::default();
+        let blocks = [0xE5_01, 0x02_03, 0xFA_10];
+        for block in blocks {
+            let result = decoder.decode_freq_block(Some(block), &mut table);
+            assert!(result.is_ok(), "Expected Ok, got {:?}", result);
+        }
+        assert_eq!(table.entries.len(), 4);
+        let actual: Vec<_> = table.entries.iter().copied().collect();
+        assert_eq!(actual, [87_600_000, 87_700_000, 87_800_000, 531_000]);
     }
 }
