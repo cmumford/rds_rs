@@ -1,4 +1,4 @@
-use crate::alt_freq_table::AfTable;
+use crate::alt_freq_table::{AfTable, Freq, FreqType};
 use thiserror::Error;
 
 // Section 3.2.1.6.1 describes how 8-bit values are mapped to either
@@ -104,7 +104,10 @@ impl AfDecoder {
                 self.reset();
                 return Err(DecodeError::InvalidCode);
             }
-            let _ = table.add(get_lf_mf_frequency(code));
+            let _ = table.add(&Freq {
+                frequency: get_lf_mf_frequency(code),
+                freq_type: FreqType::SameProgram,
+            });
             return Ok(());
         }
         if code_type == CodeType::LfMfFollows {
@@ -112,7 +115,10 @@ impl AfDecoder {
             return Ok(());
         }
         assert!(code_type == CodeType::Frequency);
-        let _ = table.add(get_uhf_frequency(code));
+        let _ = table.add(&Freq {
+            frequency: get_uhf_frequency(code),
+            freq_type: FreqType::SameProgram,
+        });
 
         Ok(())
     }
@@ -140,7 +146,7 @@ mod tests {
     use crate::alt_freq_decoder::{
         AfDecoder, decode_freq_cnt, get_lf_mf_frequency, get_uhf_frequency,
     };
-    use crate::alt_freq_table::AfTable;
+    use crate::alt_freq_table::{AfTable, Freq, FreqType};
 
     #[test]
     fn test_get_lf_mf_frequency() {
@@ -172,7 +178,13 @@ mod tests {
         assert!(result.is_ok(), "Expected Ok, got {:?}", result);
         assert_eq!(table.entries.len(), 1);
         let actual: Vec<_> = table.entries.iter().copied().collect();
-        assert_eq!(actual, [87_600_000]);
+        assert_eq!(
+            actual,
+            [Freq {
+                frequency: 87_600_000,
+                freq_type: FreqType::SameProgram
+            }]
+        );
     }
 
     // test to very scenario from Example A in RBDS Specification section 3.2.1.6.3.
@@ -189,7 +201,28 @@ mod tests {
         let actual: Vec<_> = table.entries.iter().copied().collect();
         assert_eq!(
             actual,
-            [87_600_000, 87_700_000, 87_800_000, 87_900_000, 88_000_000]
+            [
+                Freq {
+                    frequency: 87_600_000,
+                    freq_type: FreqType::SameProgram
+                },
+                Freq {
+                    frequency: 87_700_000,
+                    freq_type: FreqType::SameProgram
+                },
+                Freq {
+                    frequency: 87_800_000,
+                    freq_type: FreqType::SameProgram
+                },
+                Freq {
+                    frequency: 87_900_000,
+                    freq_type: FreqType::SameProgram
+                },
+                Freq {
+                    frequency: 88_000_000,
+                    freq_type: FreqType::SameProgram
+                },
+            ]
         );
     }
 
@@ -205,7 +238,27 @@ mod tests {
         }
         assert_eq!(table.entries.len(), 4);
         let actual: Vec<_> = table.entries.iter().copied().collect();
-        assert_eq!(actual, [87_600_000, 87_700_000, 87_800_000, 87_900_000]);
+        assert_eq!(
+            actual,
+            [
+                Freq {
+                    frequency: 87_600_000,
+                    freq_type: FreqType::SameProgram
+                },
+                Freq {
+                    frequency: 87_700_000,
+                    freq_type: FreqType::SameProgram
+                },
+                Freq {
+                    frequency: 87_800_000,
+                    freq_type: FreqType::SameProgram
+                },
+                Freq {
+                    frequency: 87_900_000,
+                    freq_type: FreqType::SameProgram
+                },
+            ]
+        );
     }
 
     // test to very scenario from Example C in RBDS Specification section 3.2.1.6.3.
@@ -220,6 +273,26 @@ mod tests {
         }
         assert_eq!(table.entries.len(), 4);
         let actual: Vec<_> = table.entries.iter().copied().collect();
-        assert_eq!(actual, [87_600_000, 87_700_000, 87_800_000, 531_000]);
+        assert_eq!(
+            actual,
+            [
+                Freq {
+                    frequency: 87_600_000,
+                    freq_type: FreqType::SameProgram
+                },
+                Freq {
+                    frequency: 87_700_000,
+                    freq_type: FreqType::SameProgram
+                },
+                Freq {
+                    frequency: 87_800_000,
+                    freq_type: FreqType::SameProgram
+                },
+                Freq {
+                    frequency: 531_000,
+                    freq_type: FreqType::SameProgram
+                },
+            ]
+        );
     }
 }
