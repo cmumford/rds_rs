@@ -87,8 +87,10 @@ impl AfDecoder {
         if self.next_freq_is_lf_mf {
             self.next_freq_is_lf_mf = false;
             if code_type != CodeType::Frequency {
+                self.reset();
                 return Err(DecodeError::InvalidCode);
             }
+            let _ = table.add(get_lf_mf_frequency(code));
         }
         Ok(())
     }

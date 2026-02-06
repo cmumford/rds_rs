@@ -1,4 +1,3 @@
-use crate::types::Frequency;
 use heapless::index_set::FnvIndexSet;
 
 // No more than 25 alternative frequencies are transmitted according to
@@ -10,16 +9,16 @@ const MAX_ENTRIES: usize = 25;
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct AfTable {
     /// Tuned frequency (used in Method B)
-    pub tuned_freq: Frequency,
+    pub tuned_freq: u32,
     /// Alternative frequencies
-    pub entries: FnvIndexSet<Frequency, 32>,
+    pub entries: FnvIndexSet<u32, 32>,
 }
 
 impl AfTable {
-    pub fn insert(&mut self, freq: &Frequency) -> bool {
-        if self.entries.len() == MAX_ENTRIES && !self.entries.contains(freq) {
+    pub fn add(&mut self, freq: u32) -> bool {
+        if self.entries.len() == MAX_ENTRIES && !self.entries.contains(&freq) {
             return false;
         }
-        self.entries.insert(*freq).unwrap()
+        self.entries.insert(freq).unwrap()
     }
 }
