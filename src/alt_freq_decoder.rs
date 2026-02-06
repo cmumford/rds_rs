@@ -176,8 +176,8 @@ mod tests {
         let mut decoder = AfDecoder::default();
         let result = decoder.decode_freq_block(Some(0xE1_01), &mut table);
         assert!(result.is_ok(), "Expected Ok, got {:?}", result);
-        assert_eq!(table.entries.len(), 1);
-        let actual: Vec<_> = table.entries.iter().copied().collect();
+        assert_eq!(table.iter().count(), 1);
+        let actual: Vec<_> = table.iter().copied().collect();
         assert_eq!(
             actual,
             [Freq {
@@ -197,8 +197,8 @@ mod tests {
             let result = decoder.decode_freq_block(Some(block), &mut table);
             assert!(result.is_ok(), "Expected Ok, got {:?}", result);
         }
-        assert_eq!(table.entries.len(), 5);
-        let actual: Vec<_> = table.entries.iter().copied().collect();
+        assert_eq!(table.iter().count(), 5);
+        let actual: Vec<_> = table.iter().copied().collect();
         assert_eq!(
             actual,
             [
@@ -236,8 +236,8 @@ mod tests {
             let result = decoder.decode_freq_block(Some(block), &mut table);
             assert!(result.is_ok(), "Expected Ok, got {:?}", result);
         }
-        assert_eq!(table.entries.len(), 4);
-        let actual: Vec<_> = table.entries.iter().copied().collect();
+        assert_eq!(table.iter().count(), 4);
+        let actual: Vec<_> = table.iter().copied().collect();
         assert_eq!(
             actual,
             [
@@ -271,8 +271,8 @@ mod tests {
             let result = decoder.decode_freq_block(Some(block), &mut table);
             assert!(result.is_ok(), "Expected Ok, got {:?}", result);
         }
-        assert_eq!(table.entries.len(), 4);
-        let actual: Vec<_> = table.entries.iter().copied().collect();
+        assert_eq!(table.iter().count(), 4);
+        let actual: Vec<_> = table.iter().copied().collect();
         assert_eq!(
             actual,
             [

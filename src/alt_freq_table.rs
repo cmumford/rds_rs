@@ -21,7 +21,7 @@ pub struct Freq {
 /// Decoded table of alternative frequencies.
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct AfTable {
-    pub entries: FnvIndexSet<Freq, 32>,
+    entries: FnvIndexSet<Freq, 32>,
 }
 
 impl AfTable {
@@ -30,5 +30,10 @@ impl AfTable {
             return false;
         }
         self.entries.insert(*freq).unwrap()
+    }
+
+    #[inline]
+    pub fn iter(&self) -> impl Iterator<Item = &Freq> + '_ {
+        self.entries.iter()
     }
 }
