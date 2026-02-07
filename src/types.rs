@@ -60,45 +60,6 @@ pub struct DiCodes {
     pub stereo: bool,          // d0
 }
 
-/// Alternative frequency band
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
-#[repr(u8)]
-pub enum Band {
-    #[default]
-    Uhf = 0, // UHF band.
-    LfMf = 1, // LF/MF band.
-}
-
-/// How an alternative frequency relates to the tuned frequency
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
-#[repr(u8)]
-pub enum AltFreqAttribute {
-    #[default]
-    SameProgram = 0,
-    RegionalVariant = 1,
-}
-
-/// Alternative frequency encoding method.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-#[repr(u8)]
-pub enum AltFreqEncoding {
-    #[default]
-    Unknown = 0,
-    MethodA = 1,
-    MethodB = 2,
-}
-
-/// A single alternative frequency entry
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Frequency {
-    pub band: Band,
-    pub attribute: AltFreqAttribute,
-    /// Frequency value:
-    /// - UHF: in 100 kHz steps (885 = 88.5 MHz)
-    /// - LF/MF: in kHz (531 = 531 kHz)
-    pub freq: u16,
-}
-
 /// Program Item Number Code (PIN)
 /// The scheduled broadcast start time and day of month as published by
 /// the broadcaster.

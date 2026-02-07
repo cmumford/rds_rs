@@ -1,7 +1,5 @@
-use crate::af_table_group::AltFreqTableGroup;
 use crate::alt_freq_decoder::AfDecoder;
 use crate::alt_freq_table::AfTable;
-use crate::eon::EonData;
 use crate::oda::OdaEntry;
 use crate::ps::PsData;
 use crate::ptyn::PtynData;
@@ -51,12 +49,6 @@ pub struct RdsData {
     /// Program Type Name (extended PTY)
     pub ptyn: PtynData,
 
-    /// Alternative frequencies
-    pub alternative_freqs: AltFreqTableGroup,
-
-    /// Enhanced Other Networks
-    pub eon: EonData,
-
     /// Active Open Data Applications
     pub oda: LinearMap<u16, OdaEntry, 10>,
 
@@ -70,7 +62,7 @@ pub struct RdsData {
 
     pub alt_freqs: AfTable,
 
-    alt_freq_decoder: AfDecoder,
+    pub alt_freq_decoder: AfDecoder,
 
     /// Bitmask of which fields are valid
     pub valid: ValidFields,

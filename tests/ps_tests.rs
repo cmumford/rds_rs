@@ -1,7 +1,4 @@
-use rds::{
-    AltFreqAttribute, Band, Content, Decoder, DiCodes, Frequency, Group, ProgramType, ValidFields,
-    rds_to_utf8_lossy,
-};
+use rds::{Content, Decoder, DiCodes, Group, ProgramType, ValidFields, rds_to_utf8_lossy};
 
 #[cfg(test)]
 
@@ -62,7 +59,7 @@ mod tests {
         // Verify block C values.
         // Verify that this 0A group, where block C hold a PI code, isn't
         // interpreted as a 0B group where they are alt-freqs.
-        assert_eq!(rds_data.alternative_freqs.count, 0);
+        assert_eq!(rds_data.alt_freqs.iter().count(), 0);
 
         // Verify block D values.
         assert_eq!(rds_to_utf8_lossy(&rds_data.ps.display), "    Ps  ");
@@ -124,19 +121,8 @@ mod tests {
                 .with_ta_code(true)
                 .with_tp_code(true)
         );
-        // TODO: Don't believe `count` is correctly set by decoder.
-        assert_eq!(rds_data.alternative_freqs.count, 0);
-        assert_eq!(rds_data.alternative_freqs.table[0].table.entries.len(), 1);
-        assert!(
-            rds_data.alternative_freqs.table[0]
-                .table
-                .entries
-                .contains(&Frequency {
-                    band: Band::Uhf,
-                    attribute: AltFreqAttribute::SameProgram,
-                    freq: 876,
-                }),
-        );
+
+        // Alternative frequency decoding is tested in `af_tests.rs` and unit tests.
 
         assert_eq!(rds_to_utf8_lossy(&rds_data.ps.display), "    Ps  ");
     }

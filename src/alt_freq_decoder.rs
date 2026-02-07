@@ -257,7 +257,7 @@ impl AfDecoder {
 
     // Decode a C block of frequencies or control codes. If none was received,
     // too many errors, etc., then pass in None to reset the decoder.
-    fn decode_freq_block(
+    pub fn decode_freq_block(
         &mut self,
         block_c: Option<u16>,
         table: &mut AfTable,
