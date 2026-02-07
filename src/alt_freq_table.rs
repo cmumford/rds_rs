@@ -1,9 +1,11 @@
 use heapless::index_set::FnvIndexSet;
 
-// No more than 25 alternative frequencies are transmitted according to
-// 3.2.1.6.2. The impementation of FnvIndexSet requires the size be a
-// power of 2, so do an additional check before inserting.
-const MAX_ENTRIES: usize = 25;
+// Alternative frequencies encoded using method A are limited to 25
+// frequencies. Method B can transmit more. The impementation of
+// FnvIndexSet requires the size be a power of 2, so do an additional
+// check before inserting.
+const MAX_NUM_ENTRIES: usize = 25;
+const TABLE_SIZE: usize = MAX_NUM_ENTRIES.next_power_of_two();
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum FreqType {
@@ -21,12 +23,12 @@ pub struct Freq {
 /// Decoded table of alternative frequencies.
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct AfTable {
-    entries: FnvIndexSet<Freq, 32>,
+    entries: FnvIndexSet<Freq, TABLE_SIZE>,
 }
 
 impl AfTable {
     pub fn add(&mut self, freq: &Freq) -> bool {
-        if self.entries.len() == MAX_ENTRIES && !self.entries.contains(freq) {
+        if self.entries.len() == MAX_NUM_ENTRIES && !self.entries.contains(freq) {
             return false;
         }
         self.entries.insert(*freq).unwrap()
