@@ -342,4 +342,76 @@ mod tests {
             ]
         );
     }
+
+    #[test]
+    fn test_decoder_method_b_example_1() {
+        let mut table = AfTable::default();
+        let mut decoder = AfDecoder::default();
+        let blocks = [0xEC_12, 0x12_78, 0x12_8E, 0x0D_12, 0x97_12, 0x12_0F];
+        for block in blocks {
+            let result = decoder.decode_freq_block(Some(block), &mut table);
+            assert!(result.is_ok(), "Expected Ok, got {:?}", result);
+        }
+        assert_eq!(table.iter().count(), 5);
+        let actual: Vec<_> = table.iter().copied().collect();
+        assert_eq!(
+            actual,
+            [
+                Freq {
+                    frequency: 99_500_000,
+                    freq_type: FreqType::SameProgram
+                },
+                Freq {
+                    frequency: 101_700_000,
+                    freq_type: FreqType::SameProgram
+                },
+                Freq {
+                    frequency: 88_800_000,
+                    freq_type: FreqType::SameProgram
+                },
+                Freq {
+                    frequency: 102_600_000,
+                    freq_type: FreqType::RegionalVariant
+                },
+                Freq {
+                    frequency: 89_000_000,
+                    freq_type: FreqType::RegionalVariant
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn test_decoder_method_b_example_2() {
+        let mut table = AfTable::default();
+        let mut decoder = AfDecoder::default();
+        let blocks = [0xEA_78, 0x12_78, 0x78_86, 0xAD_78, 0x78_10];
+        for block in blocks {
+            let result = decoder.decode_freq_block(Some(block), &mut table);
+            assert!(result.is_ok(), "Expected Ok, got {:?}", result);
+        }
+        assert_eq!(table.iter().count(), 5);
+        let actual: Vec<_> = table.iter().copied().collect();
+        assert_eq!(
+            actual,
+            [
+                Freq {
+                    frequency: 89_300_000,
+                    freq_type: FreqType::SameProgram
+                },
+                Freq {
+                    frequency: 100_900_000,
+                    freq_type: FreqType::SameProgram
+                },
+                Freq {
+                    frequency: 104_800_000,
+                    freq_type: FreqType::RegionalVariant
+                },
+                Freq {
+                    frequency: 89_100_000,
+                    freq_type: FreqType::RegionalVariant
+                },
+            ]
+        );
+    }
 }
