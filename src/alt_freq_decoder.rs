@@ -12,7 +12,7 @@ use thiserror::Error;
 // These entries distill down to these categories.
 #[derive(Debug, Clone, PartialEq)]
 enum CodeType {
-    Unassigned,   // Unused/unassigned/filler.
+    Unassigned,   // Unused/unassigned.
     Frequency,    // A UHF frequency value.
     AltFreqCount, // Number of AF's to follow.
     LfMfFollows,  // Next entry is a LF/MF freq.
@@ -104,6 +104,15 @@ impl AfDecoder {
         });
     }
 
+    fn decrement_awaiting_freq_cnt(&mut self) {
+        if self.awaiting_freq_cnt > 0 {
+            self.awaiting_freq_cnt -= 1;
+        }
+        if self.awaiting_freq_cnt == 0 {
+            self.reset();
+        }
+    }
+
     // Only called when we know encoding is method A.
     fn decode_for_method_a_code(
         &mut self,
@@ -125,13 +134,11 @@ impl AfDecoder {
                     return Err(DecodeError::InvalidCode);
                 }
                 self.next_freq_is_lf_mf = true;
-                return Ok(());
             }
             CodeType::Frequency => {
                 if self.awaiting_freq_cnt == 0 {
                     return Err(DecodeError::InvalidFreqCount);
                 }
-                self.awaiting_freq_cnt -= 1;
                 let freq: u32;
                 if self.next_freq_is_lf_mf {
                     self.next_freq_is_lf_mf = false;
@@ -143,6 +150,7 @@ impl AfDecoder {
                     frequency: freq,
                     freq_type: FreqType::SameProgram,
                 });
+                self.decrement_awaiting_freq_cnt();
             }
             CodeType::Filler => (),
         }
@@ -188,6 +196,8 @@ impl AfDecoder {
         } else {
             assert!(false, "Freq does not match tuned freq");
         }
+        self.decrement_awaiting_freq_cnt();
+        self.decrement_awaiting_freq_cnt();
         Ok(())
     }
 
@@ -210,8 +220,10 @@ impl AfDecoder {
                         // is decoded that will be determined.
                         self.first_freq_code = code_pair[1];
                         if self.awaiting_freq_cnt < 3 {
+                            self.encoding_method = EcodingMethod::MethodA;
                             self.write_first_freq_to_table(table);
                         }
+                        self.decrement_awaiting_freq_cnt();
                         return Ok(());
                     } else {
                         // This could be a LF/MF code (or other), so send to method A decoder.
