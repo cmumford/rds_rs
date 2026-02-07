@@ -74,10 +74,10 @@ enum EcodingMethod {
 
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct AfDecoder {
-    awaiting_freq_cnt: u8,
-    next_freq_is_lf_mf: bool,
-    first_freq_code: u8,
-    encoding_method: EcodingMethod,
+    awaiting_freq_cnt: u8,          // Number of expected frequencies in table.
+    next_freq_is_lf_mf: bool,       // Is the next frquency LF/MF?
+    first_freq_code: u8,            // The first frequency code in the table.
+    encoding_method: EcodingMethod, // Table encoding method.
 }
 
 impl AfDecoder {
