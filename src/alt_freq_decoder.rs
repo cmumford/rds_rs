@@ -19,12 +19,6 @@ enum CodeType {
     Filler,       // A no-op.
 }
 
-enum FreqBand {
-    Lf,      // A LF frequency value.
-    Mf,      // A MF frequency value.
-    Invalid, // Invalid freqency.
-}
-
 // Categorize a code from table 10/11 above.
 fn categorize_uhf_code(code: u8) -> CodeType {
     match code {
@@ -33,15 +27,6 @@ fn categorize_uhf_code(code: u8) -> CodeType {
         224..=249 => CodeType::AltFreqCount,
         250 => CodeType::LfMfFollows,
         _ => CodeType::Unassigned,
-    }
-}
-
-// Categorize a code from table 12 above.
-fn categorize_lf_mf(code: u8) -> FreqBand {
-    match code {
-        0..=15 => FreqBand::Lf,
-        16..=135 => FreqBand::Mf,
-        _ => FreqBand::Invalid,
     }
 }
 
