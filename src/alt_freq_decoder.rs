@@ -236,7 +236,7 @@ mod tests {
 
     // test to very scenario from Example A in RBDS Specification section 3.2.1.6.3.
     #[test]
-    fn test_decoder_example_a() {
+    fn test_decoder_method_a_example_a() {
         let mut table = AfTable::default();
         let mut decoder = AfDecoder::default();
         let blocks = [0xE5_01, 0x02_03, 0x04_05];
@@ -275,7 +275,7 @@ mod tests {
 
     // test to very scenario from Example B in RBDS Specification section 3.2.1.6.3.
     #[test]
-    fn test_decoder_example_b() {
+    fn test_decoder_method_a_example_b() {
         let mut table = AfTable::default();
         let mut decoder = AfDecoder::default();
         let blocks = [0xE5_01, 0x02_03, 0x04_CE];
@@ -310,7 +310,7 @@ mod tests {
 
     // test to very scenario from Example C in RBDS Specification section 3.2.1.6.3.
     #[test]
-    fn test_decoder_example_c() {
+    fn test_decoder_method_a_example_c() {
         let mut table = AfTable::default();
         let mut decoder = AfDecoder::default();
         let blocks = [0xE5_01, 0x02_03, 0xFA_10];
