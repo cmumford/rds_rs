@@ -50,10 +50,10 @@ mod tests {
             0x56
         );
         // Verify block B values.
-        assert_eq!(rds_data.traffic.ta(), true);
-        assert_eq!(rds_data.traffic.tp(), false);
+        assert_eq!(rds_data.tn.traffic.ta(), true);
+        assert_eq!(rds_data.tn.traffic.tp(), false);
         assert_eq!(rds_data.content, Content::Music);
-        assert_eq!(rds_data.program_type, ProgramType::ClassicRock);
+        assert_eq!(rds_data.tn.program_type, ProgramType::ClassicRock);
         assert_eq!(rds_data.did_pty, DiCodes::new().with_artificial_head(true));
 
         // Verify block C values.
@@ -62,7 +62,7 @@ mod tests {
         assert_eq!(rds_data.alt_freqs.iter().count(), 0);
 
         // Verify block D values.
-        assert_eq!(rds_to_utf8_lossy(&rds_data.ps.display), "    Ps  ");
+        assert_eq!(rds_to_utf8_lossy(&rds_data.tn.ps.display), "    Ps  ");
 
         // Now a second (different) block D with two more characters.
         //                   |code|v|t| pty |TA|MS|DI|Sa|
@@ -76,7 +76,7 @@ mod tests {
             },
             &mut rds_data,
         );
-        assert_eq!(rds_to_utf8_lossy(&rds_data.ps.display), "    Pst.");
+        assert_eq!(rds_to_utf8_lossy(&rds_data.tn.ps.display), "    Pst.");
         assert_eq!(
             rds_data.did_pty,
             DiCodes::new().with_artificial_head(true).with_stereo(true)
@@ -124,6 +124,6 @@ mod tests {
 
         // Alternative frequency decoding is tested in `af_tests.rs` and unit tests.
 
-        assert_eq!(rds_to_utf8_lossy(&rds_data.ps.display), "    Ps  ");
+        assert_eq!(rds_to_utf8_lossy(&rds_data.tn.ps.display), "    Ps  ");
     }
 }

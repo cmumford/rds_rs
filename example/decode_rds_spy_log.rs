@@ -84,13 +84,13 @@ fn process_reader<R: BufRead + 'static>(reader: R) -> io::Result<()> {
                         if rds_data.valid.ps() {
                             print!(
                                 " PS: {:?}",
-                                rds_to_utf8_lossy(&rds_data.ps.display).trim_end()
+                                rds_to_utf8_lossy(&rds_data.tn.ps.display).trim_end()
                             );
                         }
                         if rds_data.valid.ps_on() {
                             print!(
                                 " PS_ON: {:?}",
-                                rds_to_utf8_lossy(&rds_data.ps_on.display).trim_end()
+                                rds_to_utf8_lossy(&rds_data.tn.ps.display).trim_end()
                             );
                         }
                         if rds_data.valid.clock() {

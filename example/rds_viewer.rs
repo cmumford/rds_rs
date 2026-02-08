@@ -102,7 +102,7 @@ fn draw_ui(f: &mut Frame, rds_data: &RdsData, num: usize, max: usize) {
     {
         const PS_LEN: u8 = 8;
         let label = Paragraph::new("PS:").style(Style::default().fg(Color::LightCyan));
-        let data = rds_to_utf8_lossy(&rds_data.ps.display);
+        let data = rds_to_utf8_lossy(&rds_data.tn.ps.display);
         let text = format!("{:<8}", data.chars().take(8).collect::<String>());
         let input =
             Paragraph::new(text).style(Style::default().bg(Color::DarkGray).fg(Color::White));

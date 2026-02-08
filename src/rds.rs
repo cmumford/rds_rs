@@ -10,6 +10,18 @@ use crate::types::{
 };
 use heapless::LinearMap;
 
+#[derive(Default, Clone, PartialEq)]
+pub struct NetworkInfo {
+    /// Program Item Number Code
+    pub pin: Pin,
+    /// Program Type (PTY)
+    pub program_type: ProgramType,
+    /// Traffic Program / Announcement codes.
+    pub traffic: TrafficCodes,
+    /// Program Service name (8 bytes, not null-terminated)
+    pub ps: PsData,
+}
+
 /// Container for all decoded RDS data.
 ///
 /// This struct is populated by the `Decoder`, which is passed many blocks
@@ -22,22 +34,14 @@ pub struct RdsData {
     /// Program Identification Code
     pub program_information: ProgramInformation,
 
-    /// Program Item Number Code
-    pub pin: Pin,
+    /// Tuned network (TN) info.
+    pub tn: NetworkInfo,
 
-    /// Program Type (PTY)
-    pub program_type: ProgramType,
-
-    /// Traffic Program / Announcement codes.
-    pub traffic: TrafficCodes,
+    /// Other network (ON) info.
+    pub on: NetworkInfo,
 
     /// Music/Speech flag.
     pub content: Content,
-
-    /// Program Service name (8 bytes, not null-terminated)
-    pub ps: PsData,
-
-    pub ps_on: PsData, // PS data for other network. RBDS spec. sect. 3.1.5.19.
 
     /// Radiotext
     pub rt: RtData,

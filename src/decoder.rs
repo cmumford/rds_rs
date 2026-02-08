@@ -45,9 +45,9 @@ impl Group {
 }
 
 fn decode_block_b_common(block: &GroupType2BlockB, rds_data: &mut RdsData) -> ValidFields {
-    rds_data.traffic.set_tp(block.traffic_program());
+    rds_data.tn.traffic.set_tp(block.traffic_program());
 
-    rds_data.program_type = block.program_type();
+    rds_data.tn.program_type = block.program_type();
     ValidFields::new().with_tp_code(true).with_pty(true)
 }
 
@@ -89,7 +89,7 @@ fn decode_group_type_0(
     if group.d.is_none() {
         return valid;
     }
-    rds_data.traffic.set_ta(block_b.traffic_announcement());
+    rds_data.tn.traffic.set_ta(block_b.traffic_announcement());
     valid.set_ta_code(true);
     rds_data.content = block_b.ms();
     valid.set_ms(true);
@@ -98,19 +98,21 @@ fn decode_group_type_0(
     let ps_bytes = group.d.unwrap().to_be_bytes();
     if advanced_ps_decoding {
         if rds_data
+            .tn
             .ps
             .update_advanced((pair_idx + 0) as usize, ps_bytes[0])
         {
             valid.set_ps(true);
         }
         if rds_data
+            .tn
             .ps
             .update_advanced((pair_idx + 1) as usize, ps_bytes[1])
         {
             valid.set_ps(true);
         }
     } else {
-        rds_data.ps.update_simple(pair_idx as usize, ps_bytes);
+        rds_data.tn.ps.update_simple(pair_idx as usize, ps_bytes);
         valid.set_ps(true);
     }
     valid
@@ -138,7 +140,7 @@ fn decode_group_type_1(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     // valid PIN, the day of the month shall be set to zero. In this
     // case a receiver which evaluates PIN shall ignore the other
     // information in block 4.
-    rds_data.pin = group
+    rds_data.tn.pin = group
         .d
         .map(|d| Pin::from_bytes(d.to_be_bytes()))
         .unwrap_or_default();
@@ -490,7 +492,8 @@ fn decode_group_type_14a(group: &Group, rds_data: &mut RdsData) -> ValidFields {
             let idx: usize = 2 * (block_b.variant_code() as usize);
             if group.c.is_some() {
                 rds_data
-                    .ps_on
+                    .tn
+                    .ps
                     .update_simple(idx, group.c.unwrap().to_be_bytes());
                 valid.set_ps_on(true);
             }
