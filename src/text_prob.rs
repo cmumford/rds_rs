@@ -94,7 +94,6 @@ impl<const N: usize> TextProb<N> {
     }
 }
 
-// Optional: if you want TextProb to be usable with Default::default()
 impl<const N: usize> Default for TextProb<N> {
     fn default() -> Self {
         Self::new()

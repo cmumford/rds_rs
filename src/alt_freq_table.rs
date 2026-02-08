@@ -2,8 +2,7 @@ use heapless::index_set::FnvIndexSet;
 
 // Alternative frequencies encoded using method A are limited to 25
 // frequencies. Method B can transmit more. The impementation of
-// FnvIndexSet requires the size be a power of 2, so do an additional
-// check before inserting.
+// FnvIndexSet requires the size be a power of 2.
 const MAX_NUM_ENTRIES: usize = 25;
 const TABLE_SIZE: usize = MAX_NUM_ENTRIES.next_power_of_two();
 
