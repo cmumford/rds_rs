@@ -122,7 +122,7 @@ impl Clock {
 }
 
 /// Bitflags indicating which RDS fields are valid / have been received
-#[bitfield(bits = 22)]
+#[bitfield(bits = 23)]
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ValidFields {
     pub af: bool,
@@ -143,6 +143,7 @@ pub struct ValidFields {
     pub slc: bool,
     pub tdc: bool,
     pub ta_code: bool,
+    pub ta_on: bool,
     pub tp_on: bool,
     pub tp_code: bool,
     pub ms: bool,

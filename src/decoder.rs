@@ -515,6 +515,12 @@ fn decode_group_type_14a(group: &Group, rds_data: &mut RdsData) -> ValidFields {
                 valid.set_map_freqs(true);
             }
         }
+        13 => {
+            if group.c.is_some() {
+                rds_data.on.traffic.set_ta((group.c.unwrap() & 0b1) != 0);
+                valid.set_ta_on(true);
+            }
+        }
         14 => {
             if group.c.is_some() {
                 rds_data.on.pin = group
