@@ -66,7 +66,7 @@ pub struct DiCodes {
 /// See the RBDS Standard section 3.2.1.7.
 #[bitfield(bits = 16)]
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
-pub struct RdsPic {
+pub struct Pin {
     #[skip(setters)]
     pub day: B5,
     #[skip(setters)]

@@ -6,7 +6,7 @@ use crate::ptyn::decode_ptyn;
 use crate::radiotext::RtVariant;
 use crate::rds::RdsData;
 use crate::types::{
-    Content, Group, GroupType, GroupVersion, NUM_TDC, ProgramInformation, ProgramType, RdsPic,
+    Content, Group, GroupType, GroupVersion, NUM_TDC, Pin, ProgramInformation, ProgramType,
     SlcData, ValidFields,
 };
 use modular_bitfield_msb::prelude::*;
@@ -134,9 +134,9 @@ fn decode_group_type_1(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     // valid PIN, the day of the month shall be set to zero. In this
     // case a receiver which evaluates PIN shall ignore the other
     // information in block 4.
-    rds_data.program_item_number = group
+    rds_data.pin = group
         .d
-        .map(|d| RdsPic::from_bytes(d.to_be_bytes()))
+        .map(|d| Pin::from_bytes(d.to_be_bytes()))
         .unwrap_or_default();
     if group.d.is_some() {
         valid.set_pic(true);

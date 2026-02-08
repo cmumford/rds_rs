@@ -5,7 +5,7 @@ use crate::ps::PsData;
 use crate::ptyn::PtynData;
 use crate::radiotext::RtData;
 use crate::types::{
-    Clock, Content, DiCodes, EwsData, ProgramInformation, ProgramType, RdsPic, SlcData, TdcData,
+    Clock, Content, DiCodes, EwsData, Pin, ProgramInformation, ProgramType, SlcData, TdcData,
     TrafficCodes, ValidFields,
 };
 use heapless::LinearMap;
@@ -23,7 +23,7 @@ pub struct RdsData {
     pub program_information: ProgramInformation,
 
     /// Program Item Number Code
-    pub program_item_number: RdsPic,
+    pub pin: Pin,
 
     /// Program Type (PTY)
     pub program_type: ProgramType,
