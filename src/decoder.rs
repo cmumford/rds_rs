@@ -469,7 +469,7 @@ fn decode_group_type_13b(group: &Group, rds_data: &mut RdsData) -> ValidFields {
 }
 
 // Type 14 groups: Enhanced Other Networks information.
-fn decode_group_type_14a(group: &Group, _rds_data: &mut RdsData) -> ValidFields {
+fn decode_group_type_14a(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     // See RBDS Standard section 3.1.5.19.
     #[bitfield(bits = 16)]
     struct BlockB {
@@ -479,9 +479,20 @@ fn decode_group_type_14a(group: &Group, _rds_data: &mut RdsData) -> ValidFields 
         tp_on: bool,               // TP (ON).
         variant_code: B4,
     }
-    let _block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
-    // TODO: finish me.
-    ValidFields::new()
+    let block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
+    let mut valid = ValidFields::new();
+    match block_b.variant_code() {
+        4 => {
+            let _ = rds_data
+                .on_freq_decoder
+                .decode_freq_block(group.c, &mut rds_data.on_freqs);
+            valid.set_on_freqs(true);
+        }
+        _ => {
+            // TODO: finish me.
+        }
+    }
+    valid
 }
 
 // Type 14 groups: Enhanced Other Networks information.

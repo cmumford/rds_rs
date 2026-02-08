@@ -60,9 +60,11 @@ pub struct RdsData {
 
     pub did_pty: DiCodes,
 
-    pub alt_freqs: AfTable,
-
+    pub alt_freqs: AfTable, // Alternative frequency table from group 0A.
     pub alt_freq_decoder: AfDecoder,
+
+    pub on_freqs: AfTable, // Other network AFs. See RBDS spec. sect. 3.2.1.6.6.
+    pub on_freq_decoder: AfDecoder,
 
     /// Bitmask of which fields are valid
     pub valid: ValidFields,
