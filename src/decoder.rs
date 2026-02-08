@@ -71,7 +71,7 @@ fn decode_group_type_0(
     let mut valid = ValidFields::new();
     let block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
     if block_b.group_type().version() == GroupVersion::B && group.c.is_some() {
-        rds_data
+        let _ = rds_data
             .alt_freq_decoder
             .decode_freq_block(group.c, &mut rds_data.alt_freqs);
         valid.set_af(true);
