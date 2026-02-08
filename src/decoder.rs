@@ -17,7 +17,7 @@ use std::ops::BitOr;
 #[bitfield(bits = 16)]
 struct GroupType2BlockB {
     group_type: GroupType,     // Group type (code + version).
-    traffic_program: bool,     // TP bit.
+    tp: bool,                  // TP bit.
     program_type: ProgramType, // PTY: Program type.
     text_flag: RtVariant,
     text_segment_addr: B4,
@@ -45,8 +45,7 @@ impl Group {
 }
 
 fn decode_block_b_common(block: &GroupType2BlockB, rds_data: &mut RdsData) -> ValidFields {
-    rds_data.tn.traffic.set_tp(block.traffic_program());
-
+    rds_data.tn.traffic.set_tp(block.tp());
     rds_data.tn.program_type = block.program_type();
     ValidFields::new().with_tp(true).with_pty(true)
 }
