@@ -34,10 +34,10 @@ mod tests {
         assert_eq!(
             valid,
             ValidFields::new()
-                .with_pi_code(true)
+                .with_pi(true)
                 .with_pty(true)
-                .with_ta_code(true)
-                .with_tp_code(true)
+                .with_ta(true)
+                .with_tp(true)
                 .with_ms(true)
                 .with_ps(true)
         );
@@ -115,11 +115,11 @@ mod tests {
                 .with_af(true)
                 .with_af(true)
                 .with_ms(true)
-                .with_pi_code(true)
+                .with_pi(true)
                 .with_ps(true)
                 .with_pty(true)
-                .with_ta_code(true)
-                .with_tp_code(true)
+                .with_ta(true)
+                .with_tp(true)
         );
 
         // Alternative frequency decoding is tested in `af_tests.rs` and unit tests.

@@ -39,11 +39,11 @@ mod tests {
                     .with_af(true)
                     .with_af(true)
                     .with_ms(true)
-                    .with_pi_code(true)
+                    .with_pi(true)
                     .with_ps(true)
                     .with_pty(true)
-                    .with_ta_code(true)
-                    .with_tp_code(true)
+                    .with_ta(true)
+                    .with_tp(true)
             );
         };
 

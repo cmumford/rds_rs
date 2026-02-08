@@ -48,7 +48,7 @@ fn decode_block_b_common(block: &GroupType2BlockB, rds_data: &mut RdsData) -> Va
     rds_data.tn.traffic.set_tp(block.traffic_program());
 
     rds_data.tn.program_type = block.program_type();
-    ValidFields::new().with_tp_code(true).with_pty(true)
+    ValidFields::new().with_tp(true).with_pty(true)
 }
 
 // Type 0 groups: Basic tuning and switching information.
@@ -90,7 +90,7 @@ fn decode_group_type_0(
         return valid;
     }
     rds_data.tn.traffic.set_ta(block_b.traffic_announcement());
-    valid.set_ta_code(true);
+    valid.set_ta(true);
     rds_data.content = block_b.ms();
     valid.set_ms(true);
 
@@ -145,7 +145,7 @@ fn decode_group_type_1(group: &Group, rds_data: &mut RdsData) -> ValidFields {
         .map(|d| Pin::from_bytes(d.to_be_bytes()))
         .unwrap_or_default();
     if group.d.is_some() {
-        valid.set_pic(true);
+        valid.set_pin(true);
     }
     valid
 }
@@ -527,7 +527,7 @@ fn decode_group_type_14a(group: &Group, rds_data: &mut RdsData) -> ValidFields {
                     .c
                     .map(|c| Pin::from_bytes(c.to_be_bytes()))
                     .unwrap_or_default();
-                valid.set_pic_on(true);
+                valid.set_pin_on(true);
             }
         }
         _ => {}
@@ -583,7 +583,7 @@ impl<'a> Decoder {
         if group.a.is_some() {
             rds_data.program_information =
                 ProgramInformation::from_bytes(group.a.unwrap().to_be_bytes());
-            valid.set_pi_code(true);
+            valid.set_pi(true);
         }
         if group.b.is_none() {
             rds_data.valid = rds_data.valid | valid;

@@ -121,32 +121,52 @@ impl Clock {
     }
 }
 
-/// Bitflags indicating which RDS fields are valid / have been received
-#[bitfield(bits = 23)]
+/// Bitflags indicating the RDS fields that are valid / have been received
+/// and decoded.
+#[bitfield(bits = 21)]
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ValidFields {
+    /// Alternative Frequency (AF) data for the tuned network.
     pub af: bool,
+    /// Alternative Freqnency data for the other network (ON).
     pub on_freqs: bool,
+    /// Mapped alternative frequency data for the other network.    
     pub map_freqs: bool,
+    /// Clock data.
     pub clock: bool,
+    /// Emergency Warning System (EWS).
     pub ews: bool,
-    pub fbt: bool,
-    pub mc: bool,
-    pub pic: bool,
-    pub pic_on: bool,
-    pub pi_code: bool,
+    /// Program Item Number (PIN) for tuned network (TN).
+    pub pin: bool,
+    /// Program Item Number (PIN) for other network (ON).
+    pub pin_on: bool,
+    /// Program Identification (PI code).
+    pub pi: bool,
+    /// Program service name (PS) for the tuned network (TN).
     pub ps: bool,
+    /// Program service name (PS) for the other network (ON).
     pub ps_on: bool,
+    /// Program type (PTY).
     pub pty: bool,
+    /// Program type name (PTYN).
     pub ptyn: bool,
+    /// Radiotext (RT).
     pub rt: bool,
+    /// Service linked data. See RDSM spec. (3.2.1.8.3).
     pub slc: bool,
+    /// Transparent data channel data.
     pub tdc: bool,
-    pub ta_code: bool,
+    /// Traffic Announcement (TA) for the tuned network (TN).
+    pub ta: bool,
+    /// Traffic Announcement (TA) for the other network (ON).
     pub ta_on: bool,
+    /// Traffic Program (TP) for the tuned network (TN).
+    pub tp: bool,
+    /// Traffic Program (TP) for the other network (ON).
     pub tp_on: bool,
-    pub tp_code: bool,
+    /// Music/Speech flag. true=music.
     pub ms: bool,
+    /// Enhanced other network (EON) data.
     pub eon: bool,
 }
 
