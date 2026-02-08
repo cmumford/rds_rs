@@ -536,7 +536,7 @@ fn decode_group_type_14a(group: &Group, rds_data: &mut RdsData) -> ValidFields {
 }
 
 // Type 14 groups: Enhanced Other Networks information.
-fn decode_group_type_14b(group: &Group, _rds_data: &mut RdsData) -> ValidFields {
+fn decode_group_type_14b(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     // See RBDS Standard section 3.1.5.19.
     #[bitfield(bits = 16)]
     struct BlockB {
@@ -547,9 +547,12 @@ fn decode_group_type_14b(group: &Group, _rds_data: &mut RdsData) -> ValidFields 
         ta_on: bool,               // TA (ON).
         unused: B3,
     }
-    let _block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
-    // TODO: finish me.
-    ValidFields::new()
+    let block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
+    let valid = ValidFields::new();
+    rds_data.on.traffic.set_ta(block_b.ta_on());
+    rds_data.on.traffic.set_tp(block_b.tp_on());
+    // TODO: Parse PI code.
+    valid
 }
 
 // Type 15 groups: Fast basic tuning and switching information.
