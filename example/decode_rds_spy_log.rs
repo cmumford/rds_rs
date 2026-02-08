@@ -110,6 +110,9 @@ fn process_reader<R: BufRead + 'static>(reader: R) -> io::Result<()> {
                         if rds_data.valid.af() {
                             print!(" AF's: {}", rds_data.alt_freqs.iter().count());
                         }
+                        if rds_data.valid.on_freqs() {
+                            print!(" AF(ON)'s: {}", rds_data.on_freqs.iter().count());
+                        }
 
                         println!("");
                     }
