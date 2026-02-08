@@ -1,3 +1,5 @@
+#![no_std]
+
 mod alt_freq_decoder;
 mod alt_freq_table;
 mod decoder;

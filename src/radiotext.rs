@@ -1,4 +1,5 @@
 use crate::text_prob::TextProb;
+use heapless::String;
 use modular_bitfield_msb::prelude::*;
 
 pub const MAX_RADIOTEXT_LEN: usize = 64;
@@ -59,7 +60,10 @@ pub struct RtData {
     pub decode_rt: RtVariant, // Which RT text currently being decoded.
 }
 
-pub fn rds_to_utf8_lossy(bytes: &[u8]) -> String {
+/// Convert an array of bytes from the code table to a string.
+/// The string is limited to 64 bytes in length, but probably some
+/// characters are multi-byte UTF, so making the string longer.
+pub fn rds_to_utf8_lossy(bytes: &[u8]) -> String<128> {
     bytes
         .iter()
         .map(|&b| match b {

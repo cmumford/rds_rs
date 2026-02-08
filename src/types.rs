@@ -3,9 +3,9 @@
 // modular-bitfields-msb Debug attribute macro expands.
 #![allow(unused_parens)]
 
-use modular_bitfield_msb::prelude::*;
-
 use heapless::HistoryBuf;
+use libm::floorf;
+use modular_bitfield_msb::prelude::*;
 
 /// An RDS group, when transmitted, is a 104 bit item consisting of 4 blocks
 /// (A, B, C, D). Each block consists of 26 bits: a 16 data information word
@@ -107,7 +107,7 @@ impl Clock {
         // int { [ MJD - 14956,1 - int (Y' × 365,25) ] / 30,6001 }
         let a: f32 = (self.mjd as f32) - 14956.1;
         let b: f32 = (self.yp() as f32) * AVT_DAYS_PER_YEAR;
-        ((a - b.floor()) / AVG_DAYS_PER_MONTH) as i32
+        ((a - floorf(b)) / AVG_DAYS_PER_MONTH) as i32
     }
     pub fn month(&self) -> i32 {
         // M = M' - 1 - K × 12

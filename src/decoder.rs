@@ -10,8 +10,8 @@ use crate::types::{
     Content, Group, GroupType, GroupVersion, NUM_TDC, Pin, ProgramInformation, ProgramType,
     SlcData, ValidFields,
 };
+use core::ops::BitOr;
 use modular_bitfield_msb::prelude::*;
-use std::ops::BitOr;
 
 // See RBDS Standard section 3.1.5.3.
 #[bitfield(bits = 16)]
@@ -27,7 +27,7 @@ impl BitOr for ValidFields {
     type Output = Self;
 
     fn bitor(self, rhs: Self) -> Self {
-        const N: usize = std::mem::size_of::<ValidFields>();
+        const N: usize = core::mem::size_of::<ValidFields>();
         let l = self.into_bytes();
         let r = rhs.into_bytes();
         let mut m = [0u8; N];
@@ -83,7 +83,7 @@ fn decode_group_type_0(
         1 => rds_data.did_pty.set_compressed(block_b.di_bit()),
         2 => rds_data.did_pty.set_artificial_head(block_b.di_bit()),
         3 => rds_data.did_pty.set_stereo(block_b.di_bit()),
-        _ => panic!("Invalid"), // Can't happen for a B2 type.
+        _ => return valid,
     }
     if group.d.is_none() {
         return valid;

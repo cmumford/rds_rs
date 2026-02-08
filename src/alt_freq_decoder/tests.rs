@@ -5,6 +5,7 @@ mod tests {
         AfDecoder, EncodingMethod, decode_freq_cnt, get_lf_mf_frequency, get_uhf_frequency,
     };
     use crate::alt_freq_table::{AfTable, Freq, FreqType};
+    use heapless::Vec;
 
     #[test]
     fn test_get_lf_mf_frequency() {
@@ -35,7 +36,7 @@ mod tests {
         let result = decoder.decode_freq_block(Some(0xE1_01), &mut table);
         assert!(result.is_ok(), "Expected Ok, got {:?}", result);
         assert_eq!(table.iter().count(), 1);
-        let actual: Vec<_> = table.iter().copied().collect();
+        let actual: Vec<Freq, 45> = table.iter().copied().collect();
         assert_eq!(
             actual,
             [Freq {
@@ -59,7 +60,7 @@ mod tests {
         }
         assert_eq!(decoder.awaiting_freq_cnt, 0);
         assert_eq!(table.iter().count(), 5);
-        let actual: Vec<_> = table.iter().copied().collect();
+        let actual: Vec<Freq, 45> = table.iter().copied().collect();
         assert_eq!(
             actual,
             [
@@ -100,7 +101,7 @@ mod tests {
         assert_eq!(table.iter().count(), 4);
         assert_eq!(decoder.awaiting_freq_cnt, 0);
         assert_eq!(decoder.encoding_method, EncodingMethod::Unknown);
-        let actual: Vec<_> = table.iter().copied().collect();
+        let actual: Vec<Freq, 45> = table.iter().copied().collect();
         assert_eq!(
             actual,
             [
@@ -136,7 +137,7 @@ mod tests {
         }
         assert_eq!(table.iter().count(), 4);
         assert_eq!(decoder.awaiting_freq_cnt, 0);
-        let actual: Vec<_> = table.iter().copied().collect();
+        let actual: Vec<Freq, 45> = table.iter().copied().collect();
         assert_eq!(
             actual,
             [
@@ -172,7 +173,7 @@ mod tests {
         assert_eq!(table.iter().count(), 5);
         assert_eq!(decoder.awaiting_freq_cnt, 0);
         assert_eq!(decoder.encoding_method, EncodingMethod::Unknown);
-        let mut actual: Vec<_> = table.iter().copied().collect();
+        let mut actual: Vec<Freq, 45> = table.iter().copied().collect();
         actual.sort_by_key(|f| f.frequency);
         assert_eq!(
             actual,
@@ -213,7 +214,7 @@ mod tests {
         assert_eq!(table.iter().count(), 4);
         assert_eq!(decoder.awaiting_freq_cnt, 0);
         assert_eq!(decoder.encoding_method, EncodingMethod::Unknown);
-        let mut actual: Vec<_> = table.iter().copied().collect();
+        let mut actual: Vec<Freq, 45> = table.iter().copied().collect();
         actual.sort_by_key(|f| f.frequency);
 
         assert_eq!(
@@ -257,7 +258,7 @@ mod tests {
         assert_eq!(table.iter().count(), 9);
         assert_eq!(decoder.awaiting_freq_cnt, 0);
         assert_eq!(decoder.encoding_method, EncodingMethod::Unknown);
-        let mut actual: Vec<_> = table.iter().copied().collect();
+        let mut actual: Vec<Freq, 45> = table.iter().copied().collect();
         actual.sort_by_key(|f| f.frequency);
         assert_eq!(
             actual,

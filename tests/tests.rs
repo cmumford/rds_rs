@@ -35,22 +35,18 @@ mod tests {
 
     #[test]
     fn test_rt_convert_ascii() {
-        assert_eq!(
-            rds_to_utf8_lossy(
-                "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:{}[]();!\"*+-'./%&"
-                    .as_bytes()
-            ),
-            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:{}[]();!\"*+-'./%&"
-                .to_string()
-        );
+        let input_str =
+            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:{}[]();!\"*+-'./%&";
+        let input_bytes = input_str.as_bytes();
+        let result = rds_to_utf8_lossy(input_bytes);
+        assert_eq!(result.as_str(), input_str);
     }
 
     #[test]
     fn test_rt_convert_ebu_common_language() {
-        assert_eq!(
-            rds_to_utf8_lossy(&[0b10101011, 0b10101010]),
-            "$£".to_string()
-        );
+        let input_str = "$£";
+        let result = rds_to_utf8_lossy(&[0b10101011, 0b10101010]);
+        assert_eq!(result.as_str(), input_str);
     }
 
     #[test]
