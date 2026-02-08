@@ -2,7 +2,7 @@
 
 mod tests {
     use crate::alt_freq_decoder::{
-        AfDecoder, decode_freq_cnt, get_lf_mf_frequency, get_uhf_frequency,
+        AfDecoder, EcodingMethod, decode_freq_cnt, get_lf_mf_frequency, get_uhf_frequency,
     };
     use crate::alt_freq_table::{AfTable, Freq, FreqType};
 
@@ -44,6 +44,7 @@ mod tests {
             }]
         );
         assert_eq!(decoder.awaiting_freq_cnt, 0);
+        assert_eq!(decoder.encoding_method, EcodingMethod::Unknown);
     }
 
     // test to very scenario from Example A in RBDS Specification section 3.2.1.6.3.
@@ -98,6 +99,7 @@ mod tests {
         }
         assert_eq!(table.iter().count(), 4);
         assert_eq!(decoder.awaiting_freq_cnt, 0);
+        assert_eq!(decoder.encoding_method, EcodingMethod::Unknown);
         let actual: Vec<_> = table.iter().copied().collect();
         assert_eq!(
             actual,
@@ -169,6 +171,7 @@ mod tests {
         }
         assert_eq!(table.iter().count(), 5);
         assert_eq!(decoder.awaiting_freq_cnt, 0);
+        assert_eq!(decoder.encoding_method, EcodingMethod::Unknown);
         let mut actual: Vec<_> = table.iter().copied().collect();
         actual.sort_by_key(|f| f.frequency);
         assert_eq!(
@@ -209,6 +212,7 @@ mod tests {
         }
         assert_eq!(table.iter().count(), 4);
         assert_eq!(decoder.awaiting_freq_cnt, 0);
+        assert_eq!(decoder.encoding_method, EcodingMethod::Unknown);
         let mut actual: Vec<_> = table.iter().copied().collect();
         actual.sort_by_key(|f| f.frequency);
 
@@ -252,6 +256,7 @@ mod tests {
         }
         assert_eq!(table.iter().count(), 9);
         assert_eq!(decoder.awaiting_freq_cnt, 0);
+        assert_eq!(decoder.encoding_method, EcodingMethod::Unknown);
         let mut actual: Vec<_> = table.iter().copied().collect();
         actual.sort_by_key(|f| f.frequency);
         assert_eq!(
