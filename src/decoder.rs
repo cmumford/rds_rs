@@ -541,14 +541,18 @@ fn decode_group_type_14b(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     #[bitfield(bits = 16)]
     struct BlockB {
         group_type: GroupType,     // Group type (code + version).
-        traffic_program: bool,     // TP bit.
+        tp: bool,                  // TP bit.
         program_type: ProgramType, // PTY: Program type.
         tp_on: bool,               // TP (ON).
         ta_on: bool,               // TA (ON).
         unused: B3,
     }
     let block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
-    let valid = ValidFields::new();
+    let valid = ValidFields::new()
+        .with_tp(true)
+        .with_ta_on(true)
+        .with_tp_on(true);
+    rds_data.tn.traffic.set_tp(block_b.tp());
     rds_data.on.traffic.set_ta(block_b.ta_on());
     rds_data.on.traffic.set_tp(block_b.tp_on());
     // TODO: Parse PI code.
