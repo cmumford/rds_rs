@@ -486,7 +486,8 @@ fn decode_group_type_14a(group: &Group, rds_data: &mut RdsData) -> ValidFields {
         variant_code: B4,
     }
     let block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
-    let mut valid = ValidFields::new();
+    let mut valid = ValidFields::new().with_tp_on(true);
+    rds_data.on.traffic.set_tp(block_b.tp_on());
     match block_b.variant_code() {
         0..=3 => {
             let idx: usize = 2 * (block_b.variant_code() as usize);
@@ -512,6 +513,15 @@ fn decode_group_type_14a(group: &Group, rds_data: &mut RdsData) -> ValidFields {
                     freq_type: FreqType::SameProgram,
                 });
                 valid.set_map_freqs(true);
+            }
+        }
+        14 => {
+            if group.c.is_some() {
+                rds_data.on.pin = group
+                    .c
+                    .map(|c| Pin::from_bytes(c.to_be_bytes()))
+                    .unwrap_or_default();
+                valid.set_pic_on(true);
             }
         }
         _ => {}
