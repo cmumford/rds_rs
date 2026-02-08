@@ -54,7 +54,7 @@ pub enum DecodeError {
 }
 
 #[derive(Debug, Default, Clone, PartialEq)]
-enum EcodingMethod {
+enum EncodingMethod {
     #[default]
     Unknown, // Not enough data yet to determine.
     MethodA, // See RBDS Spec section 3.2.1.6.3.
@@ -63,11 +63,11 @@ enum EcodingMethod {
 
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct AfDecoder {
-    awaiting_freq_cnt: u8,          // Number of expected frequencies in table.
-    next_freq_is_lf_mf: bool,       // Is the next frquency LF/MF?
-    first_freq_code: u8,            // The first frequency code in the table.
-    first_freq_in_table: bool,      // Has first frequency been added to the table?
-    encoding_method: EcodingMethod, // Table encoding method.
+    awaiting_freq_cnt: u8,           // Number of expected frequencies in table.
+    next_freq_is_lf_mf: bool,        // Is the next frquency LF/MF?
+    first_freq_code: u8,             // The first frequency code in the table.
+    first_freq_in_table: bool,       // Has first frequency been added to the table?
+    encoding_method: EncodingMethod, // Table encoding method.
 }
 
 impl AfDecoder {
@@ -76,7 +76,7 @@ impl AfDecoder {
         self.next_freq_is_lf_mf = false;
         self.first_freq_code = 0;
         self.first_freq_in_table = false;
-        self.encoding_method = EcodingMethod::Unknown;
+        self.encoding_method = EncodingMethod::Unknown;
     }
 
     fn write_first_freq_to_table(&mut self, table: &mut AfTable) {
@@ -205,14 +205,14 @@ impl AfDecoder {
                         // is decoded that will be determined.
                         self.first_freq_code = code_pair[1];
                         if self.awaiting_freq_cnt < 3 {
-                            self.encoding_method = EcodingMethod::MethodA;
+                            self.encoding_method = EncodingMethod::MethodA;
                             self.write_first_freq_to_table(table);
                         }
                         self.decrement_awaiting_freq_cnt();
                         return Ok(());
                     } else {
                         // This could be a LF/MF code (or other), so send to method A decoder.
-                        self.encoding_method = EcodingMethod::MethodA;
+                        self.encoding_method = EncodingMethod::MethodA;
                         return self.decode_for_method_a_code(code_pair[1], table);
                     }
                 }
@@ -226,16 +226,16 @@ impl AfDecoder {
 
         // If here then processing block 2..n.
         if ct1 != CodeType::Frequency || ct2 != CodeType::Frequency {
-            self.encoding_method = EcodingMethod::MethodA;
+            self.encoding_method = EncodingMethod::MethodA;
         } else if code_pair[0] == self.first_freq_code || code_pair[1] == self.first_freq_code {
-            self.encoding_method = EcodingMethod::MethodB;
+            self.encoding_method = EncodingMethod::MethodB;
         } else {
-            self.encoding_method = EcodingMethod::MethodA;
+            self.encoding_method = EncodingMethod::MethodA;
         }
 
         match self.encoding_method {
-            EcodingMethod::MethodA => self.decode_for_method_a(code_pair, table),
-            EcodingMethod::MethodB => self.decode_for_method_b(code_pair, table),
+            EncodingMethod::MethodA => self.decode_for_method_a(code_pair, table),
+            EncodingMethod::MethodB => self.decode_for_method_b(code_pair, table),
             _ => panic!("Shouldn't get here"),
         }
     }
@@ -253,9 +253,9 @@ impl AfDecoder {
         }
         let code_pair = block_c.unwrap().to_be_bytes();
         match self.encoding_method {
-            EcodingMethod::MethodA => self.decode_for_method_a(code_pair, table),
-            EcodingMethod::MethodB => self.decode_for_method_b(code_pair, table),
-            EcodingMethod::Unknown => self.decode_for_unknown_method(code_pair, table),
+            EncodingMethod::MethodA => self.decode_for_method_a(code_pair, table),
+            EncodingMethod::MethodB => self.decode_for_method_b(code_pair, table),
+            EncodingMethod::Unknown => self.decode_for_unknown_method(code_pair, table),
         }
     }
 }
