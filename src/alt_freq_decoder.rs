@@ -41,7 +41,7 @@ fn get_lf_mf_frequency(idx: u8) -> u32 {
     return 531_000 + ((idx as u32) - 16) * 9000;
 }
 
-fn get_uhf_frequency(idx: u8) -> u32 {
+pub fn get_uhf_frequency(idx: u8) -> u32 {
     87_600_000 + ((idx - 1) as u32) * 100000
 }
 

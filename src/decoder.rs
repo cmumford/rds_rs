@@ -1,7 +1,8 @@
 #![allow(dead_code)]
 
+use crate::alt_freq_decoder::get_uhf_frequency;
+use crate::alt_freq_table::{Freq, FreqType};
 use crate::oda::{OdaEntry, decode_oda, is_oda_group_type_used, is_valid_oda_app_id};
-use crate::ps::{update_ps_advanced, update_ps_simple};
 use crate::ptyn::decode_ptyn;
 use crate::radiotext::RtVariant;
 use crate::rds::RdsData;
@@ -94,19 +95,22 @@ fn decode_group_type_0(
     valid.set_ms(true);
 
     let pair_idx = 2 * block_b.seg_addr();
-    let d_val = group.d.unwrap();
-    let hi_byte = (d_val >> 8) as u8;
-    let lo_byte = (d_val & 0xFF) as u8;
+    let ps_bytes = group.d.unwrap().to_be_bytes();
     if advanced_ps_decoding {
-        if update_ps_advanced((pair_idx + 0) as usize, hi_byte, rds_data) {
+        if rds_data
+            .ps
+            .update_advanced((pair_idx + 0) as usize, ps_bytes[0])
+        {
             valid.set_ps(true);
         }
-        if update_ps_advanced((pair_idx + 1) as usize, lo_byte, rds_data) {
+        if rds_data
+            .ps
+            .update_advanced((pair_idx + 1) as usize, ps_bytes[1])
+        {
             valid.set_ps(true);
         }
     } else {
-        update_ps_simple(pair_idx + 0, hi_byte, rds_data);
-        update_ps_simple(pair_idx + 1, lo_byte, rds_data);
+        rds_data.ps.update_simple(pair_idx as usize, ps_bytes);
         valid.set_ps(true);
     }
     valid
@@ -482,15 +486,32 @@ fn decode_group_type_14a(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     let block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
     let mut valid = ValidFields::new();
     match block_b.variant_code() {
+        0..=3 => {
+            let idx: usize = 2 * (block_b.variant_code() as usize);
+            if group.c.is_some() {
+                rds_data
+                    .ps_on
+                    .update_simple(idx, group.c.unwrap().to_be_bytes());
+                valid.set_ps_on(true);
+            }
+        }
         4 => {
             let _ = rds_data
                 .on_freq_decoder
                 .decode_freq_block(group.c, &mut rds_data.on_freqs);
             valid.set_on_freqs(true);
         }
-        _ => {
-            // TODO: finish me.
+        5..=9 => {
+            if group.c.is_some() {
+                let freqs = group.c.unwrap().to_be_bytes();
+                rds_data.map_freqs.add(&Freq {
+                    frequency: get_uhf_frequency(freqs[1]),
+                    freq_type: FreqType::SameProgram,
+                });
+                valid.set_map_freqs(true);
+            }
         }
+        _ => {}
     }
     valid
 }

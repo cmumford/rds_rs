@@ -37,6 +37,8 @@ pub struct RdsData {
     /// Program Service name (8 bytes, not null-terminated)
     pub ps: PsData,
 
+    pub ps_on: PsData, // PS data for other network. RBDS spec. sect. 3.1.5.19.
+
     /// Radiotext
     pub rt: RtData,
 
@@ -65,6 +67,8 @@ pub struct RdsData {
 
     pub on_freqs: AfTable, // Other network AFs. See RBDS spec. sect. 3.2.1.6.6.
     pub on_freq_decoder: AfDecoder,
+
+    pub map_freqs: AfTable, // Mapped AFs. See RBDS spec. sect. 3.1.5.19 and 3.2.1.6.6.
 
     /// Bitmask of which fields are valid
     pub valid: ValidFields,
