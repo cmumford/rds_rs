@@ -13,6 +13,7 @@ mod text_prob;
 mod types;
 
 pub use decoder::Decoder;
+pub use ps::PS_TEXT_LEN;
 pub use radiotext::{MAX_RADIOTEXT_LEN, RtVariant};
 pub use rds::RdsData;
 pub use text::{BLANK_CHAR, LINE_BREAK_CHAR, rds_to_utf8_lossy};

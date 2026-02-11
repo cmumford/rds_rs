@@ -1,6 +1,9 @@
 use log::{error, info};
-use rds::{Decoder, Group, RdsData, RtVariant, rds_to_utf8_lossy};
+use rds::{Decoder, Group, MAX_RADIOTEXT_LEN, PS_TEXT_LEN, RdsData, RtVariant, rds_to_utf8_lossy};
 use rdspy::RdsGroupIterator;
+
+const PS_LEN: usize = PS_TEXT_LEN + 2;
+const RADIOTEXT_LEN: usize = MAX_RADIOTEXT_LEN + 2;
 
 use std::{
     env,
@@ -66,7 +69,8 @@ fn process_reader<R: BufRead + 'static>(reader: R) -> io::Result<()> {
                         RtVariant::A => &rds_data.rt.a,
                         RtVariant::B => &rds_data.rt.b,
                     };
-                    let text = rds_to_utf8_lossy(&rt.display);
+                    let text: heapless::String<RADIOTEXT_LEN> =
+                        rds_to_utf8_lossy::<RADIOTEXT_LEN>(&rt.display);
                     let trimmed = text.trim_end();
                     if last_rt != trimmed {
                         print!("RT: {:?}", trimmed);
@@ -74,7 +78,7 @@ fn process_reader<R: BufRead + 'static>(reader: R) -> io::Result<()> {
                         if rds_data.valid.ptyn() {
                             print!(
                                 " PTYN: {:?}",
-                                rds_to_utf8_lossy(&rds_data.ptyn.display).trim_end()
+                                rds_to_utf8_lossy::<PS_LEN>(&rds_data.ptyn.display).trim_end()
                             );
                         }
                         // Too verbose
@@ -84,13 +88,13 @@ fn process_reader<R: BufRead + 'static>(reader: R) -> io::Result<()> {
                         if rds_data.valid.ps() {
                             print!(
                                 " PS: {:?}",
-                                rds_to_utf8_lossy(&rds_data.tn.ps.display).trim_end()
+                                rds_to_utf8_lossy::<PS_LEN>(&rds_data.tn.ps.display).trim_end()
                             );
                         }
                         if rds_data.valid.ps_on() {
                             print!(
                                 " PS_ON: {:?}",
-                                rds_to_utf8_lossy(&rds_data.tn.ps.display).trim_end()
+                                rds_to_utf8_lossy::<PS_LEN>(&rds_data.tn.ps.display).trim_end()
                             );
                         }
                         if rds_data.valid.clock() {

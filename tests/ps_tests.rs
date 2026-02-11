@@ -1,4 +1,8 @@
-use rds::{Content, Decoder, DiCodes, Group, ProgramType, ValidFields, rds_to_utf8_lossy};
+use rds::{
+    Content, Decoder, DiCodes, Group, PS_TEXT_LEN, ProgramType, ValidFields, rds_to_utf8_lossy,
+};
+
+const PS_LEN: usize = PS_TEXT_LEN + 2;
 
 #[cfg(test)]
 
@@ -62,7 +66,10 @@ mod tests {
         assert_eq!(rds_data.alt_freqs.iter().count(), 0);
 
         // Verify block D values.
-        assert_eq!(rds_to_utf8_lossy(&rds_data.tn.ps.display), "    Ps  ");
+        assert_eq!(
+            rds_to_utf8_lossy::<PS_LEN>(&rds_data.tn.ps.display),
+            "    Ps  "
+        );
 
         // Now a second (different) block D with two more characters.
         //                   |code|v|t| pty |TA|MS|DI|Sa|
@@ -76,7 +83,10 @@ mod tests {
             },
             &mut rds_data,
         );
-        assert_eq!(rds_to_utf8_lossy(&rds_data.tn.ps.display), "    Pst.");
+        assert_eq!(
+            rds_to_utf8_lossy::<PS_LEN>(&rds_data.tn.ps.display),
+            "    Pst."
+        );
         assert_eq!(
             rds_data.did_pty,
             DiCodes::new().with_artificial_head(true).with_stereo(true)
@@ -124,6 +134,9 @@ mod tests {
 
         // Alternative frequency decoding is tested in `af_tests.rs` and unit tests.
 
-        assert_eq!(rds_to_utf8_lossy(&rds_data.tn.ps.display), "    Ps  ");
+        assert_eq!(
+            rds_to_utf8_lossy::<PS_LEN>(&rds_data.tn.ps.display),
+            "    Ps  "
+        );
     }
 }

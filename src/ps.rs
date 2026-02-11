@@ -1,9 +1,11 @@
 use crate::text_prob::TextProb;
 
+pub const PS_TEXT_LEN: usize = 8;
+
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct PsData {
-    pub display: [u8; 8],
-    pub pvt: TextProb<8>,
+    pub display: [u8; PS_TEXT_LEN],
+    pub pvt: TextProb<PS_TEXT_LEN>,
 }
 
 impl PsData {

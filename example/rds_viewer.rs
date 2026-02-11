@@ -4,7 +4,7 @@ use crossterm::{
     terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
 use ratatui::{prelude::*, widgets::*};
-use rds::{Decoder, Group, MAX_RADIOTEXT_LEN, RdsData, rds_to_utf8_lossy};
+use rds::{Decoder, Group, MAX_RADIOTEXT_LEN, PS_TEXT_LEN, RdsData, rds_to_utf8_lossy};
 use rdspy::RdsGroupIterator;
 use std::{
     env,
@@ -12,6 +12,9 @@ use std::{
     io::{self, BufRead, BufReader, stdout},
     path::Path,
 };
+
+const PS_LEN: usize = PS_TEXT_LEN + 2;
+const RADIOTEXT_LEN: usize = MAX_RADIOTEXT_LEN + 2;
 
 // In your render/draw function:
 fn draw_ui(f: &mut Frame, rds_data: &RdsData, num: usize, max: usize) {
@@ -40,7 +43,7 @@ fn draw_ui(f: &mut Frame, rds_data: &RdsData, num: usize, max: usize) {
 
     {
         let rta_label = Paragraph::new("RTA:").style(Style::default().fg(Color::LightCyan));
-        let rta = rds_to_utf8_lossy(&rds_data.rt.a.display);
+        let rta = rds_to_utf8_lossy::<RADIOTEXT_LEN>(&rds_data.rt.a.display);
         let rta_content = format!(
             "{:<64}",
             rta.chars().take(MAX_RADIOTEXT_LEN).collect::<String>()
@@ -61,7 +64,7 @@ fn draw_ui(f: &mut Frame, rds_data: &RdsData, num: usize, max: usize) {
 
     {
         let label = Paragraph::new("RTB:").style(Style::default().fg(Color::LightCyan));
-        let rtb = rds_to_utf8_lossy(&rds_data.rt.b.display);
+        let rtb = rds_to_utf8_lossy::<RADIOTEXT_LEN>(&rds_data.rt.b.display);
         let rtb_content = format!(
             "{:<64}",
             rtb.chars().take(MAX_RADIOTEXT_LEN).collect::<String>()
@@ -83,7 +86,7 @@ fn draw_ui(f: &mut Frame, rds_data: &RdsData, num: usize, max: usize) {
     {
         const PTYN_LEN: u8 = 8;
         let label = Paragraph::new("PTYN:").style(Style::default().fg(Color::LightCyan));
-        let data = rds_to_utf8_lossy(&rds_data.ptyn.display);
+        let data = rds_to_utf8_lossy::<PS_LEN>(&rds_data.ptyn.display);
         let text = format!("{:<8}", data.chars().take(8).collect::<String>());
         let input =
             Paragraph::new(text).style(Style::default().bg(Color::DarkGray).fg(Color::White));
@@ -100,9 +103,8 @@ fn draw_ui(f: &mut Frame, rds_data: &RdsData, num: usize, max: usize) {
     }
 
     {
-        const PS_LEN: u8 = 8;
         let label = Paragraph::new("PS:").style(Style::default().fg(Color::LightCyan));
-        let data = rds_to_utf8_lossy(&rds_data.tn.ps.display);
+        let data = rds_to_utf8_lossy::<PS_LEN>(&rds_data.tn.ps.display);
         let text = format!("{:<8}", data.chars().take(8).collect::<String>());
         let input =
             Paragraph::new(text).style(Style::default().bg(Color::DarkGray).fg(Color::White));

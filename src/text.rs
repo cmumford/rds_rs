@@ -23,11 +23,10 @@ const TABLE2: [char; 256] = [
 'Ã', 'Å', 'Æ', 'Œ', 'ŷ', 'Ý', 'Õ', 'Ø' , 'Þ', 'Ŋ', 'Ŕ', 'Ć', 'Ś' , 'Ź', 'Ŧ', 'ð',
 'ã', 'å', 'æ', 'œ', 'ŵ', 'ý', 'õ', 'ø' , 'þ', 'ŋ', 'ŕ', 'ć', 'ś' , 'ź', 'ŧ', ' '];
 
-/// Convert an array of bytes from the code table to a string.
-/// The string is limited to 64 bytes in length. Probably some
-/// characters are multi-byte UTF, so the string is longer than.
-/// 64 bytes.
-pub fn rds_to_utf8_lossy(bytes: &[u8]) -> String<128> {
+/// Convert an array of bytes from the code table to a string. At present
+/// the caller is responsible for ensuring the output string is properly
+/// sized to contain the output data.
+pub fn rds_to_utf8_lossy<const N: usize>(bytes: &[u8]) -> String<N> {
     bytes
         .iter()
         .map(|&b| match b {
@@ -43,17 +42,18 @@ mod tests {
 
     #[test]
     fn test_rt_convert_ascii() {
-        let input_str =
+        const INPUT_STR: &str =
             "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:{}[]();!\"*+-'./%&";
-        let input_bytes = input_str.as_bytes();
-        let result = rds_to_utf8_lossy(input_bytes);
-        assert_eq!(result.as_str(), input_str);
+        const INPUT_LEN: usize = INPUT_STR.len();
+        const INPUT_BYTES: &[u8] = INPUT_STR.as_bytes();
+        let result = rds_to_utf8_lossy::<INPUT_LEN>(INPUT_BYTES);
+        assert_eq!(result.as_str(), INPUT_STR);
     }
 
     #[test]
     fn test_rt_convert_ebu_common_language() {
-        let input_str = "$£";
-        let result = rds_to_utf8_lossy(&[0b10101011, 0b10101010]);
-        assert_eq!(result.as_str(), input_str);
+        const INPUT_STR: &str = "$£";
+        let result = rds_to_utf8_lossy::<3>(&[0b10101011, 0b10101010]);
+        assert_eq!(result.as_str(), INPUT_STR);
     }
 }

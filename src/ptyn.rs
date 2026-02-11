@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+const PTYN_TEXT_LEN: usize = 8;
+
 use crate::rds::RdsData;
 use crate::text::BLANK_CHAR;
 use crate::types::{Group, GroupType, ProgramType, ValidFields};
@@ -8,14 +10,14 @@ use modular_bitfield_msb::prelude::*;
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PtynData {
-    pub display: [u8; 8],
+    pub display: [u8; PTYN_TEXT_LEN],
     // TODO: Unify A/B flag types.
     pub last_ab: bool,
 }
 
 impl Default for PtynData {
     fn default() -> Self {
-        let mut spaces = [0u8; 8];
+        let mut spaces = [0u8; PTYN_TEXT_LEN];
         spaces.fill(' ' as u8);
 
         Self {
