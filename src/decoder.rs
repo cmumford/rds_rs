@@ -635,3 +635,6 @@ impl<'a> Decoder {
         valid
     }
 }
+
+#[cfg(test)]
+mod tests;
