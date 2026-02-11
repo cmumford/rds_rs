@@ -13,8 +13,12 @@ use std::{
     path::Path,
 };
 
-const PS_LEN: usize = PS_TEXT_LEN + 2;
-const RADIOTEXT_LEN: usize = MAX_RADIOTEXT_LEN + 2;
+// The RDS text may contain bytes that map to unicode characters to the required
+// number of bytes to store the string may be greater than 8 or 64 (depending)
+// on the field. Use double the length to be safe. It could still be longer though.
+// This could be fixed by calling rds_to_utf8_required_bytes() if desired.
+const PS_LEN: usize = 2 * PS_TEXT_LEN;
+const RADIOTEXT_LEN: usize = 2 * MAX_RADIOTEXT_LEN;
 
 // In your render/draw function:
 fn draw_ui(f: &mut Frame, rds_data: &RdsData, num: usize, max: usize) {

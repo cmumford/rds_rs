@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-const PTYN_TEXT_LEN: usize = 8;
+pub const PTYN_TEXT_LEN: usize = 8;
 
 use crate::rds::RdsData;
 use crate::text::BLANK_CHAR;

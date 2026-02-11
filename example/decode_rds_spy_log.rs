@@ -1,16 +1,22 @@
 use log::{error, info};
-use rds::{Decoder, Group, MAX_RADIOTEXT_LEN, PS_TEXT_LEN, RdsData, RtVariant, rds_to_utf8_lossy};
+use rds::{
+    Decoder, Group, MAX_RADIOTEXT_LEN, PS_TEXT_LEN, PTYN_TEXT_LEN, RdsData, RtVariant,
+    rds_to_utf8_lossy,
+};
 use rdspy::RdsGroupIterator;
-
-const PS_LEN: usize = PS_TEXT_LEN + 2;
-const RADIOTEXT_LEN: usize = MAX_RADIOTEXT_LEN + 2;
-
 use std::{
     env,
     fs::File,
     io::{self, BufRead, BufReader},
     path::Path,
 };
+
+// The RDS text may contain bytes that map to unicode characters to the required
+// number of bytes to store the string may be greater than 8 or 64 (depending)
+// on the field. Use double the length to be safe. It could still be longer though.
+// This could be fixed by calling rds_to_utf8_required_bytes() if desired.
+const PS_LEN: usize = 2 * PS_TEXT_LEN;
+const RADIOTEXT_LEN: usize = 2 * MAX_RADIOTEXT_LEN;
 
 fn main() -> io::Result<()> {
     let args: Vec<String> = env::args().collect();
@@ -78,7 +84,8 @@ fn process_reader<R: BufRead + 'static>(reader: R) -> io::Result<()> {
                         if rds_data.valid.ptyn() {
                             print!(
                                 " PTYN: {:?}",
-                                rds_to_utf8_lossy::<PS_LEN>(&rds_data.ptyn.display).trim_end()
+                                rds_to_utf8_lossy::<PTYN_TEXT_LEN>(&rds_data.ptyn.display)
+                                    .trim_end()
                             );
                         }
                         // Too verbose

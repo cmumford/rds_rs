@@ -10,7 +10,7 @@ build:
 
 .PHONY: test
 test:
-	cargo run $(RELEASE) --example decode_rds_spy_log $(TEST_FILE)
+	RUST_BACKTRACE=full cargo run $(RELEASE) --example decode_rds_spy_log $(TEST_FILE)
 
 .PHONY: test-all
 test-all:

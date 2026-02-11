@@ -27,12 +27,29 @@ const TABLE2: [char; 256] = [
 /// the caller is responsible for ensuring the output string is properly
 /// sized to contain the output data.
 pub fn rds_to_utf8_lossy<const N: usize>(bytes: &[u8]) -> String<N> {
+    let mut s = String::<N>::new();
+    for &b in bytes {
+        let ch = TABLE2[b as usize];
+        if s.push(ch).is_err() {
+            break;
+        }
+    }
+    s
+}
+
+/// Returns the exact number of UTF-8 bytes needed to represent the RDS-decoded string,
+/// **not** including a trailing null terminator (unless you explicitly want one).
+///
+/// This is useful when you want to pre-allocate a `String` or fixed-size buffer
+/// without risking truncation or over-allocation.
+pub fn rds_to_utf8_required_bytes(bytes: &[u8]) -> usize {
     bytes
         .iter()
-        .map(|&b| match b {
-            _ => TABLE2[b as usize],
+        .map(|&b| {
+            let ch = TABLE2[b as usize];
+            ch.len_utf8() // returns 1, 2, 3, or 4
         })
-        .collect()
+        .sum()
 }
 
 #[cfg(test)]
@@ -52,8 +69,23 @@ mod tests {
 
     #[test]
     fn test_rt_convert_ebu_common_language() {
-        const INPUT_STR: &str = "$£";
         let result = rds_to_utf8_lossy::<3>(&[0b10101011, 0b10101010]);
-        assert_eq!(result.as_str(), INPUT_STR);
+        assert_eq!(result.as_str(), "$£");
+    }
+
+    #[test]
+    fn test_rds_to_utf8_required_bytes_ascii() {
+        assert_eq!(rds_to_utf8_required_bytes("ab".as_bytes()), 2);
+    }
+
+    #[test]
+    fn test_rds_to_utf8_required_bytes_ebu_common_language() {
+        // [0b10101011, 0b10101010] → "$£"
+        assert_eq!(rds_to_utf8_required_bytes(&[0b10101011, 0b10101010]), 3);
+    }
+
+    #[test]
+    fn test_rds_to_utf8_required_bytes_empty() {
+        assert_eq!(rds_to_utf8_required_bytes(&[]), 0);
     }
 }
