@@ -1,5 +1,5 @@
 const VALIDATE_LIMIT: u8 = 2;
-use crate::radiotext::BLANK_CHAR;
+use crate::text::BLANK_CHAR;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TextProb<const N: usize> {

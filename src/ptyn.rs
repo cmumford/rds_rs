@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
-use crate::radiotext::BLANK_CHAR;
 use crate::rds::RdsData;
+use crate::text::BLANK_CHAR;
 use crate::types::{Group, GroupType, ProgramType, ValidFields};
 use modular_bitfield_msb::prelude::*;
 

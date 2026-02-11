@@ -1,31 +1,9 @@
+use crate::text::BLANK_CHAR;
 use crate::text_prob::TextProb;
-use heapless::String;
 use modular_bitfield_msb::prelude::*;
 
 pub const MAX_RADIOTEXT_LEN: usize = 64;
-const END_OF_MESSAGE_CHAR: u8 = 0x0d;
-pub const LINE_BREAK_CHAR: u8 = 0x0a;
-pub const BLANK_CHAR: u8 = ' ' as u8;
-
-// Code table from IEC 62106:1000 Figure E.1
-#[rustfmt::skip]
-const TABLE2: [char; 256] = [
-' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' , ' ', ' ', '␊', ' ', '␌' , '␍', ' ', ' ',
-' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' , ' ', ' ', ' ', '␛', ' ' , ' ', ' ', ' ',
-' ', '!', '"', '#', '¤', '%', '&', '\'', '(', ')', '*', '+', ',' , '-', '.', '/',
-'0', '1', '2', '3', '4', '5', '6', '7' , '8', '9', ':', ';', '<' , '=', '>', '?',
-'@', 'A', 'B', 'C', 'D', 'E', 'F', 'G' , 'H', 'I', 'J', 'K', 'L' , 'M', 'N', 'O',
-'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W' , 'X', 'Y', 'Z', '[', '\\', ']', '―', '_',
-'║', 'a', 'b', 'c', 'd', 'e', 'f', 'g' , 'h', 'i', 'j', 'k', 'l' , 'm', 'n', 'o',
-'p', 'q', 'r', 's', 't', 'u', 'v', 'w' , 'x', 'y', 'z', '{', '|' , '}', '¯', '␡',
-'á', 'à', 'é', 'è', 'í', 'ì', 'ó', 'ò' , 'ú', 'ù', 'Ñ', 'Ç', 'Ş' , 'ß', '¡', 'Ĳ',
-'â', 'ä', 'ê', 'ë', 'î', 'ï', 'ô', 'ö' , 'û', 'ü', 'ñ', 'ç', 'ş' , 'ğ', 'ı', 'ĳ',
-'ª', 'α', '©', '‰', 'Ğ', 'ě', 'ň', 'ő' , 'π', '€', '£', '$', '←' , '↑', '→', '↓',
-'º', '¹', '²', '³', '±', 'İ', 'ń', 'ű' , 'µ', '¿', '÷', '°', '¼' , '½', '¾', '§',
-'Á', 'À', 'É', 'È', 'Í', 'Ì', 'Ó', 'Ò' , 'Ú', 'Ù', 'Ř', 'Č', 'Š' , 'Ž', 'Ð', 'Ŀ',
-'Â', 'Ä', 'Ê', 'Ë', 'Î', 'Ï', 'Ô', 'Ö' , 'Û', 'Ü', 'ř', 'č', 'š' , 'ž', 'đ', 'ŀ',
-'Ã', 'Å', 'Æ', 'Œ', 'ŷ', 'Ý', 'Õ', 'Ø' , 'Þ', 'Ŋ', 'Ŕ', 'Ć', 'Ś' , 'Ź', 'Ŧ', 'ð',
-'ã', 'å', 'æ', 'œ', 'ŵ', 'ý', 'õ', 'ø' , 'þ', 'ŋ', 'ŕ', 'ć', 'ś' , 'ź', 'ŧ', ' '];
+pub const END_OF_MESSAGE_CHAR: u8 = 0x0d;
 
 /// Radiotext (RT) decoding state for one variant (A or B)
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -58,18 +36,6 @@ pub struct RtData {
     pub a: Radiotext,         // RT A text.
     pub b: Radiotext,         // RT B text.
     pub decode_rt: RtVariant, // Which RT text currently being decoded.
-}
-
-/// Convert an array of bytes from the code table to a string.
-/// The string is limited to 64 bytes in length, but probably some
-/// characters are multi-byte UTF, so making the string longer.
-pub fn rds_to_utf8_lossy(bytes: &[u8]) -> String<128> {
-    bytes
-        .iter()
-        .map(|&b| match b {
-            _ => TABLE2[b as usize],
-        })
-        .collect()
 }
 
 impl Radiotext {
