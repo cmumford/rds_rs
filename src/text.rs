@@ -69,6 +69,14 @@ mod tests {
     }
 
     #[test]
+    fn test_rt_convert_drop_chars() {
+        const INPUT_STR: &str = "12345678";
+        const INPUT_BYTES: &[u8] = INPUT_STR.as_bytes();
+        let result = rds_to_utf8_lossy::<4>(INPUT_BYTES);
+        assert_eq!(result.as_str(), "1234");
+    }
+
+    #[test]
     fn test_rt_convert_ebu_common_language() {
         let result = rds_to_utf8_lossy::<3>(&[0b10101011, 0b10101010]);
         assert_eq!(result.as_str(), "$£");
