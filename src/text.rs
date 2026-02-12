@@ -23,9 +23,10 @@ const TABLE2: [char; 256] = [
 'Ã', 'Å', 'Æ', 'Œ', 'ŷ', 'Ý', 'Õ', 'Ø' , 'Þ', 'Ŋ', 'Ŕ', 'Ć', 'Ś' , 'Ź', 'Ŧ', 'ð',
 'ã', 'å', 'æ', 'œ', 'ŵ', 'ý', 'õ', 'ø' , 'þ', 'ŋ', 'ŕ', 'ć', 'ś' , 'ź', 'ŧ', ' '];
 
-/// Convert an array of bytes from the code table to a string. At present
-/// the caller is responsible for ensuring the output string is properly
-/// sized to contain the output data.
+/// Convert an array of bytes from the code table to a string. If the destination
+/// string is too small then characters will be silently dropped. If desired
+/// call rds_to_utf8_required_bytes() to determine the number of bytes that
+/// the output string needs to be to contain all characters specified in `bytes`.
 pub fn rds_to_utf8_lossy<const N: usize>(bytes: &[u8]) -> String<N> {
     let mut s = String::<N>::new();
     for &b in bytes {
