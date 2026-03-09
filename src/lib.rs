@@ -17,5 +17,7 @@ pub use ps::PS_TEXT_LEN;
 pub use ptyn::PTYN_TEXT_LEN;
 pub use radiotext::{MAX_RADIOTEXT_LEN, RtVariant};
 pub use rds::RdsData;
-pub use text::{BLANK_CHAR, LINE_BREAK_CHAR, rds_to_utf8_lossy, rds_to_utf8_required_bytes};
+pub use text::{
+    BLANK_CHAR, LINE_BREAK_CHAR, is_whitespace_byte, rds_to_utf8_lossy, rds_to_utf8_required_bytes,
+};
 pub use types::{Clock, Content, DiCodes, Group, GroupType, ProgramType, ValidFields};
