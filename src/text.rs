@@ -54,7 +54,7 @@ pub fn rds_to_utf8_required_bytes(bytes: &[u8]) -> usize {
 }
 
 pub fn is_whitespace_byte(b: u8) -> bool {
-    b <= 32 || b == 0xff
+    b <= 32 || b == 0xff || b == 127
 }
 
 #[cfg(test)]
@@ -106,6 +106,7 @@ mod tests {
     fn test_is_whitespace_byte() {
         assert_eq!(is_whitespace_byte(0), true);
         assert_eq!(is_whitespace_byte(BLANK_CHAR), true);
+        assert_eq!(is_whitespace_byte(127), true); // DEL character
         assert_eq!(is_whitespace_byte(255), true);
 
         assert_eq!(is_whitespace_byte(b'A'), false);
