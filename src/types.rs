@@ -183,8 +183,21 @@ pub struct ProgramInformation {
     pub program_reference_number: u8,
 }
 
-// A combination of Traffic Program (TP) and Traffic Announcement (TA) codes
-// See the RBDS Standard section 3.2.1.3.
+/// A combination of Traffic Program (TP) and Traffic Announcement (TA) codes
+/// See the RBDS Standard section 3.2.1.3.
+///
+/// | TP | TA |  Comment                                                   |
+/// |----|----|------------------------------------------------------------|
+/// | 0  | 0  | This program does not carry traffic announcements nor does |
+/// |    |    | it refer, via EON, to a program that does.                 |
+/// | 0  | 1  | This program carries EON information about another program |
+/// |    |    | which gives traffic information.                           |
+/// | 1  | 0  | This program carries traffic announcements but none are    |
+/// |    |    | being broadcast at present and may also carry EON          |
+/// |    |    | information about other traffic announcements.             |
+/// | 1  | 1  | A traffic announcement is being broadcast on this program  |
+/// |    |    | at present.                                                |
+///
 #[bitfield(bits = 2)]
 #[derive(Default, Clone, PartialEq, Eq)]
 pub struct TrafficCodes {
