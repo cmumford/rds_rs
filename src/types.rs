@@ -192,7 +192,7 @@ pub struct TrafficCodes {
     pub ta: bool, // Traffic Announcement code (TA).
 }
 
-#[derive(BitfieldSpecifier, Debug, Default, Clone, PartialEq, Eq)]
+#[derive(BitfieldSpecifier, Debug, Default, Clone, Copy, PartialEq, Eq)]
 #[bits = 5]
 pub enum ProgramType {
     #[default]
