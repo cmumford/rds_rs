@@ -2,24 +2,43 @@
 
 mod tests {
     use crate::alt_freq_decoder::{
-        AfDecoder, EncodingMethod, decode_freq_cnt, get_lf_mf_frequency, get_uhf_frequency,
+        AfDecoder, CodeType, EncodingMethod, categorize_vhf_code, decode_freq_cnt,
+        get_lf_mf_frequency, get_vhf_frequency,
     };
     use crate::alt_freq_table::{AfTable, Freq, FreqType};
     use heapless::Vec;
 
     #[test]
-    fn test_get_lf_mf_frequency() {
+    fn test_categorize_vhf_code() {
+        assert_eq!(categorize_vhf_code(0), CodeType::Unassigned);
+        assert_eq!(categorize_vhf_code(1), CodeType::Frequency);
+        assert_eq!(categorize_vhf_code(100), CodeType::Frequency);
+        assert_eq!(categorize_vhf_code(204), CodeType::Frequency);
+        assert_eq!(categorize_vhf_code(205), CodeType::Filler);
+        assert_eq!(categorize_vhf_code(224), CodeType::AltFreqCount);
+        assert_eq!(categorize_vhf_code(230), CodeType::AltFreqCount);
+        assert_eq!(categorize_vhf_code(249), CodeType::AltFreqCount);
+        assert_eq!(categorize_vhf_code(250), CodeType::LfMfFollows);
+        assert_eq!(categorize_vhf_code(255), CodeType::Unassigned);
+    }
+
+    #[test]
+    fn test_get_lf_mf_frequency_lf() {
         assert_eq!(get_lf_mf_frequency(1), 153_000);
         assert_eq!(get_lf_mf_frequency(15), 279_000);
+    }
+
+    #[test]
+    fn test_get_lf_mf_frequency_mf() {
         assert_eq!(get_lf_mf_frequency(16), 531_000);
         assert_eq!(get_lf_mf_frequency(135), 1_602_000);
     }
 
     #[test]
-    fn test_get_uhf_frequency() {
-        assert_eq!(get_uhf_frequency(1), 87_600_000);
-        assert_eq!(get_uhf_frequency(2), 87_700_000);
-        assert_eq!(get_uhf_frequency(204), 107_900_000);
+    fn test_get_vhf_frequency() {
+        assert_eq!(get_vhf_frequency(1), 87_600_000);
+        assert_eq!(get_vhf_frequency(2), 87_700_000);
+        assert_eq!(get_vhf_frequency(204), 107_900_000);
     }
 
     #[test]

@@ -23,3 +23,7 @@ viewer:
 .PHONY: clean
 clean:
 	cargo clean
+
+.PHONY: fuzz
+fuzz:
+	cargo fuzz run fuzz_target_1

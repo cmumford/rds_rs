@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use crate::alt_freq_decoder::get_uhf_frequency;
+use crate::alt_freq_decoder::get_vhf_frequency;
 use crate::alt_freq_table::{Freq, FreqType};
 use crate::oda::{OdaEntry, decode_oda, is_oda_group_type_used, is_valid_oda_app_id};
 use crate::ptyn::decode_ptyn;
@@ -507,11 +507,13 @@ fn decode_group_type_14a(group: &Group, rds_data: &mut RdsData) -> ValidFields {
         5..=9 => {
             if group.c.is_some() {
                 let freqs = group.c.unwrap().to_be_bytes();
-                rds_data.map_freqs.add(&Freq {
-                    frequency: get_uhf_frequency(freqs[1]),
-                    freq_type: FreqType::SameProgram,
-                });
-                valid.set_map_freqs(true);
+                if freqs[1] != 0 {
+                    rds_data.map_freqs.add(&Freq {
+                        frequency: get_vhf_frequency(freqs[1]),
+                        freq_type: FreqType::SameProgram,
+                    });
+                    valid.set_map_freqs(true);
+                }
             }
         }
         13 => {

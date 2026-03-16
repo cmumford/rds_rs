@@ -2,7 +2,7 @@ use crate::alt_freq_table::{AfTable, Freq, FreqType};
 use thiserror::Error;
 
 // Section 3.2.1.6.1 describes how 8-bit values are mapped to either
-// UHF frequencies, LF/MF frequencies, or othe special codes. These
+// VHF frequencies, LF/MF frequencies, or othe special codes. These
 // are described in three different tables:
 //
 // Table 10: VHF code table
@@ -13,14 +13,15 @@ use thiserror::Error;
 #[derive(Debug, Clone, PartialEq)]
 enum CodeType {
     Unassigned,   // Unused/unassigned.
-    Frequency,    // A UHF frequency value.
+    Frequency,    // A VHF frequency value.
     AltFreqCount, // Number of AF's to follow.
     LfMfFollows,  // Next entry is a LF/MF freq.
     Filler,       // A no-op.
 }
 
 // Categorize a code from table 10/11 above.
-fn categorize_uhf_code(code: u8) -> CodeType {
+/// See RBDS Spec section 3.2.1.6.1 table 11.
+fn categorize_vhf_code(code: u8) -> CodeType {
     match code {
         1..=204 => CodeType::Frequency,
         205 => CodeType::Filler,
@@ -34,6 +35,8 @@ fn decode_freq_cnt(code: u8) -> u8 {
     code - 224_u8
 }
 
+/// Convert a code from the LF/MF table to a frequency in Hz.
+/// See RBDS Spec section 3.2.1.6.1 table 12.
 fn get_lf_mf_frequency(idx: u8) -> u32 {
     if idx >= 1 && idx < 16 {
         return 153_000 + ((idx as u32) - 1) * 9000;
@@ -41,7 +44,10 @@ fn get_lf_mf_frequency(idx: u8) -> u32 {
     return 531_000 + ((idx as u32) - 16) * 9000;
 }
 
-pub fn get_uhf_frequency(idx: u8) -> u32 {
+/// Convert a code from the VHF table to a frequency in Hz.
+/// See RBDS Spec section 3.2.1.6.1 table 10.
+pub fn get_vhf_frequency(idx: u8) -> u32 {
+    assert_ne!(idx, 0);
     87_600_000 + ((idx - 1) as u32) * 100000
 }
 
@@ -84,7 +90,7 @@ impl AfDecoder {
         assert_ne!(self.first_freq_code, 0);
         self.first_freq_in_table = true;
         let _ = table.add(&Freq {
-            frequency: get_uhf_frequency(self.first_freq_code),
+            frequency: get_vhf_frequency(self.first_freq_code),
             freq_type: FreqType::SameProgram,
         });
     }
@@ -107,7 +113,7 @@ impl AfDecoder {
         if !self.first_freq_in_table && self.first_freq_code != 0 {
             self.write_first_freq_to_table(table);
         }
-        match categorize_uhf_code(code) {
+        match categorize_vhf_code(code) {
             CodeType::Unassigned => {
                 return Err(DecodeError::InvalidCode);
             }
@@ -129,7 +135,7 @@ impl AfDecoder {
                     self.next_freq_is_lf_mf = false;
                     freq = get_lf_mf_frequency(code);
                 } else {
-                    freq = get_uhf_frequency(code);
+                    freq = get_vhf_frequency(code);
                 }
                 let _ = table.add(&Freq {
                     frequency: freq,
@@ -169,13 +175,13 @@ impl AfDecoder {
         if code_pair[0] == self.first_freq_code {
             assert_ne!(code_pair[1], self.first_freq_code);
             let _ = table.add(&Freq {
-                frequency: get_uhf_frequency(code_pair[1]),
+                frequency: get_vhf_frequency(code_pair[1]),
                 freq_type: freq_type,
             });
         } else if code_pair[1] == self.first_freq_code {
             assert_ne!(code_pair[0], self.first_freq_code);
             let _ = table.add(&Freq {
-                frequency: get_uhf_frequency(code_pair[0]),
+                frequency: get_vhf_frequency(code_pair[0]),
                 freq_type: freq_type,
             });
         } else {
@@ -191,8 +197,8 @@ impl AfDecoder {
         code_pair: [u8; 2],
         table: &mut AfTable,
     ) -> Result<(), DecodeError> {
-        let ct1 = categorize_uhf_code(code_pair[0]);
-        let ct2 = categorize_uhf_code(code_pair[1]);
+        let ct1 = categorize_vhf_code(code_pair[0]);
+        let ct2 = categorize_vhf_code(code_pair[1]);
 
         if self.first_freq_code == 0 {
             assert_eq!(self.first_freq_in_table, false);
