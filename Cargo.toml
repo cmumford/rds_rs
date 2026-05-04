@@ -13,7 +13,7 @@ thiserror = { version = "2.0.18", default-features = false }
 crossterm = "0.29.0"
 log = "0.4"
 ratatui = "0.30.0"
-rdspy = { path = "/Users/chris/src/rdspy" }
+rdspy = { path = "../rdspy" }
 walkdir = "2.5"
 
 [[example]]
