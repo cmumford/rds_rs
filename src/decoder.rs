@@ -23,6 +23,16 @@ struct GroupType2BlockB {
     text_segment_addr: B4,
 }
 
+// See RBDS Standard section 3.1.5.4.
+#[bitfield(bits = 16)]
+#[derive(Default, Clone, PartialEq, Eq)]
+struct GroupType3ABlockB {
+    group_type: GroupType,        // Group type (code + version).
+    traffic_program: bool,        // TP bit.
+    program_type: ProgramType,    // PTY: Program type.
+    application_group: GroupType, // See Annex M.
+}
+
 impl BitOr for ValidFields {
     type Output = Self;
 
@@ -99,7 +109,7 @@ fn decode_group_type_0(
         if rds_data
             .tn
             .ps
-            .update_advanced((pair_idx + 0) as usize, ps_bytes[0])
+            .update_advanced(pair_idx as usize, ps_bytes[0])
         {
             valid.set_ps(true);
         }
@@ -130,8 +140,10 @@ fn decode_group_type_1(group: &Group, rds_data: &mut RdsData) -> ValidFields {
 
     let mut valid = ValidFields::new();
     let block_b = GroupType1BlockB::from_bytes(group.b.unwrap().to_be_bytes());
-    if block_b.group_type().version() == GroupVersion::A && group.c.is_some() {
-        rds_data.slc = SlcData::from_bytes(group.c.unwrap().to_be_bytes());
+    if block_b.group_type().version() == GroupVersion::A
+        && let Some(group_c) = group.c
+    {
+        rds_data.slc = SlcData::from_bytes(group_c.to_be_bytes());
         valid.set_slc(true);
     }
 
@@ -153,10 +165,8 @@ fn decode_group_type_1(group: &Group, rds_data: &mut RdsData) -> ValidFields {
 // See RBDS Standard setion 3.1.5.3.
 fn decode_group_type_2a(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     let block_b = GroupType2BlockB::from_bytes(group.b.unwrap().to_be_bytes());
-    let chars: [Option<[u8; 2]>; 2] = [
-        group.c.map(|c| c.to_be_bytes()),
-        group.d.map(|d| d.to_be_bytes()),
-    ];
+    let chars: [Option<[u8; 2]>; 2] =
+        [group.c.map(u16::to_be_bytes), group.d.map(u16::to_be_bytes)];
     let rt = match block_b.text_flag() {
         RtVariant::A => &mut rds_data.rt.a,
         RtVariant::B => &mut rds_data.rt.b,
@@ -178,7 +188,7 @@ fn decode_group_type_2b(group: &Group, rds_data: &mut RdsData) -> ValidFields {
         return ValidFields::new();
     }
     let block_b = GroupType2BlockB::from_bytes(group.b.unwrap().to_be_bytes());
-    let chars: [Option<[u8; 2]>; 1] = [group.d.map(|d| d.to_be_bytes())];
+    let chars: [Option<[u8; 2]>; 1] = [group.d.map(u16::to_be_bytes)];
     let rt = match block_b.text_flag() {
         RtVariant::A => &mut rds_data.rt.a,
         RtVariant::B => &mut rds_data.rt.b,
@@ -196,16 +206,6 @@ fn decode_group_type_2b(group: &Group, rds_data: &mut RdsData) -> ValidFields {
 // Type 3A groups: Application identification for Open data.
 fn decode_group_type_3a(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     let valid = ValidFields::new();
-    // See RBDS Standard section 3.1.5.4.
-    #[bitfield(bits = 16)]
-    #[derive(Default, Clone, PartialEq, Eq)]
-    struct GroupType3ABlockB {
-        group_type: GroupType,        // Group type (code + version).
-        traffic_program: bool,        // TP bit.
-        program_type: ProgramType,    // PTY: Program type.
-        application_group: GroupType, // See Annex M.
-    }
-
     if group.d.is_none() {
         return valid;
     }
@@ -222,19 +222,16 @@ fn decode_group_type_3a(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     }
 
     let entry = rds_data.oda.get_mut(&app_id);
-    if entry.is_some() {
-        let e = entry.unwrap();
+    if let Some(e) = entry {
         e.group_type = block_b.group_type();
-    } else {
-        if !rds_data.oda.is_full() {
-            let _ = rds_data.oda.insert(
-                app_id,
-                OdaEntry {
-                    group_type: block_b.group_type(),
-                    packet_count: 0,
-                },
-            );
-        }
+    } else if !rds_data.oda.is_full() {
+        let _ = rds_data.oda.insert(
+            app_id,
+            OdaEntry {
+                group_type: block_b.group_type(),
+                packet_count: 0,
+            },
+        );
     }
     valid
 }
@@ -276,13 +273,13 @@ fn decode_group_type_4a(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     let block_c = BlockC::from_bytes(group.b.unwrap().to_be_bytes());
     let block_d = BlockD::from_bytes(group.b.unwrap().to_be_bytes());
 
-    rds_data.clock.mjd = ((block_b.date_msb() as u32) << 15) + block_c.date() as u32;
-    rds_data.clock.hour = ((block_c.hour_msb() as u8) << 4) + block_d.hour();
+    rds_data.clock.mjd = (u32::from(block_b.date_msb()) << 15) + u32::from(block_c.date());
+    rds_data.clock.hour = (block_c.hour_msb() << 4) + block_d.hour();
     rds_data.clock.minute = block_d.minute();
     rds_data.clock.utc_offset_half_hours = if block_d.local_offset_dir() == 0 {
-        block_d.local_offset_val() as i8
+        block_d.local_offset_val().cast_signed()
     } else {
-        -(block_d.local_offset_val() as i8)
+        -(block_d.local_offset_val().cast_signed())
     };
     ValidFields::new().with_clock(true)
 }
@@ -322,12 +319,12 @@ fn decode_group_type_5a(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     }
     let mut valid = ValidFields::new();
     rds_data.tdc.current_channel = block_b.address();
-    if group.c.is_some() {
-        decode_tdc_block(group.c.unwrap(), rds_data);
+    if let Some(group_c) = group.c {
+        decode_tdc_block(group_c, rds_data);
         valid.set_tdc(true);
     }
-    if group.d.is_some() {
-        decode_tdc_block(group.d.unwrap(), rds_data);
+    if let Some(group_d) = group.d {
+        decode_tdc_block(group_d, rds_data);
         valid.set_tdc(true);
     }
     valid
@@ -336,7 +333,7 @@ fn decode_group_type_5a(group: &Group, rds_data: &mut RdsData) -> ValidFields {
 // Type 5 groups: ODA.
 fn decode_group_type_5b(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     // See RBDS Standard section 3.1.5.8.
-    const GROUP_TYPE: GroupType = GroupType::from_bytes([5 << 1 + GroupVersion::B as u8]);
+    const GROUP_TYPE: GroupType = GroupType::from_bytes([5 << (1 + GroupVersion::B as u8)]);
     if is_oda_group_type_used(&rds_data.oda, GROUP_TYPE) {
         return decode_oda(group, GROUP_TYPE, rds_data);
     }
@@ -366,7 +363,7 @@ fn decode_group_type_6(group: &Group, rds_data: &mut RdsData) -> ValidFields {
 // Type 7A groups: Radio Paging or ODA.
 fn decode_group_type_7a(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     // See RBDS Standard section 3.1.5.10.
-    const GROUP_TYPE: GroupType = GroupType::from_bytes([7 << 1 + GroupVersion::A as u8]);
+    const GROUP_TYPE: GroupType = GroupType::from_bytes([7 << (1 + GroupVersion::A as u8)]);
     if is_oda_group_type_used(&rds_data.oda, GROUP_TYPE) {
         return decode_oda(group, GROUP_TYPE, rds_data);
     }
@@ -490,11 +487,8 @@ fn decode_group_type_14a(group: &Group, rds_data: &mut RdsData) -> ValidFields {
     match block_b.variant_code() {
         0..=3 => {
             let idx: usize = 2 * (block_b.variant_code() as usize);
-            if group.c.is_some() {
-                rds_data
-                    .tn
-                    .ps
-                    .update_simple(idx, group.c.unwrap().to_be_bytes());
+            if let Some(group_c) = group.c {
+                rds_data.tn.ps.update_simple(idx, group_c.to_be_bytes());
                 valid.set_ps_on(true);
             }
         }
@@ -505,10 +499,10 @@ fn decode_group_type_14a(group: &Group, rds_data: &mut RdsData) -> ValidFields {
             valid.set_on_freqs(true);
         }
         5..=9 => {
-            if group.c.is_some() {
-                let freqs = group.c.unwrap().to_be_bytes();
+            if let Some(group_c) = group.c {
+                let freqs = group_c.to_be_bytes();
                 if freqs[1] != 0 {
-                    rds_data.map_freqs.add(&Freq {
+                    rds_data.map_freqs.add(Freq {
                         frequency: get_vhf_frequency(freqs[1]),
                         freq_type: FreqType::SameProgram,
                     });
@@ -517,19 +511,17 @@ fn decode_group_type_14a(group: &Group, rds_data: &mut RdsData) -> ValidFields {
             }
         }
         13 => {
-            if group.c.is_some() {
-                rds_data.on.traffic.set_ta((group.c.unwrap() & 0b1) != 0);
+            if let Some(group_c) = group.c {
+                rds_data.on.traffic.set_ta((group_c & 0b1) != 0);
                 valid.set_ta_on(true);
             }
         }
-        14 => {
-            if group.c.is_some() {
-                rds_data.on.pin = group
-                    .c
-                    .map(|c| Pin::from_bytes(c.to_be_bytes()))
-                    .unwrap_or_default();
-                valid.set_pin_on(true);
-            }
+        14 if group.c.is_some() => {
+            rds_data.on.pin = group
+                .c
+                .map(|c| Pin::from_bytes(c.to_be_bytes()))
+                .unwrap_or_default();
+            valid.set_pin_on(true);
         }
         _ => {}
     }
@@ -569,64 +561,65 @@ pub struct Decoder {
     advanced_ps_decoding: bool,
 }
 
-impl<'a> Decoder {
+impl Decoder {
+    #[must_use]
     pub fn new(advanced_ps_decoding: bool) -> Self {
         Decoder {
-            advanced_ps_decoding: advanced_ps_decoding,
+            advanced_ps_decoding,
         }
     }
 
     /// Decode a group of RDS data and update the supplied RDS data object.
-    /// Will return a ValidFields bitfield which describes the updated RDS
+    /// Will return a `ValidFields` bitfield which describes the updated RDS
     /// data fields.
-    /// Note: RdsData::valid also describes the valid data fields, but those
+    /// Note: `RdsData::valid` also describes the valid data fields, but those
     /// are cumulative over all calls to `decode()` with the same RDS data
     /// object.
     pub fn decode(&mut self, group: &Group, rds_data: &mut RdsData) -> ValidFields {
         let mut valid = ValidFields::default();
 
-        if group.a.is_some() {
-            rds_data.program_information =
-                ProgramInformation::from_bytes(group.a.unwrap().to_be_bytes());
+        if let Some(group_a) = group.a {
+            rds_data.program_information = ProgramInformation::from_bytes(group_a.to_be_bytes());
             valid.set_pi(true);
         }
-        if group.b.is_none() {
+
+        let Some(blk_b) = group.b else {
             rds_data.valid = rds_data.valid | valid;
             return valid;
-        }
+        };
 
         // We don't yet know what block/version this is, but decode as 2B as all
         // blocks share the first four common fields.
-        let block_b = GroupType2BlockB::from_bytes(group.b.unwrap().to_be_bytes());
+        let block_b = GroupType2BlockB::from_bytes(blk_b.to_be_bytes());
         valid = valid | decode_block_b_common(&block_b, rds_data);
 
         let new_valid = match (block_b.group_type().code(), block_b.group_type().version()) {
-            (0, GroupVersion::A) | (0, GroupVersion::B) => {
-                decode_group_type_0(&group, rds_data, self.advanced_ps_decoding)
+            (0, GroupVersion::A | GroupVersion::B) => {
+                decode_group_type_0(group, rds_data, self.advanced_ps_decoding)
             }
-            (1, GroupVersion::A) | (1, GroupVersion::B) => decode_group_type_1(&group, rds_data),
-            (2, GroupVersion::A) => decode_group_type_2a(&group, rds_data),
-            (2, GroupVersion::B) => decode_group_type_2b(&group, rds_data),
-            (3, GroupVersion::A) => decode_group_type_3a(&group, rds_data),
-            (3, GroupVersion::B) => decode_group_type_3b(&group, rds_data),
-            (4, GroupVersion::A) => decode_group_type_4a(&group, rds_data),
-            (4, GroupVersion::B) => decode_group_type_4b(&group, rds_data),
-            (5, GroupVersion::A) => decode_group_type_5a(&group, rds_data),
-            (5, GroupVersion::B) => decode_group_type_5b(&group, rds_data),
-            (6, GroupVersion::A) | (6, GroupVersion::B) => decode_group_type_6(&group, rds_data),
-            (7, GroupVersion::A) => decode_group_type_7a(&group, rds_data),
-            (7, GroupVersion::B) => decode_group_type_7b(&group, rds_data),
-            (8, GroupVersion::A) | (8, GroupVersion::B) => decode_group_type_8(&group, rds_data),
-            (9, GroupVersion::A) | (9, GroupVersion::B) => decode_group_type_9(&group, rds_data),
-            (10, GroupVersion::A) => decode_group_type_10a(&group, rds_data),
-            (10, GroupVersion::B) => decode_group_type_10b(&group, rds_data),
-            (11, GroupVersion::A) | (11, GroupVersion::B) => decode_group_type_11(&group, rds_data),
-            (12, GroupVersion::A) | (12, GroupVersion::B) => decode_group_type_12(&group, rds_data),
-            (13, GroupVersion::A) => decode_group_type_13a(&group, rds_data),
-            (13, GroupVersion::B) => decode_group_type_13b(&group, rds_data),
-            (14, GroupVersion::A) => decode_group_type_14a(&group, rds_data),
-            (14, GroupVersion::B) => decode_group_type_14b(&group, rds_data),
-            (15, GroupVersion::A) | (15, GroupVersion::B) => decode_group_type_15(&group, rds_data),
+            (1, GroupVersion::A | GroupVersion::B) => decode_group_type_1(group, rds_data),
+            (2, GroupVersion::A) => decode_group_type_2a(group, rds_data),
+            (2, GroupVersion::B) => decode_group_type_2b(group, rds_data),
+            (3, GroupVersion::A) => decode_group_type_3a(group, rds_data),
+            (3, GroupVersion::B) => decode_group_type_3b(group, rds_data),
+            (4, GroupVersion::A) => decode_group_type_4a(group, rds_data),
+            (4, GroupVersion::B) => decode_group_type_4b(group, rds_data),
+            (5, GroupVersion::A) => decode_group_type_5a(group, rds_data),
+            (5, GroupVersion::B) => decode_group_type_5b(group, rds_data),
+            (6, GroupVersion::A | GroupVersion::B) => decode_group_type_6(group, rds_data),
+            (7, GroupVersion::A) => decode_group_type_7a(group, rds_data),
+            (7, GroupVersion::B) => decode_group_type_7b(group, rds_data),
+            (8, GroupVersion::A | GroupVersion::B) => decode_group_type_8(group, rds_data),
+            (9, GroupVersion::A | GroupVersion::B) => decode_group_type_9(group, rds_data),
+            (10, GroupVersion::A) => decode_group_type_10a(group, rds_data),
+            (10, GroupVersion::B) => decode_group_type_10b(group, rds_data),
+            (11, GroupVersion::A | GroupVersion::B) => decode_group_type_11(group, rds_data),
+            (12, GroupVersion::A | GroupVersion::B) => decode_group_type_12(group, rds_data),
+            (13, GroupVersion::A) => decode_group_type_13a(group, rds_data),
+            (13, GroupVersion::B) => decode_group_type_13b(group, rds_data),
+            (14, GroupVersion::A) => decode_group_type_14a(group, rds_data),
+            (14, GroupVersion::B) => decode_group_type_14b(group, rds_data),
+            (15, GroupVersion::A | GroupVersion::B) => decode_group_type_15(group, rds_data),
             _ => {
                 // Other group types not implemented yet
                 ValidFields::new()

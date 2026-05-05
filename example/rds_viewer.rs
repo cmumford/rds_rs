@@ -178,14 +178,10 @@ fn main() -> io::Result<()> {
                     break;
                 }
                 KeyCode::Left => {
-                    if block_idx > 0 {
-                        block_idx -= 1;
-                    }
+                    block_idx = block_idx.saturating_sub(1);
                 }
-                KeyCode::Right => {
-                    if block_idx + 1 < rds_blocks.len() {
-                        block_idx += 1;
-                    }
+                KeyCode::Right if block_idx + 1 < rds_blocks.len() => {
+                    block_idx += 1;
                 }
                 _ => {}
             }

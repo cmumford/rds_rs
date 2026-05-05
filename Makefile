@@ -27,3 +27,23 @@ clean:
 .PHONY: fuzz
 fuzz:
 	cargo fuzz run fuzz_target_1
+
+.PHONY: docs
+docs:
+	cargo doc --no-deps --open
+
+.PHONY: clippy
+clippy:
+	cargo clippy --all-targets --
+
+.PHONY: check
+check:
+	cargo check
+
+.PHONY: machete
+machete:
+	cargo machete --with-metadata
+
+.PHONY: publish
+publish:
+	cargo publish

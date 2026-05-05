@@ -4,8 +4,8 @@ use rds::{
 
 const PS_LEN: usize = PS_TEXT_LEN + 2;
 
+#[allow(clippy::unusual_byte_groupings)]
 #[cfg(test)]
-
 mod tests {
     use rds::RdsData;
 
@@ -54,8 +54,8 @@ mod tests {
             0x56
         );
         // Verify block B values.
-        assert_eq!(rds_data.tn.traffic.ta(), true);
-        assert_eq!(rds_data.tn.traffic.tp(), false);
+        assert!(rds_data.tn.traffic.ta());
+        assert!(!rds_data.tn.traffic.tp());
         assert_eq!(rds_data.content, Content::Music);
         assert_eq!(rds_data.tn.program_type, ProgramType::ClassicRock);
         assert_eq!(rds_data.did_pty, DiCodes::new().with_artificial_head(true));

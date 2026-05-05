@@ -1,7 +1,6 @@
 use rds::Clock;
 
 #[cfg(test)]
-
 mod tests {
     use super::*;
 

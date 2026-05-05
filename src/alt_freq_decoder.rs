@@ -38,17 +38,17 @@ fn decode_freq_cnt(code: u8) -> u8 {
 /// Convert a code from the LF/MF table to a frequency in Hz.
 /// See RBDS Spec section 3.2.1.6.1 table 12.
 fn get_lf_mf_frequency(idx: u8) -> u32 {
-    if idx >= 1 && idx < 16 {
-        return 153_000 + ((idx as u32) - 1) * 9000;
+    if (1..16).contains(&idx) {
+        return 153_000 + (u32::from(idx) - 1) * 9000;
     }
-    return 531_000 + ((idx as u32) - 16) * 9000;
+    531_000 + (u32::from(idx) - 16) * 9000
 }
 
 /// Convert a code from the VHF table to a frequency in Hz.
 /// See RBDS Spec section 3.2.1.6.1 table 10.
 pub fn get_vhf_frequency(idx: u8) -> u32 {
     assert_ne!(idx, 0);
-    87_600_000 + ((idx - 1) as u32) * 100000
+    87_600_000 + u32::from(idx - 1) * 100_000
 }
 
 #[derive(Error, Debug)]
@@ -89,7 +89,7 @@ impl AfDecoder {
         assert!(!self.first_freq_in_table);
         assert_ne!(self.first_freq_code, 0);
         self.first_freq_in_table = true;
-        let _ = table.add(&Freq {
+        let _ = table.add(Freq {
             frequency: get_vhf_frequency(self.first_freq_code),
             freq_type: FreqType::SameProgram,
         });
@@ -114,10 +114,7 @@ impl AfDecoder {
             self.write_first_freq_to_table(table);
         }
         match categorize_vhf_code(code) {
-            CodeType::Unassigned => {
-                return Err(DecodeError::InvalidCode);
-            }
-            CodeType::AltFreqCount => {
+            CodeType::Unassigned | CodeType::AltFreqCount => {
                 return Err(DecodeError::InvalidCode);
             }
             CodeType::LfMfFollows => {
@@ -137,7 +134,7 @@ impl AfDecoder {
                 } else {
                     freq = get_vhf_frequency(code);
                 }
-                let _ = table.add(&Freq {
+                let _ = table.add(Freq {
                     frequency: freq,
                     freq_type: FreqType::SameProgram,
                 });
@@ -150,23 +147,14 @@ impl AfDecoder {
 
     // Only called when we know encoding is method A.
     // and only for blocks 2..n and not the first block.
-    fn decode_for_method_a(
-        &mut self,
-        code_pair: [u8; 2],
-        table: &mut AfTable,
-    ) -> Result<(), DecodeError> {
+    fn decode_for_method_a(&mut self, code_pair: [u8; 2], table: &mut AfTable) {
         let _ = self.decode_for_method_a_code(code_pair[0], table);
         let _ = self.decode_for_method_a_code(code_pair[1], table);
-        Ok(())
     }
 
     // Only called when we know encoding is method B.
     // and only for blocks 2..n and not the first block.
-    fn decode_for_method_b(
-        &mut self,
-        code_pair: [u8; 2],
-        table: &mut AfTable,
-    ) -> Result<(), DecodeError> {
+    fn decode_for_method_b(&mut self, code_pair: [u8; 2], table: &mut AfTable) {
         let freq_type = if code_pair[0] < code_pair[1] {
             FreqType::SameProgram
         } else {
@@ -174,22 +162,21 @@ impl AfDecoder {
         };
         if code_pair[0] == self.first_freq_code {
             assert_ne!(code_pair[1], self.first_freq_code);
-            let _ = table.add(&Freq {
+            let _ = table.add(Freq {
                 frequency: get_vhf_frequency(code_pair[1]),
-                freq_type: freq_type,
+                freq_type,
             });
         } else if code_pair[1] == self.first_freq_code {
             assert_ne!(code_pair[0], self.first_freq_code);
-            let _ = table.add(&Freq {
+            let _ = table.add(Freq {
                 frequency: get_vhf_frequency(code_pair[0]),
-                freq_type: freq_type,
+                freq_type,
             });
         } else {
-            assert!(false, "Freq does not match tuned freq");
+            return;
         }
         self.decrement_awaiting_freq_cnt();
         self.decrement_awaiting_freq_cnt();
-        Ok(())
     }
 
     fn decode_for_unknown_method(
@@ -201,7 +188,7 @@ impl AfDecoder {
         let ct2 = categorize_vhf_code(code_pair[1]);
 
         if self.first_freq_code == 0 {
-            assert_eq!(self.first_freq_in_table, false);
+            assert!(!self.first_freq_in_table);
             match ct1 {
                 CodeType::Unassigned => return Err(DecodeError::InvalidCode),
                 CodeType::AltFreqCount => {
@@ -216,11 +203,10 @@ impl AfDecoder {
                         }
                         self.decrement_awaiting_freq_cnt();
                         return Ok(());
-                    } else {
-                        // This could be a LF/MF code (or other), so send to method A decoder.
-                        self.encoding_method = EncodingMethod::MethodA;
-                        return self.decode_for_method_a_code(code_pair[1], table);
                     }
+                    // This could be a LF/MF code (or other), so send to method A decoder.
+                    self.encoding_method = EncodingMethod::MethodA;
+                    return self.decode_for_method_a_code(code_pair[1], table);
                 }
                 _ => {
                     // No freq count. Probably started decoding in a table stream
@@ -242,8 +228,9 @@ impl AfDecoder {
         match self.encoding_method {
             EncodingMethod::MethodA => self.decode_for_method_a(code_pair, table),
             EncodingMethod::MethodB => self.decode_for_method_b(code_pair, table),
-            _ => panic!("Shouldn't get here"),
+            EncodingMethod::Unknown => panic!("Shouldn't get here"),
         }
+        Ok(())
     }
 
     // Decode a C block of frequencies or control codes. If none was received,
@@ -261,8 +248,9 @@ impl AfDecoder {
         match self.encoding_method {
             EncodingMethod::MethodA => self.decode_for_method_a(code_pair, table),
             EncodingMethod::MethodB => self.decode_for_method_b(code_pair, table),
-            EncodingMethod::Unknown => self.decode_for_unknown_method(code_pair, table),
+            EncodingMethod::Unknown => self.decode_for_unknown_method(code_pair, table)?,
         }
+        Ok(())
     }
 }
 

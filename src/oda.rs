@@ -12,21 +12,21 @@ pub struct OdaEntry {
 
 /// Is the ODA application ID valid?
 pub fn is_valid_oda_app_id(app_id: u16) -> bool {
-    return app_id != INVALID_ODA_APP_ID;
+    app_id != INVALID_ODA_APP_ID
 }
 
 pub fn is_oda_group_type_used(map: &LinearMap<u16, OdaEntry, 10>, gt: GroupType) -> bool {
-    for (_key, val) in map.iter() {
+    for (_key, val) in map {
         if val.group_type == gt {
             return true;
         }
     }
-    return false;
+    false
 }
 
 pub fn decode_oda(_group: &Group, gt: GroupType, rds_data: &mut RdsData) -> ValidFields {
     let mut app_id: u16 = INVALID_ODA_APP_ID;
-    for (key, val) in rds_data.oda.iter() {
+    for (key, val) in &rds_data.oda {
         if val.group_type == gt {
             app_id = *key;
             break;

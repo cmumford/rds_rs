@@ -58,7 +58,7 @@ impl<const N: usize> TextProb<N> {
         if in_transition {
             // When the text is changing, decrement the count for all characters to
             // prevent displaying part of a message that is in transition.
-            for count in self.hi_prob_cnt.iter_mut() {
+            for count in &mut self.hi_prob_cnt {
                 if *count > 1 {
                     *count -= 1;
                 }
@@ -69,7 +69,7 @@ impl<const N: usize> TextProb<N> {
     pub fn is_complete(&self) -> bool {
         // Text is incomplete if any character in the high probability array
         // has been seen fewer times than the validation limit.
-        for count in self.hi_prob_cnt.iter() {
+        for count in &self.hi_prob_cnt {
             if *count < VALIDATE_LIMIT {
                 return false;
             }

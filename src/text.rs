@@ -1,7 +1,7 @@
 use heapless::String;
 
 pub const LINE_BREAK_CHAR: u8 = 0x0a;
-pub const BLANK_CHAR: u8 = ' ' as u8;
+pub const BLANK_CHAR: u8 = b' ';
 
 // Code table from IEC 62106:1000 Figure E.1
 #[rustfmt::skip]
@@ -25,8 +25,9 @@ const TABLE2: [char; 256] = [
 
 /// Convert an array of bytes from the code table to a string. If the destination
 /// string is too small then characters will be silently dropped. If desired
-/// call rds_to_utf8_required_bytes() to determine the number of bytes that
+/// call `rds_to_utf8_required_bytes()` to determine the number of bytes that
 /// the output string needs to be to contain all characters specified in `bytes`.
+#[must_use]
 pub fn rds_to_utf8_lossy<const N: usize>(bytes: &[u8]) -> String<N> {
     let mut s = String::<N>::new();
     for &b in bytes {
@@ -43,6 +44,7 @@ pub fn rds_to_utf8_lossy<const N: usize>(bytes: &[u8]) -> String<N> {
 ///
 /// This is useful when you want to pre-allocate a `String` or fixed-size buffer
 /// without risking truncation or over-allocation.
+#[must_use]
 pub fn rds_to_utf8_required_bytes(bytes: &[u8]) -> usize {
     bytes
         .iter()
@@ -53,12 +55,12 @@ pub fn rds_to_utf8_required_bytes(bytes: &[u8]) -> usize {
         .sum()
 }
 
+#[must_use]
 pub fn is_whitespace_byte(b: u8) -> bool {
     b <= 32 || b == 0xff || b == 127
 }
 
 #[cfg(test)]
-
 mod tests {
     use super::*;
 
@@ -104,12 +106,12 @@ mod tests {
 
     #[test]
     fn test_is_whitespace_byte() {
-        assert_eq!(is_whitespace_byte(0), true);
-        assert_eq!(is_whitespace_byte(BLANK_CHAR), true);
-        assert_eq!(is_whitespace_byte(127), true); // DEL character
-        assert_eq!(is_whitespace_byte(255), true);
+        assert!(is_whitespace_byte(0));
+        assert!(is_whitespace_byte(BLANK_CHAR));
+        assert!(is_whitespace_byte(127)); // DEL character
+        assert!(is_whitespace_byte(255));
 
-        assert_eq!(is_whitespace_byte(b'A'), false);
-        assert_eq!(is_whitespace_byte(128), false);
+        assert!(!is_whitespace_byte(b'A'));
+        assert!(!is_whitespace_byte(128));
     }
 }

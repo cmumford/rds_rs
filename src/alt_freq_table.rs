@@ -26,11 +26,11 @@ pub struct AfTable {
 }
 
 impl AfTable {
-    pub fn add(&mut self, freq: &Freq) -> bool {
-        if self.entries.len() == MAX_NUM_ENTRIES && !self.entries.contains(freq) {
+    pub fn add(&mut self, freq: Freq) -> bool {
+        if self.entries.len() == MAX_NUM_ENTRIES && !self.entries.contains(&freq) {
             return false;
         }
-        self.entries.insert(*freq).unwrap()
+        self.entries.insert(freq).unwrap()
     }
 
     #[inline]

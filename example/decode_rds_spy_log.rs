@@ -125,7 +125,7 @@ fn process_reader<R: BufRead + 'static>(reader: R) -> io::Result<()> {
                             print!(" AF(ON)'s: {}", rds_data.on_freqs.iter().count());
                         }
 
-                        println!("");
+                        println!();
                     }
                 }
             }
@@ -143,21 +143,20 @@ fn process_directory(dir: &Path) -> io::Result<()> {
     {
         let path = entry.path();
 
-        if path.is_file() {
-            if let Some(ext) = path.extension() {
-                if ext == "rds" || ext == "spy" {
-                    info!("Processing file: {}", path.display());
-                    let file = match File::open(path) {
-                        Ok(f) => f,
-                        Err(e) => {
-                            eprintln!("Failed to open {}: {}", path.display(), e);
-                            continue;
-                        }
-                    };
-                    if let Err(e) = process_reader(BufReader::new(file)) {
-                        error!("Error processing {}: {}", path.display(), e);
-                    }
+        if path.is_file()
+            && let Some(ext) = path.extension()
+            && (ext == "rds" || ext == "spy")
+        {
+            info!("Processing file: {}", path.display());
+            let file = match File::open(path) {
+                Ok(f) => f,
+                Err(e) => {
+                    eprintln!("Failed to open {}: {}", path.display(), e);
+                    continue;
                 }
+            };
+            if let Err(e) = process_reader(BufReader::new(file)) {
+                error!("Error processing {}: {}", path.display(), e);
             }
         }
     }
