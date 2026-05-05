@@ -4,7 +4,7 @@ use crossterm::{
     terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
 use ratatui::{prelude::*, widgets::*};
-use rds::{Decoder, Group, MAX_RADIOTEXT_LEN, PS_TEXT_LEN, RdsData, rds_to_utf8_lossy};
+use rds_rs::{Decoder, Group, MAX_RADIOTEXT_LEN, PS_TEXT_LEN, RdsData, rds_to_utf8_lossy};
 use rdspy::RdsGroupIterator;
 use std::{
     env,

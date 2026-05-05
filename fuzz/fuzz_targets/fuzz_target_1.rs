@@ -1,7 +1,7 @@
 #![no_main]
 
 use libfuzzer_sys::fuzz_target;
-use rds::{Decoder, Group, RdsData};
+use rds_rs::{Decoder, Group, RdsData};
 
 fuzz_target!(|data: &[u8]| {
     if data.len() < 9 {

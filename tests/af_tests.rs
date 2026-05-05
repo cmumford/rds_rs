@@ -1,9 +1,9 @@
-use rds::{Decoder, Group, ValidFields};
+use rds_rs::{Decoder, Group, ValidFields};
 
 #[allow(clippy::unusual_byte_groupings)]
 #[cfg(test)]
 mod tests {
-    use rds::RdsData;
+    use rds_rs::RdsData;
 
     use super::*;
 

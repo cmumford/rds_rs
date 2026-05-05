@@ -1,4 +1,4 @@
-use rds::Clock;
+use rds_rs::Clock;
 
 #[cfg(test)]
 mod tests {

@@ -1,4 +1,4 @@
-use rds::{
+use rds_rs::{
     Content, Decoder, DiCodes, Group, PS_TEXT_LEN, ProgramType, ValidFields, rds_to_utf8_lossy,
 };
 
@@ -7,7 +7,7 @@ const PS_LEN: usize = PS_TEXT_LEN + 2;
 #[allow(clippy::unusual_byte_groupings)]
 #[cfg(test)]
 mod tests {
-    use rds::RdsData;
+    use rds_rs::RdsData;
 
     use super::*;
 
