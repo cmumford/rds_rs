@@ -1,4 +1,4 @@
-# rds_rs
+# rds-rs
 [![CI](https://github.com/cmumford/rds_rs/actions/workflows/ci.yml/badge.svg)](https://github.com/cmumford/rds_rs/actions/workflows/ci.yml)
 [![Crates.io Version](https://img.shields.io/crates/v/rds_rs)](https://crates.io/crates/rds_rs)
 [![docs.rs](https://docs.rs/rds_rs/badge.svg)](https://docs.rs/rds_rs)
