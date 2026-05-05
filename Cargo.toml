@@ -7,6 +7,11 @@ description = "A Library for Decoding RDS/RBDS data"
 readme = "README.md"
 keywords = ["RDS", "radio", "FM"]
 license = "MIT"
+homepage = "https://github.com/cmumford/rds_rs"
+
+exclude = [
+    "third_party/", # External dependencies.
+]
 
 [dependencies]
 heapless = "0.9.3"
