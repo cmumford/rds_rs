@@ -1,4 +1,10 @@
-# A Library for Decoding RDS/RBDS data.
+# rds_rs
+[![CI](https://github.com/cmumford/rds_rs/actions/workflows/ci.yml/badge.svg)](https://github.com/cmumford/rds_rs/actions/workflows/ci.yml)
+[![Crates.io Version](https://img.shields.io/crates/v/rds_rs)](https://crates.io/crates/rds_rs)
+[![docs.rs](https://docs.rs/rds_rs/badge.svg)](https://docs.rs/rds_rs)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+A Library for Decoding RDS/RBDS data.
 
 Provide a complete decode implementation of the
 [RDS/RBDS](https://en.wikipedia.org/wiki/Radio_Data_System) protocol
