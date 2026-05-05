@@ -1,5 +1,5 @@
 use log::{error, info};
-use rds::{
+use rds_rs::{
     Decoder, Group, MAX_RADIOTEXT_LEN, PS_TEXT_LEN, PTYN_TEXT_LEN, RdsData, RtVariant,
     rds_to_utf8_lossy,
 };
