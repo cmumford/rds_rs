@@ -1027,7 +1027,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "rds"
+name = "rds-rs"
 version = "1.0.0"
 dependencies = [
  "crossterm",
