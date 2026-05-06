@@ -6,6 +6,7 @@ authors = ["Chris Mumford <cmumford@cmumford.com>"]
 description = "A Library for Decoding RDS/RBDS data"
 readme = "README.md"
 keywords = ["RDS", "radio", "FM"]
+categories = ["encoding", "no-std"]
 license = "MIT"
 homepage = "https://github.com/cmumford/rds_rs"
 repository = "https://github.com/cmumford/rds_rs"
