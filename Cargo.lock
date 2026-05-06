@@ -1043,9 +1043,9 @@ dependencies = [
 
 [[package]]
 name = "rdspy"
-version = "1.0.1"
+version = "1.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bbc1ff572f38dcc90589d0732216840123c575a0e544ab2e7dd1a48e709240cf"
+checksum = "1bc878d6803321d68aec2fceaab292123018e96fc477a5b6c24145a8d51ac776"
 dependencies = [
  "chrono",
  "log",
