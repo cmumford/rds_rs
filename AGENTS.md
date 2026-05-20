@@ -22,8 +22,6 @@ Always verify changes in this sequence:
 4.  **Smoke Test:** `make test` (runs decode example on a Swedish spy log file)
 5.  **Full Test:** `make test-all` (decodes all spy logs in the directory)
 
-*Note: The GitHub Actions CI pipeline (`.github/workflows/ci.yml`) does **not** run `cargo test`. You must execute tests locally before pushing or declaring a task complete.*
-
 ### Fuzzing
 *   **Run Fuzzer:** `make fuzz` (executes `cargo fuzz run fuzz_target_1`). Requires a nightly Rust toolchain.
 

@@ -31,5 +31,8 @@ jobs:
           cargo build --example decode_rds_spy_log --release
           cargo build --example rds_viewer --release
 
+      - name: Tests
+        run: cargo test
+
       - name: Docs
         run: cargo doc --no-deps
