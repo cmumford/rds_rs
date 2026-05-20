@@ -29,3 +29,4 @@ Always verify changes in this sequence:
 *   **Decoder State:** `src/rds.rs` (`RdsData`) stores the current RDS decoder state.
 *   **Decoding Entrypoint:** `src/decoder.rs` contains the core `Decoder` struct and state machine implementing the spec decoding.
 *   **Utility & Tables:** `src/text.rs` holds the custom RDS character set translation table (EBU common language mapping to UTF-8).
+*   **RDS Documenttion**: is stored in the docs/ directory.
