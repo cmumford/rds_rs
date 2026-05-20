@@ -14,6 +14,25 @@ This file is a high-signal reference for AI agents to avoid repository-specific 
 
 ## Commands & Workflows
 
+## Core Principles
+- **Think Before Coding:** Always analyze the codebase and state your plan before making any edits.
+- **Simplicity First:** Implement the simplest solution that solves the problem. Avoid "clever" code or unrequested abstractions.
+- **Surgical Edits:** Only modify the specific lines or functions necessary for the task. Do not refactor unrelated code or fix "style" issues unless asked.
+- **Goal-Driven:** Define what "success" looks like before you start. Use the `!bash` tool to verify changes with tests or linting immediately after editing.
+
+## Communication Guidelines
+- Be concise and technical.
+- If a task is ambiguous, ask for clarification instead of guessing.
+- When using `!bash` commands, explain what you are checking (e.g., "Checking if the build still passes...").
+
+## Technical Context
+- **Style:** Follow the existing patterns in the codebase. Use @filename to reference existing examples for consistency.
+- **Testing:** Run `cargo test` after every significant logic change.
+
+## Error Handling
+- If a command fails, analyze the stderr output fully before trying a second time.
+- Do not enter a loop of "trying things" to see if they work. If you are stuck, stop and ask the user.
+
 ### Verification Pipeline
 Always verify changes in this sequence:
 1.  **Check:** `make check` (or `cargo check`)
