@@ -270,8 +270,8 @@ fn decode_group_type_4a(group: &Group, rds_data: &mut RdsData) -> ValidFields {
         return ValidFields::new();
     }
     let block_b = BlockB::from_bytes(group.b.unwrap().to_be_bytes());
-    let block_c = BlockC::from_bytes(group.b.unwrap().to_be_bytes());
-    let block_d = BlockD::from_bytes(group.b.unwrap().to_be_bytes());
+    let block_c = BlockC::from_bytes(group.c.unwrap().to_be_bytes());
+    let block_d = BlockD::from_bytes(group.d.unwrap().to_be_bytes());
 
     rds_data.clock.mjd = (u32::from(block_b.date_msb()) << 15) + u32::from(block_c.date());
     rds_data.clock.hour = (block_c.hour_msb() << 4) + block_d.hour();
