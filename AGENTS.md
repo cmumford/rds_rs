@@ -7,18 +7,31 @@ This file is a high-signal reference for AI agents to avoid repository-specific 
 *   **Strict `no_std`:** The library crate (`src/`) is entirely `#![no_std]`.
     *   No `std::` library access is allowed.
     *   Uses `heapless` for static/fixed-capacity collections (e.g., `heapless::String`).
+    *   Uses `libm` for no_std-compatible math functions (e.g., `libm::floorf`).
     *   `thiserror` is imported with `default-features = false`.
 *   **Bitfields:** Code uses `modular-bitfield-msb` (MSB-first bit layout), **not** the standard `modular-bitfield` crate. Always import from `modular_bitfield_msb::prelude::*`.
 *   **Directories to Ignore:**
-    *   Never search, read, or scan the `third_party/` directory (which contains extensive RDS spy logs) or `.jj/` (Jujutsu VCS metadata directory).
+    *   Never search, read, or scan the `third_party/` directory (which contains extensive RDS spy logs).
 
 ## Commands & Workflows
+
+*   **Build:** `make build` (or `cargo build`)
+*   **Check:** `make check` (runs `cargo check`)
+*   **Lint:** `make clippy` (runs `cargo clippy --all-targets`)
+*   **Test:** `cargo test` (unit and integration tests)
+*   **Smoke Test:** `make test` (runs `decode_rds_spy_log` example on a Swedish spy log)
+*   **Full Test:** `make test-all` (runs `decode_rds_spy_log` example on all spy logs in `third_party/`)
+*   **Viewer:** `make viewer` (runs the `rds_viewer` TUI example)
+*   **Docs:** `make docs` (runs `cargo doc --no-deps --open`)
+*   **Machete:** `make machete` (runs `cargo machete` to detect unused dependencies)
+*   **Publish:** `make publish` (runs `cargo publish`)
+*   **Fuzz:** `make fuzz` (runs `cargo fuzz run fuzz_target_1` — requires nightly)
 
 ## Core Principles
 - **Think Before Coding:** Always analyze the codebase and state your plan before making any edits.
 - **Simplicity First:** Implement the simplest solution that solves the problem. Avoid "clever" code or unrequested abstractions.
 - **Surgical Edits:** Only modify the specific lines or functions necessary for the task. Do not refactor unrelated code or fix "style" issues unless asked.
-- **Goal-Driven:** Define what "success" looks like before you start. Use the `!bash` tool to verify changes with tests or linting immediately after editing.
+- **Goal-Driven:** Define what "success" looks like before you start. Use the `bash` tool to verify changes with tests or linting immediately after editing.
 
 ## Communication Guidelines
 - Be concise and technical.
