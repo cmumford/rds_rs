@@ -19,12 +19,12 @@ exclude = [
 heapless = "0.9.3"
 libm = "0.2"
 modular-bitfield-msb = "0.11.2"
-thiserror = { version = "2.0.18", default-features = false }
+thiserror = { version = "2.0.19", default-features = false }
 
 [dev-dependencies]
 crossterm = "0.29.0"
-log = "0.4"
-ratatui = "0.30.0"
+log = "0.4.33"
+ratatui = "0.30.2"
 rdspy = { version = "1.0" }
 walkdir = "2.5"
 
