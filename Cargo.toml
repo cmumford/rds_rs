@@ -23,7 +23,7 @@ thiserror = { version = "2.0.20", default-features = false }
 
 [dev-dependencies]
 crossterm = "0.29.0"
-log = "0.4.33"
+log = "0.4.34"
 ratatui = "0.30.2"
 rdspy = { version = "1.0" }
 walkdir = "2.5"
